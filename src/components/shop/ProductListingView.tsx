@@ -21,6 +21,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Rating } from "@/components/ui/Rating";
 
 type SortOption = "featured" | "price-asc" | "price-desc" | "rating";
+type QuickFilter =
+  "all" | "under-25k" | "above-35k" | "bestseller" | "new" | "kanchipuram" | "banarasi";
 
 interface ProductListingViewProps {
   title: string;
@@ -41,6 +43,7 @@ export const ProductListingView: React.FC<ProductListingViewProps> = ({
 
   const [sortBy, setSortBy] = React.useState<SortOption>("featured");
   const [selectedFabric, setSelectedFabric] = React.useState<string>("all");
+  const [quickFilter, setQuickFilter] = React.useState<QuickFilter>("all");
   const [mobileColumns, setMobileColumns] = React.useState<1 | 2>(2);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = React.useState(false);
 
@@ -56,9 +59,27 @@ export const ProductListingView: React.FC<ProductListingViewProps> = ({
       ) {
         return false;
       }
+      if (quickFilter === "under-25k" && p.price >= 25000) return false;
+      if (quickFilter === "above-35k" && p.price < 35000) return false;
+      if (quickFilter === "bestseller" && p.badge !== "BESTSELLER") return false;
+      if (quickFilter === "new" && p.badge !== "NEW") return false;
+      if (
+        quickFilter === "kanchipuram" &&
+        !p.title.toLowerCase().includes("kanchipuram") &&
+        !p.fabric.toLowerCase().includes("kanchipuram")
+      ) {
+        return false;
+      }
+      if (
+        quickFilter === "banarasi" &&
+        !p.title.toLowerCase().includes("banarasi") &&
+        !p.fabric.toLowerCase().includes("banarasi")
+      ) {
+        return false;
+      }
       return true;
     });
-  }, [categoryFilter, collectionFilter, badgeFilter, selectedFabric]);
+  }, [categoryFilter, collectionFilter, badgeFilter, selectedFabric, quickFilter]);
 
   // Sort
   const sortedProducts = React.useMemo(() => {
@@ -221,19 +242,52 @@ export const ProductListingView: React.FC<ProductListingViewProps> = ({
         </div>
       </div>
 
+      {/* 1-Tap Quick Filter Chips (Mobile & Desktop) */}
+      <div className="mb-6 flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+        <span className="text-[10px] uppercase tracking-[0.18em] text-[#8C867D] font-semibold mr-1 shrink-0 flex items-center gap-1">
+          <Sparkles className="h-3 w-3 text-[#B79B63]" /> Curations:
+        </span>
+        {[
+          { id: "all", label: "All Ensembles" },
+          { id: "bestseller", label: "Bestsellers" },
+          { id: "new", label: "New Arrivals" },
+          { id: "kanchipuram", label: "Kanchipuram Silk" },
+          { id: "banarasi", label: "Banarasi Kadhwa" },
+          { id: "under-25k", label: "Under ₹25,000" },
+          { id: "above-35k", label: "Heirloom Bridal (₹35k+)" },
+        ].map((pill) => (
+          <button
+            key={pill.id}
+            type="button"
+            onClick={() => setQuickFilter(pill.id as QuickFilter)}
+            className={cn(
+              "px-3 py-1.5 text-xs whitespace-nowrap rounded-full transition-all cursor-pointer border shrink-0",
+              quickFilter === pill.id
+                ? "bg-[#1C1B19] text-[#FAF7F2] border-[#1C1B19] shadow-xs"
+                : "bg-white text-[#5A5650] border-[#E8E2D8] hover:border-[#B79B63] hover:text-[#1C1B19]"
+            )}
+          >
+            {pill.label}
+          </button>
+        ))}
+      </div>
+
       {/* Product Grid (Responsive: 1-col or 2-col on mobile, 3-col on md, 4-col on lg) */}
       {sortedProducts.length === 0 ? (
         <div className="p-16 text-center bg-white border border-[#E8E2D8] space-y-4">
           <p className="font-serif text-2xl text-[#1C1B19]">No pieces match your filter</p>
           <p className="text-xs text-[#5A5650]">
-            Try resetting your fabric filter to explore all designs.
+            Try resetting your filters or curations to explore all designs.
           </p>
           <button
             type="button"
-            onClick={() => setSelectedFabric("all")}
-            className="px-6 py-2 bg-[#1C1B19] text-[#FAF7F2] text-xs uppercase tracking-wider font-medium cursor-pointer"
+            onClick={() => {
+              setSelectedFabric("all");
+              setQuickFilter("all");
+            }}
+            className="px-6 py-2 bg-[#1C1B19] text-[#FAF7F2] text-xs uppercase tracking-wider font-medium cursor-pointer hover:bg-[#B79B63] transition-colors"
           >
-            Reset Filters
+            Reset All Filters
           </button>
         </div>
       ) : (
@@ -458,15 +512,48 @@ export const ProductListingView: React.FC<ProductListingViewProps> = ({
               </div>
             </div>
 
+            {/* Quick Curations Section */}
+            <div className="space-y-2">
+              <span className="text-[11px] uppercase tracking-wider text-[#8C867D] font-medium block">
+                Quick Curations
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { id: "all", label: "All Ensembles" },
+                  { id: "bestseller", label: "Bestsellers" },
+                  { id: "new", label: "New Arrivals" },
+                  { id: "kanchipuram", label: "Kanchipuram Silk" },
+                  { id: "banarasi", label: "Banarasi Kadhwa" },
+                  { id: "under-25k", label: "Under ₹25k" },
+                  { id: "above-35k", label: "Bridal ₹35k+" },
+                ].map((pill) => (
+                  <button
+                    key={pill.id}
+                    type="button"
+                    onClick={() => setQuickFilter(pill.id as QuickFilter)}
+                    className={cn(
+                      "px-3 py-1.5 text-xs border transition-colors",
+                      quickFilter === pill.id
+                        ? "bg-[#1C1B19] text-[#FAF7F2] border-[#1C1B19]"
+                        : "bg-white text-[#1C1B19] border-[#E8E2D8]"
+                    )}
+                  >
+                    {pill.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Actions */}
             <div className="pt-2 flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => {
                   setSelectedFabric("all");
+                  setQuickFilter("all");
                   setSortBy("featured");
                 }}
-                className="w-1/3 py-2.5 border border-[#E8E2D8] bg-white text-xs text-[#5A5650] uppercase tracking-wider"
+                className="w-1/3 py-2.5 border border-[#E8E2D8] bg-white text-xs text-[#5A5650] uppercase tracking-wider cursor-pointer hover:bg-neutral-50"
               >
                 Reset
               </button>

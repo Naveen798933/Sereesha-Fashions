@@ -5,13 +5,21 @@ import Image from "next/image";
 import Link from "next/link";
 import { X, Trash2, ArrowRight, ShoppingBag, ShieldCheck } from "lucide-react";
 import { useCartWishlist } from "@/context/CartWishlistContext";
+import { PRODUCTS } from "@/data/products";
 import { Button } from "@/components/ui/Button";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { formatINR } from "@/lib/utils";
 
 export const CartDrawer: React.FC = () => {
-  const { cart, cartTotal, isCartDrawerOpen, setIsCartDrawerOpen, removeFromCart, updateQuantity } =
-    useCartWishlist();
+  const {
+    cart,
+    cartTotal,
+    isCartDrawerOpen,
+    setIsCartDrawerOpen,
+    removeFromCart,
+    updateQuantity,
+    addToCart,
+  } = useCartWishlist();
 
   const freeShippingThreshold = 2999;
   const progressPercent = Math.min(100, (cartTotal / freeShippingThreshold) * 100);
@@ -97,68 +105,116 @@ export const CartDrawer: React.FC = () => {
               </Button>
             </div>
           ) : (
-            cart.map((item) => (
-              <div
-                key={item.id}
-                className="flex gap-4 p-3 bg-white border border-[#E8E2D8] hover:border-[#D8C7A5] transition-colors"
-              >
-                {/* Product Thumbnail */}
-                <div className="relative h-24 w-20 shrink-0 overflow-hidden bg-[#EFE8DD] border border-[#E8E2D8]">
-                  <Image
-                    src={item.product.primaryImage}
-                    alt={item.product.title}
-                    fill
-                    sizes="80px"
-                    className="object-cover object-center"
-                  />
-                </div>
-
-                {/* Details */}
-                <div className="flex-1 flex flex-col justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <Link
-                        href={`/women/${item.product.category}/${item.product.slug}`}
-                        onClick={() => setIsCartDrawerOpen(false)}
-                        className="text-xs font-medium text-[#1C1B19] hover:text-[#B79B63] transition-colors line-clamp-2 leading-snug"
-                      >
-                        {item.product.title}
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => removeFromCart(item.id)}
-                        className="text-[#8C867D] hover:text-[#9A3434] transition-colors p-1"
-                        aria-label="Remove item"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-
-                    <p className="text-[10px] uppercase tracking-wider text-[#8C867D]">
-                      Option: {item.size}
-                    </p>
-                    {item.blouseOption && (
-                      <p className="text-[10px] text-[#B79B63] font-medium">
-                        Blouse: {item.blouseOption}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2">
-                    <span className="text-xs font-semibold text-[#1C1B19]">
-                      {formatINR(item.product.price * item.quantity)}
-                    </span>
-                    <QuantityStepper
-                      value={item.quantity}
-                      min={1}
-                      max={10}
-                      onChange={(q) => updateQuantity(item.id, q)}
-                      size="sm"
+            <>
+              {cart.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex gap-4 p-3 bg-white border border-[#E8E2D8] hover:border-[#D8C7A5] transition-colors rounded-xs shadow-2xs"
+                >
+                  {/* Product Thumbnail */}
+                  <div className="relative h-24 w-20 shrink-0 overflow-hidden bg-[#EFE8DD] border border-[#E8E2D8]">
+                    <Image
+                      src={item.product.primaryImage}
+                      alt={item.product.title}
+                      fill
+                      sizes="80px"
+                      className="object-cover object-center"
                     />
                   </div>
+
+                  {/* Details */}
+                  <div className="flex-1 flex flex-col justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <Link
+                          href={`/women/${item.product.category}/${item.product.slug}`}
+                          onClick={() => setIsCartDrawerOpen(false)}
+                          className="text-xs font-medium text-[#1C1B19] hover:text-[#B79B63] transition-colors line-clamp-2 leading-snug"
+                        >
+                          {item.product.title}
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => removeFromCart(item.id)}
+                          className="text-[#8C867D] hover:text-[#9A3434] transition-colors p-1 cursor-pointer"
+                          aria-label="Remove item"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+
+                      <p className="text-[10px] uppercase tracking-wider text-[#8C867D]">
+                        Option: {item.size}
+                      </p>
+                      {item.blouseOption && (
+                        <p className="text-[10px] text-[#B79B63] font-medium">
+                          Blouse: {item.blouseOption}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-xs font-semibold text-[#1C1B19]">
+                        {formatINR(item.product.price * item.quantity)}
+                      </span>
+                      <QuantityStepper
+                        value={item.quantity}
+                        min={1}
+                        max={10}
+                        onChange={(q) => updateQuantity(item.id, q)}
+                        size="sm"
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+
+              {/* Curated Atelier Recommendation / Quick Add */}
+              {cart.length > 0 && (
+                <div className="pt-3 border-t border-[#E8E2D8]">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] uppercase tracking-[0.2em] text-[#1C1B19] font-bold">
+                      Atelier Recommends
+                    </span>
+                    <span className="text-[9px] text-[#B79B63] font-semibold uppercase tracking-wider">
+                      Pair With Ensemble
+                    </span>
+                  </div>
+                  {(() => {
+                    const recommendation =
+                      PRODUCTS.find((p) => !cart.some((c) => c.product.id === p.id)) || PRODUCTS[0];
+                    return (
+                      <div className="p-3 bg-[#FAF7F2] border border-[#E8E2D8] flex items-center gap-3 rounded-xs">
+                        <div className="relative h-14 w-12 shrink-0 bg-[#EFE8DD] overflow-hidden border border-[#E8E2D8]">
+                          <Image
+                            src={recommendation.primaryImage}
+                            alt={recommendation.title}
+                            fill
+                            sizes="48px"
+                            className="object-cover"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0 text-xs">
+                          <p className="font-medium text-[#1C1B19] truncate">
+                            {recommendation.title}
+                          </p>
+                          <p className="text-xs font-semibold text-[#B79B63]">
+                            {formatINR(recommendation.price)}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => addToCart(recommendation, recommendation.sizes[0])}
+                          className="px-2.5 py-1.5 bg-[#1C1B19] text-[#FAF7F2] text-[10px] uppercase tracking-wider font-semibold hover:bg-[#B79B63] transition-colors shrink-0 rounded-2xs"
+                        >
+                          + Add
+                        </button>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+            </>
           )}
         </div>
 

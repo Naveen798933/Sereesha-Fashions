@@ -12,6 +12,12 @@ import {
   Phone,
   ArrowRight,
   Check,
+  Truck,
+  MapPin,
+  Share2,
+  ZoomIn,
+  Sparkles,
+  Info,
 } from "lucide-react";
 import { Product, PRODUCTS } from "@/data/products";
 import { useCartWishlist } from "@/context/CartWishlistContext";
@@ -42,6 +48,23 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
   );
   const [quantity, setQuantity] = React.useState(1);
 
+  // Zari Texture Zoom State
+  const [isZooming, setIsZooming] = React.useState(false);
+  const [zoomPos, setZoomPos] = React.useState({ x: 50, y: 50 });
+
+  // Indian PIN Code Estimator State
+  const [pincode, setPincode] = React.useState("");
+  const [pincodeStatus, setPincodeStatus] = React.useState<{
+    type: "success" | "error";
+    message: string;
+    badge?: string;
+  } | null>(null);
+
+  // Bespoke Blouse Styling Visualizer State
+  const [neckline, setNeckline] = React.useState("Regal Sweetheart");
+  const [sleeveStyle, setSleeveStyle] = React.useState("Elbow-Length with Zari Border");
+  const [backStyle, setBackStyle] = React.useState("Dori with Handmade Silk Latkans");
+
   const wishlisted = isInWishlist(product.id);
 
   const discountPercent =
@@ -63,8 +86,84 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
     },
   ];
 
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+    setZoomPos({ x, y });
+  };
+
+  const handleCheckPincode = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleaned = pincode.trim();
+    if (!/^\d{6}$/.test(cleaned)) {
+      setPincodeStatus({
+        type: "error",
+        message: "Please enter a valid 6-digit Indian postal code.",
+      });
+      return;
+    }
+
+    const prefix3 = cleaned.slice(0, 3);
+    const prefix2 = cleaned.slice(0, 2);
+
+    if (prefix3 === "500" || prefix3 === "501" || prefix3 === "502") {
+      setPincodeStatus({
+        type: "success",
+        badge: "Hyderabad Atelier Express",
+        message: "Delivers Tomorrow (Same-Day / Next-Day Dispatch from Banjara Hills Atelier)",
+      });
+    } else if (["560", "600", "682", "530"].includes(prefix3)) {
+      setPincodeStatus({
+        type: "success",
+        badge: "South Metro Express",
+        message: "Delivers in 2 Days via BlueDart Air • Free Insured Delivery",
+      });
+    } else if (
+      ["110", "400", "700", "380", "411"].includes(prefix3) ||
+      ["11", "40"].includes(prefix2)
+    ) {
+      setPincodeStatus({
+        type: "success",
+        badge: "Tier-1 Metro Air",
+        message: "Delivers in 2-3 Days via BlueDart Air • Free Insured Delivery",
+      });
+    } else {
+      setPincodeStatus({
+        type: "success",
+        badge: "Pan-India Priority",
+        message: "Delivers in 3-5 Business Days across India • Free Insured Delivery",
+      });
+    }
+  };
+
+  const handleShareWithFamily = async () => {
+    const shareText = `Admiring this exquisite handloom ensemble from Sreesha Elegance:\n\n${product.title} - ${formatINR(product.price)}\n\nWhat do you think?`;
+    const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: product.title,
+          text: shareText,
+          url: shareUrl,
+        });
+        return;
+      } catch {
+        // User cancelled share dialog
+      }
+    }
+
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(shareText + "\n" + shareUrl)}`;
+    window.open(waUrl, "_blank", "noopener,noreferrer");
+  };
+
   const handleInstantBuy = () => {
-    addToCart(product, selectedSize, selectedBlouse, quantity);
+    const customSummary =
+      selectedBlouse === "Bespoke Custom Tailored"
+        ? `${selectedBlouse} (${neckline}, ${sleeveStyle}, ${backStyle})`
+        : selectedBlouse;
+    addToCart(product, selectedSize, customSummary, quantity);
     setIsCartDrawerOpen(true);
   };
 
@@ -91,16 +190,29 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 bg-white border border-[#E8E2D8] p-4 sm:p-10 shadow-xs">
         {/* Left: Gallery Column (7 cols on lg) */}
         <div className="lg:col-span-7 space-y-4">
-          {/* Main Large Image */}
-          <div className="relative aspect-[4/5] w-full overflow-hidden bg-[#EFE8DD] border border-[#E8E2D8]">
-            <Image
-              src={activeImage}
-              alt={product.title}
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 55vw"
-              className="object-cover object-center transition-all duration-500"
-            />
+          {/* Main Large Image with Zari Magnifier */}
+          <div
+            className="relative aspect-[4/5] w-full overflow-hidden bg-[#EFE8DD] border border-[#E8E2D8] select-none group"
+            onMouseEnter={() => setIsZooming(true)}
+            onMouseLeave={() => setIsZooming(false)}
+            onMouseMove={handleMouseMove}
+          >
+            <div
+              className="relative w-full h-full transition-transform duration-200 ease-out"
+              style={{
+                transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
+                transform: isZooming ? "scale(2.2)" : "scale(1)",
+              }}
+            >
+              <Image
+                src={activeImage}
+                alt={product.title}
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 55vw"
+                className="object-cover object-center pointer-events-none"
+              />
+            </div>
 
             {/* Badges */}
             <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex flex-col gap-1.5 z-10 pointer-events-none">
@@ -110,20 +222,39 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
               {discountPercent && <Badge variant="sale">-{discountPercent}%</Badge>}
             </div>
 
-            {/* Wishlist Button */}
-            <button
-              type="button"
-              onClick={() => toggleWishlist(product.id)}
-              className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 h-9 w-9 sm:h-10 sm:w-10 bg-white/95 backdrop-blur-xs flex items-center justify-center text-[#1C1B19] hover:text-[#9A3434] transition-colors border border-[#E8E2D8] shadow-xs cursor-pointer"
-              aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-            >
-              <Heart
-                className={cn(
-                  "h-4 w-4 sm:h-5 sm:w-5 transition-colors",
-                  wishlisted ? "fill-[#9A3434] text-[#9A3434]" : "text-[#1C1B19]"
-                )}
-              />
-            </button>
+            {/* Quick Actions (Share & Wishlist) */}
+            <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleShareWithFamily}
+                className="h-9 w-9 sm:h-10 sm:w-10 bg-white/95 backdrop-blur-xs flex items-center justify-center text-[#1C1B19] hover:text-[#25D366] transition-colors border border-[#E8E2D8] shadow-xs cursor-pointer"
+                title="Share ensemble with family on WhatsApp"
+                aria-label="Share ensemble with family"
+              >
+                <Share2 className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleWishlist(product.id)}
+                className="h-9 w-9 sm:h-10 sm:w-10 bg-white/95 backdrop-blur-xs flex items-center justify-center text-[#1C1B19] hover:text-[#9A3434] transition-colors border border-[#E8E2D8] shadow-xs cursor-pointer"
+                aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+              >
+                <Heart
+                  className={cn(
+                    "h-4 w-4 sm:h-5 sm:w-5 transition-colors",
+                    wishlisted ? "fill-[#9A3434] text-[#9A3434]" : "text-[#1C1B19]"
+                  )}
+                />
+              </button>
+            </div>
+
+            {/* Zari Zoom Guide Indicator */}
+            <div className="absolute bottom-3 left-3 z-10 pointer-events-none bg-white/95 backdrop-blur-xs px-2.5 py-1 border border-[#E8E2D8] flex items-center gap-1.5 text-[10px] text-[#5A5650] uppercase tracking-wider font-medium shadow-2xs">
+              <ZoomIn className="h-3 w-3 text-[#B79B63]" />
+              <span>
+                {isZooming ? "Magnifying 2.2x Zari Weave" : "Hover to Inspect Zari Weave"}
+              </span>
+            </div>
           </div>
 
           {/* Mobile Dot Indicators */}
@@ -274,7 +405,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
 
             {/* Blouse Stitching Options for Sarees */}
             {product.category === "sarees" && (
-              <div className="space-y-2 pt-1 sm:pt-2">
+              <div className="space-y-3 pt-1 sm:pt-2">
                 <span className="block text-xs uppercase tracking-wider font-medium text-[#1C1B19]">
                   Atelier Blouse Customization:
                 </span>
@@ -309,6 +440,107 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
                     </label>
                   ))}
                 </div>
+
+                {/* Bespoke Blouse Visual Customizer Box */}
+                {selectedBlouse === "Bespoke Custom Tailored" && (
+                  <div className="p-3.5 bg-[#FAF7F2] border border-[#B79B63]/40 rounded-xs space-y-3">
+                    <div className="flex items-center gap-1.5 text-xs text-[#B79B63] font-semibold uppercase tracking-wider">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      <span>Bespoke Master Tailoring Options</span>
+                    </div>
+
+                    {/* Neckline Choice */}
+                    <div className="space-y-1.5">
+                      <span className="text-[11px] font-medium text-[#1C1B19]">
+                        Neckline Pattern:
+                      </span>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {[
+                          "Regal Sweetheart",
+                          "Classic Round",
+                          "Royal Boat Neck",
+                          "Deep V with Zari",
+                        ].map((neck) => (
+                          <button
+                            key={neck}
+                            type="button"
+                            onClick={() => setNeckline(neck)}
+                            className={cn(
+                              "px-2.5 py-1.5 text-[11px] border text-left transition-colors cursor-pointer",
+                              neckline === neck
+                                ? "bg-[#1C1B19] text-[#FAF7F2] border-[#1C1B19]"
+                                : "bg-white text-[#1C1B19] border-[#E8E2D8] hover:border-[#B79B63]"
+                            )}
+                          >
+                            {neck}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Sleeve Style */}
+                    <div className="space-y-1.5">
+                      <span className="text-[11px] font-medium text-[#1C1B19]">Sleeve Cut:</span>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {[
+                          "Elbow-Length with Zari Border",
+                          "Cap Sleeves",
+                          "Full Sleeves (Bridal)",
+                          "Sleeveless",
+                        ].map((slv) => (
+                          <button
+                            key={slv}
+                            type="button"
+                            onClick={() => setSleeveStyle(slv)}
+                            className={cn(
+                              "px-2.5 py-1.5 text-[11px] border text-left transition-colors cursor-pointer",
+                              sleeveStyle === slv
+                                ? "bg-[#1C1B19] text-[#FAF7F2] border-[#1C1B19]"
+                                : "bg-white text-[#1C1B19] border-[#E8E2D8] hover:border-[#B79B63]"
+                            )}
+                          >
+                            {slv}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Back Silhouette */}
+                    <div className="space-y-1.5">
+                      <span className="text-[11px] font-medium text-[#1C1B19]">
+                        Back Silhouette:
+                      </span>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {[
+                          "Dori with Handmade Silk Latkans",
+                          "Keyhole Back Cut",
+                          "Hook & Eye Classic",
+                          "Backless with Dual Tie",
+                        ].map((bk) => (
+                          <button
+                            key={bk}
+                            type="button"
+                            onClick={() => setBackStyle(bk)}
+                            className={cn(
+                              "px-2.5 py-1.5 text-[11px] border text-left transition-colors cursor-pointer",
+                              backStyle === bk
+                                ? "bg-[#1C1B19] text-[#FAF7F2] border-[#1C1B19]"
+                                : "bg-white text-[#1C1B19] border-[#E8E2D8] hover:border-[#B79B63]"
+                            )}
+                          >
+                            {bk}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <p className="text-[10px] text-[#8C867D] italic flex items-center gap-1 pt-1 border-t border-[#E8E2D8]">
+                      <Info className="h-3 w-3 text-[#B79B63] shrink-0" />
+                      Our Masterji will contact you on WhatsApp within 2 hrs of order to finalize
+                      exact bust &amp; waist measurements.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -329,7 +561,13 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
                 <Button
                   variant="primary"
                   size="lg"
-                  onClick={() => addToCart(product, selectedSize, selectedBlouse, quantity)}
+                  onClick={() => {
+                    const customSummary =
+                      selectedBlouse === "Bespoke Custom Tailored"
+                        ? `${selectedBlouse} (${neckline}, ${sleeveStyle}, ${backStyle})`
+                        : selectedBlouse;
+                    addToCart(product, selectedSize, customSummary, quantity);
+                  }}
                   className="w-full"
                 >
                   <ShoppingBag className="mr-2 h-4 w-4 text-[#B79B63]" />
@@ -349,6 +587,99 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
               >
                 <Phone className="h-3.5 w-3.5" /> Book Video Call Preview on WhatsApp
               </a>
+            </div>
+
+            {/* Indian PIN Code Delivery Estimator Widget */}
+            <div className="p-4 bg-[#FAF7F2] border border-[#E8E2D8] space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#1C1B19] uppercase tracking-wider">
+                  <Truck className="h-4 w-4 text-[#B79B63]" />
+                  <span>Delivery &amp; Atelier Dispatch</span>
+                </div>
+                <span className="text-[10px] text-[#2D6A4F] font-medium flex items-center gap-1">
+                  <Check className="h-3 w-3" /> Free Express Delivery
+                </span>
+              </div>
+
+              <form onSubmit={handleCheckPincode} className="flex gap-2">
+                <div className="relative flex-1">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#8C867D]" />
+                  <input
+                    type="text"
+                    maxLength={6}
+                    placeholder="Enter 6-digit PIN code (e.g. 500034)"
+                    value={pincode}
+                    onChange={(e) => {
+                      setPincode(e.target.value.replace(/\D/g, ""));
+                      if (pincodeStatus) setPincodeStatus(null);
+                    }}
+                    className="w-full pl-9 pr-3 py-2 bg-white border border-[#E8E2D8] text-xs text-[#1C1B19] placeholder:text-[#8C867D] focus:border-[#B79B63] outline-none"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-[#1C1B19] text-[#FAF7F2] text-xs font-semibold uppercase tracking-wider hover:bg-[#B79B63] transition-colors cursor-pointer shrink-0"
+                >
+                  Check
+                </button>
+              </form>
+
+              {/* Quick City Pills */}
+              <div className="flex items-center gap-1.5 text-[10px] text-[#8C867D] overflow-x-auto no-scrollbar">
+                <span className="shrink-0">Quick check:</span>
+                {[
+                  { city: "Hyderabad", pin: "500034" },
+                  { city: "Bengaluru", pin: "560001" },
+                  { city: "Mumbai", pin: "400001" },
+                  { city: "Delhi", pin: "110001" },
+                ].map((c) => (
+                  <button
+                    key={c.pin}
+                    type="button"
+                    onClick={() => {
+                      setPincode(c.pin);
+                      setTimeout(() => {
+                        const form = document.querySelector("form");
+                        if (form) form.requestSubmit();
+                      }, 50);
+                    }}
+                    className="px-2 py-0.5 bg-white border border-[#E8E2D8] hover:border-[#B79B63] hover:text-[#1C1B19] transition-colors shrink-0 cursor-pointer"
+                  >
+                    {c.city}
+                  </button>
+                ))}
+              </div>
+
+              {/* Status Output */}
+              {pincodeStatus && (
+                <div
+                  className={cn(
+                    "p-2.5 text-xs border rounded-xs transition-all",
+                    pincodeStatus.type === "success"
+                      ? "bg-[#F3F8F5] border-[#B7D8C4] text-[#1B4332]"
+                      : "bg-[#FDF2F2] border-[#F8B4B4] text-[#9A3434]"
+                  )}
+                >
+                  {pincodeStatus.badge && (
+                    <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-[#B79B63] bg-white border border-[#E8E2D8] px-2 py-0.5 mb-1 mr-2">
+                      {pincodeStatus.badge}
+                    </span>
+                  )}
+                  <p className="font-medium text-[11px] leading-relaxed">{pincodeStatus.message}</p>
+                </div>
+              )}
+
+              {/* Trust Assurance checklist */}
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#E8E2D8] text-[10px] text-[#5A5650]">
+                <div className="flex items-center gap-1.5">
+                  <Check className="h-3 w-3 text-[#B79B63] shrink-0" />
+                  <span>Transit Insured to Doorstep</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Check className="h-3 w-3 text-[#B79B63] shrink-0" />
+                  <span>Bespoke Fall &amp; Pico Included</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -485,7 +816,13 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
           <Button
             variant="primary"
             size="md"
-            onClick={() => addToCart(product, selectedSize, selectedBlouse, quantity)}
+            onClick={() => {
+              const customSummary =
+                selectedBlouse === "Bespoke Custom Tailored"
+                  ? `${selectedBlouse} (${neckline}, ${sleeveStyle}, ${backStyle})`
+                  : selectedBlouse;
+              addToCart(product, selectedSize, customSummary, quantity);
+            }}
             className="h-10 px-4 text-xs tracking-wider"
           >
             <ShoppingBag className="mr-1.5 h-3.5 w-3.5 text-[#B79B63]" />
