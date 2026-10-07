@@ -138,7 +138,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[#FAF7F2] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-28 sm:pb-12">
       <div className="border-b border-[#E8E2D8] pb-6 mb-8">
         <h1 className="text-3xl sm:text-4xl font-serif text-[#1C1B19]">Shopping Bag</h1>
         <p className="text-xs text-[#8C867D] mt-1">{cart.length} unique pieces in your selection</p>

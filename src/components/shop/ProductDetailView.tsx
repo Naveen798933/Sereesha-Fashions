@@ -72,10 +72,12 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
     (p) => p.id !== product.id && p.category === product.category
   ).slice(0, 3);
 
+  const whatsAppInquiryUrl = `https://wa.me/919876543210?text=Hello%20Sreesha%20Elegance%2C%20I%20am%20interested%20in%20${encodeURIComponent(product.title)}%20(SKU%3A%20${product.id}%2C%20${formatINR(product.price)}).%20Can%20you%20help%20me%20with%20customization%20and%20video%20call%20preview%3F`;
+
   return (
-    <div className="min-h-screen bg-[#FAF7F2] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[#FAF7F2] py-6 sm:py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-32 sm:pb-12">
       {/* Breadcrumb Trail */}
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <Breadcrumb
           items={[
             { label: "Women", href: "/women/sarees" },
@@ -86,7 +88,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
       </div>
 
       {/* Main Grid: Gallery on Left, Purchase Details on Right */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 bg-white border border-[#E8E2D8] p-6 sm:p-10">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 bg-white border border-[#E8E2D8] p-4 sm:p-10 shadow-xs">
         {/* Left: Gallery Column (7 cols on lg) */}
         <div className="lg:col-span-7 space-y-4">
           {/* Main Large Image */}
@@ -101,7 +103,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
             />
 
             {/* Badges */}
-            <div className="absolute top-4 left-4 flex flex-col gap-2 z-10 pointer-events-none">
+            <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex flex-col gap-1.5 z-10 pointer-events-none">
               {product.badge === "NEW" && <Badge variant="gold">NEW</Badge>}
               {product.badge === "BESTSELLER" && <Badge variant="default">BESTSELLER</Badge>}
               {product.badge === "LIMITED" && <Badge variant="goldSolid">LIMITED</Badge>}
@@ -112,27 +114,43 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
             <button
               type="button"
               onClick={() => toggleWishlist(product.id)}
-              className="absolute top-4 right-4 z-10 h-10 w-10 bg-white/90 backdrop-blur-xs flex items-center justify-center text-[#1C1B19] hover:text-[#9A3434] transition-colors border border-[#E8E2D8] shadow-sm cursor-pointer"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 h-9 w-9 sm:h-10 sm:w-10 bg-white/95 backdrop-blur-xs flex items-center justify-center text-[#1C1B19] hover:text-[#9A3434] transition-colors border border-[#E8E2D8] shadow-xs cursor-pointer"
               aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
             >
               <Heart
                 className={cn(
-                  "h-5 w-5 transition-colors",
+                  "h-4 w-4 sm:h-5 sm:w-5 transition-colors",
                   wishlisted ? "fill-[#9A3434] text-[#9A3434]" : "text-[#1C1B19]"
                 )}
               />
             </button>
           </div>
 
-          {/* Thumbnail Strip */}
-          <div className="flex items-center gap-3 overflow-x-auto pb-2">
+          {/* Mobile Dot Indicators */}
+          <div className="flex sm:hidden items-center justify-center gap-1.5 pt-1">
             {product.galleryImages.map((img, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => setActiveImage(img)}
                 className={cn(
-                  "relative h-20 w-16 shrink-0 overflow-hidden border cursor-pointer transition-all",
+                  "h-1.5 rounded-full transition-all cursor-pointer",
+                  activeImage === img ? "w-6 bg-[#B79B63]" : "w-1.5 bg-[#D8C7A5]"
+                )}
+                aria-label={`View photo ${idx + 1}`}
+              />
+            ))}
+          </div>
+
+          {/* Thumbnail Strip */}
+          <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar pb-1">
+            {product.galleryImages.map((img, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setActiveImage(img)}
+                className={cn(
+                  "relative h-16 w-14 sm:h-20 sm:w-16 shrink-0 overflow-hidden border cursor-pointer transition-all",
                   activeImage === img
                     ? "border-[#B79B63] ring-1 ring-[#B79B63]"
                     : "border-[#E8E2D8] opacity-70 hover:opacity-100"
@@ -144,31 +162,35 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
           </div>
 
           {/* Assurance strip under gallery */}
-          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-[#E8E2D8] text-center text-xs text-[#5A5650]">
-            <div className="p-3 bg-[#FAF7F2] border border-[#E8E2D8] space-y-1">
-              <ShieldCheck className="h-5 w-5 text-[#B79B63] mx-auto" />
-              <p className="font-medium text-[#1C1B19]">Silk Mark Certified</p>
-              <p className="text-[10px]">100% Genuine Mulberry Silk</p>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-4 border-t border-[#E8E2D8] text-center text-xs text-[#5A5650]">
+            <div className="p-2.5 sm:p-3 bg-[#FAF7F2] border border-[#E8E2D8] space-y-1">
+              <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-[#B79B63] mx-auto" />
+              <p className="font-medium text-[#1C1B19] text-[11px] sm:text-xs">
+                Silk Mark Certified
+              </p>
+              <p className="text-[9px] sm:text-[10px]">Pure Mulberry Silk</p>
             </div>
-            <div className="p-3 bg-[#FAF7F2] border border-[#E8E2D8] space-y-1">
-              <Scissors className="h-5 w-5 text-[#B79B63] mx-auto" />
-              <p className="font-medium text-[#1C1B19]">Bespoke Atelier Fit</p>
-              <p className="text-[10px]">Hyderabad Master Craftsmen</p>
+            <div className="p-2.5 sm:p-3 bg-[#FAF7F2] border border-[#E8E2D8] space-y-1">
+              <Scissors className="h-4 w-4 sm:h-5 sm:w-5 text-[#B79B63] mx-auto" />
+              <p className="font-medium text-[#1C1B19] text-[11px] sm:text-xs">
+                Bespoke Atelier Fit
+              </p>
+              <p className="text-[9px] sm:text-[10px]">Master Craftsmen</p>
             </div>
-            <div className="p-3 bg-[#FAF7F2] border border-[#E8E2D8] space-y-1">
-              <RotateCcw className="h-5 w-5 text-[#B79B63] mx-auto" />
-              <p className="font-medium text-[#1C1B19]">7-Day Exchanges</p>
-              <p className="text-[10px]">Doorstep Pickup Service</p>
+            <div className="p-2.5 sm:p-3 bg-[#FAF7F2] border border-[#E8E2D8] space-y-1">
+              <RotateCcw className="h-4 w-4 sm:h-5 sm:w-5 text-[#B79B63] mx-auto" />
+              <p className="font-medium text-[#1C1B19] text-[11px] sm:text-xs">7-Day Exchanges</p>
+              <p className="text-[9px] sm:text-[10px]">Doorstep Pickup</p>
             </div>
           </div>
         </div>
 
         {/* Right: Product Buy Box (5 cols on lg) */}
-        <div className="lg:col-span-5 space-y-6 flex flex-col justify-between">
+        <div className="lg:col-span-5 space-y-5 sm:space-y-6 flex flex-col justify-between">
           <div className="space-y-4">
             {/* Category and Collection tag */}
             <div className="flex items-center gap-2">
-              <span className="text-[11px] uppercase tracking-[0.2em] text-[#B79B63] font-medium">
+              <span className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-[#B79B63] font-medium">
                 {product.categoryLabel}
               </span>
               {product.collection && (
@@ -182,7 +204,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
             </div>
 
             {/* Title */}
-            <h1 className="text-2xl sm:text-3xl font-serif text-[#1C1B19] font-normal tracking-wide leading-snug">
+            <h1 className="text-xl sm:text-3xl font-serif text-[#1C1B19] font-normal tracking-wide leading-snug">
               {product.title}
             </h1>
 
@@ -195,23 +217,23 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
             </div>
 
             {/* Price Box */}
-            <div className="p-4 bg-[#FAF7F2] border border-[#E8E2D8] space-y-1">
+            <div className="p-3.5 sm:p-4 bg-[#FAF7F2] border border-[#E8E2D8] space-y-1">
               <div className="flex items-baseline gap-3">
-                <span className="text-2xl font-serif text-[#1C1B19] font-semibold">
+                <span className="text-xl sm:text-2xl font-serif text-[#1C1B19] font-semibold">
                   {formatINR(product.price)}
                 </span>
                 {product.originalPrice && product.originalPrice > product.price && (
-                  <span className="text-sm text-[#8C867D] line-through">
+                  <span className="text-xs sm:text-sm text-[#8C867D] line-through">
                     {formatINR(product.originalPrice)}
                   </span>
                 )}
                 {discountPercent && (
-                  <span className="text-xs font-semibold text-[#9A3434] bg-[#F7EBEB] px-2 py-0.5">
+                  <span className="text-[11px] font-semibold text-[#9A3434] bg-[#F7EBEB] px-2 py-0.5">
                     Save {discountPercent}%
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-[#8C867D]">
+              <p className="text-[10px] sm:text-[11px] text-[#8C867D]">
                 Price inclusive of all taxes. Free express shipping across India on this ensemble.
               </p>
             </div>
@@ -221,7 +243,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
 
             {/* Size / Option Selector */}
             {product.sizes.length > 0 && (
-              <div className="space-y-2 pt-2">
+              <div className="space-y-2 pt-1 sm:pt-2">
                 <div className="flex justify-between items-center text-xs">
                   <span className="uppercase tracking-wider font-medium text-[#1C1B19]">
                     Select Size / Option:
@@ -252,7 +274,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
 
             {/* Blouse Stitching Options for Sarees */}
             {product.category === "sarees" && (
-              <div className="space-y-2 pt-2">
+              <div className="space-y-2 pt-1 sm:pt-2">
                 <span className="block text-xs uppercase tracking-wider font-medium text-[#1C1B19]">
                   Atelier Blouse Customization:
                 </span>
@@ -261,7 +283,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
                     <label
                       key={opt.label}
                       className={cn(
-                        "flex items-start gap-3 p-3 border cursor-pointer transition-colors text-xs",
+                        "flex items-start gap-3 p-2.5 sm:p-3 border cursor-pointer transition-colors text-xs",
                         selectedBlouse === opt.label
                           ? "border-[#B79B63] bg-[#F7F3EB]/40"
                           : "border-[#E8E2D8] bg-white hover:border-[#D8C7A5]"
@@ -290,8 +312,8 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
               </div>
             )}
 
-            {/* Quantity Stepper & Buttons */}
-            <div className="pt-4 space-y-3">
+            {/* Quantity Stepper & Buttons (Desktop & Tablet) */}
+            <div className="pt-2 sm:pt-4 space-y-3">
               <div className="flex items-center gap-4">
                 <span className="text-xs uppercase tracking-wider text-[#8C867D]">Quantity:</span>
                 <QuantityStepper
@@ -318,9 +340,9 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
                 </Button>
               </div>
 
-              {/* WhatsApp direct consultation */}
+              {/* WhatsApp direct consultation button */}
               <a
-                href={`https://wa.me/919876543210?text=Hello%20Sreesha%20Elegance%2C%20I%20am%20interested%20in%20${encodeURIComponent(product.title)}%20(SKU%3A%20${product.id}).%20Can%20you%20help%20me%20with%20customization%20and%20video%20call%20preview%3F`}
+                href={whatsAppInquiryUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-2.5 px-4 bg-[#25D366]/10 text-[#128C7E] border border-[#25D366]/30 text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[#25D366]/20 transition-colors"
@@ -388,31 +410,33 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
 
       {/* Related Pieces */}
       {relatedProducts.length > 0 && (
-        <div className="mt-16">
-          <div className="text-center mb-8">
+        <div className="mt-12 sm:mt-16">
+          <div className="text-center mb-6 sm:mb-8">
             <p className="text-[11px] uppercase tracking-[0.25em] text-[#B79B63] font-medium mb-1">
               Complete Your Trousseau
             </p>
-            <h2 className="font-serif text-3xl text-[#1C1B19] font-normal">You May Also Admire</h2>
+            <h2 className="font-serif text-2xl sm:text-3xl text-[#1C1B19] font-normal">
+              You May Also Admire
+            </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
             {relatedProducts.map((item) => (
               <Link
                 key={item.id}
                 href={`/women/${item.category}/${item.slug}`}
-                className="group p-4 bg-white border border-[#E8E2D8] hover:border-[#B79B63] transition-colors"
+                className="group p-3 sm:p-4 bg-white border border-[#E8E2D8] hover:border-[#B79B63] transition-colors"
               >
-                <div className="relative aspect-[4/5] bg-[#EFE8DD] overflow-hidden mb-3">
+                <div className="relative aspect-[4/5] bg-[#EFE8DD] overflow-hidden mb-2.5 sm:mb-3">
                   <Image
                     src={item.primaryImage}
                     alt={item.title}
                     fill
-                    sizes="(max-width: 640px) 100vw, 33vw"
+                    sizes="(max-width: 640px) 50vw, 33vw"
                     className="object-cover group-hover:scale-105 transition-transform"
                   />
                 </div>
-                <p className="text-[10px] uppercase tracking-wider text-[#8C867D]">
+                <p className="text-[9px] sm:text-[10px] uppercase tracking-wider text-[#8C867D]">
                   {item.categoryLabel}
                 </p>
                 <p className="text-xs font-medium text-[#1C1B19] group-hover:text-[#B79B63] line-clamp-1 mt-0.5">
@@ -424,6 +448,51 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
           </div>
         </div>
       )}
+
+      {/* Sticky Mobile Bottom Action Bar (Fixed on Mobile Viewports) */}
+      <aside
+        aria-label="Mobile Product Actions"
+        data-testid="pdp-sticky-bar"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/98 backdrop-blur-md border-t border-[#E8E2D8] p-3 px-4 shadow-[0_-4px_20px_rgba(28,27,25,0.12)] flex items-center justify-between gap-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
+      >
+        <div className="flex flex-col">
+          <span className="text-[10px] uppercase tracking-wider text-[#8C867D]">Total Price</span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-base font-serif font-bold text-[#1C1B19]">
+              {formatINR(product.price)}
+            </span>
+            {discountPercent && (
+              <span className="text-[9px] font-semibold text-[#9A3434] bg-[#F7EBEB] px-1.5 py-0.2">
+                -{discountPercent}%
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Quick WhatsApp Concierge Button */}
+          <a
+            href={whatsAppInquiryUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-10 w-10 flex items-center justify-center bg-[#25D366]/15 text-[#128C7E] border border-[#25D366]/30 active:scale-95 transition-transform shrink-0"
+            aria-label="Ask Stylist on WhatsApp"
+          >
+            <Phone className="h-4 w-4" />
+          </a>
+
+          {/* Add to Bag Button */}
+          <Button
+            variant="primary"
+            size="md"
+            onClick={() => addToCart(product, selectedSize, selectedBlouse, quantity)}
+            className="h-10 px-4 text-xs tracking-wider"
+          >
+            <ShoppingBag className="mr-1.5 h-3.5 w-3.5 text-[#B79B63]" />
+            Add to Bag
+          </Button>
+        </div>
+      </aside>
     </div>
   );
 };

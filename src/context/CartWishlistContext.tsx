@@ -20,6 +20,10 @@ interface CartWishlistContextType {
   cartTotal: number;
   isCartDrawerOpen: boolean;
   setIsCartDrawerOpen: (open: boolean) => void;
+  isSearchOpen: boolean;
+  setIsSearchOpen: (open: boolean) => void;
+  isMobileMenuOpen: boolean;
+  setIsMobileMenuOpen: (open: boolean) => void;
   addToCart: (product: Product, size?: string, blouseOption?: string, quantity?: number) => void;
   removeFromCart: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
@@ -52,6 +56,8 @@ export const CartWishlistProvider: React.FC<{ children: React.ReactNode }> = ({ 
   });
 
   const [isCartDrawerOpen, setIsCartDrawerOpen] = React.useState(false);
+  const [isSearchOpen, setIsSearchOpen] = React.useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   // Sync to localStorage
   React.useEffect(() => {
@@ -139,6 +145,10 @@ export const CartWishlistProvider: React.FC<{ children: React.ReactNode }> = ({ 
         cartTotal,
         isCartDrawerOpen,
         setIsCartDrawerOpen,
+        isSearchOpen,
+        setIsSearchOpen,
+        isMobileMenuOpen,
+        setIsMobileMenuOpen,
         addToCart,
         removeFromCart,
         updateQuantity,

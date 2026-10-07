@@ -42,7 +42,7 @@ export const AnnouncementBar: React.FC = () => {
   return (
     <aside
       aria-label="Announcement"
-      className="bg-[#1C1B19] text-[#FAF7F2] text-[11px] py-2.5 px-4 border-b border-[#2E2C28] tracking-[0.12em] uppercase overflow-hidden"
+      className="bg-[#1C1B19] text-[#FAF7F2] text-[10px] sm:text-[11px] py-2 sm:py-2.5 px-3 sm:px-4 border-b border-[#2E2C28] tracking-[0.06em] sm:tracking-[0.12em] uppercase overflow-hidden"
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         {/* Left: Boutique tag */}
@@ -55,15 +55,15 @@ export const AnnouncementBar: React.FC = () => {
 
         {/* Center: Rotating announcement */}
         <div
-          className="flex-1 flex items-center justify-center gap-2 font-medium transition-all duration-400"
+          className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 font-medium transition-all duration-400 text-center"
           style={{
             opacity: isVisible ? 1 : 0,
             transform: isVisible ? "translateY(0)" : "translateY(-6px)",
             transition: "opacity 0.4s ease, transform 0.4s ease",
           }}
         >
-          <span className="text-[#B79B63]">{current.icon}</span>
-          <span>{current.text}</span>
+          <span className="text-[#B79B63] shrink-0">{current.icon}</span>
+          <span className="truncate sm:overflow-visible">{current.text}</span>
         </div>
 
         {/* Right: Phone */}

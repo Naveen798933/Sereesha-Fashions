@@ -4,6 +4,7 @@ import "./globals.css";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { CartDrawer } from "@/components/layout/CartDrawer";
 import { PageTransitionWrapper } from "@/components/layout/PageTransitionWrapper";
 import { SmoothScrollProvider } from "@/components/layout/SmoothScrollProvider";
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Header />
             <PageTransitionWrapper>{children}</PageTransitionWrapper>
             <Footer />
+            <MobileBottomNav />
             <CartDrawer />
             <ToastProvider />
           </SmoothScrollProvider>

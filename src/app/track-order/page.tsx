@@ -34,7 +34,7 @@ function TrackOrderContent() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] py-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen bg-[#FAF7F2] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto space-y-8 pb-28 sm:pb-12">
       {/* Title */}
       <div className="text-center space-y-2">
         <span className="text-xs uppercase tracking-[0.25em] text-[#B79B63] font-medium">

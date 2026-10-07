@@ -31,7 +31,7 @@ export default function AccountPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[#FAF7F2] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-28 sm:pb-12">
       {/* Header Profile Summary */}
       <div className="bg-white border border-[#E8E2D8] p-6 sm:p-8 mb-8 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
         <div className="flex items-center gap-4 text-center sm:text-left">

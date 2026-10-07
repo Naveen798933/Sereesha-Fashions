@@ -41,11 +41,17 @@ export interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) => {
   const [isScrolled, setIsScrolled] = React.useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  const [isSearchOpen, setIsSearchOpen] = React.useState(false);
   const pathname = usePathname();
 
-  const { cartCount, wishlistCount, setIsCartDrawerOpen } = useCartWishlist();
+  const {
+    cartCount,
+    wishlistCount,
+    setIsCartDrawerOpen,
+    isSearchOpen,
+    setIsSearchOpen,
+    isMobileMenuOpen,
+    setIsMobileMenuOpen,
+  } = useCartWishlist();
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -56,11 +62,23 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Lock body scroll when mobile drawer is open
+  React.useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileMenuOpen]);
+
   // Close mobile drawer on route change
   const [prevPathname, setPrevPathname] = React.useState(pathname);
   if (prevPathname !== pathname) {
     setPrevPathname(pathname);
-    setMobileMenuOpen(false);
+    setIsMobileMenuOpen(false);
   }
 
   const isTransparent = transparentInitially && !isScrolled;
@@ -81,7 +99,7 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
             <div className="flex items-center lg:hidden">
               <button
                 type="button"
-                onClick={() => setMobileMenuOpen(true)}
+                onClick={() => setIsMobileMenuOpen(true)}
                 className="p-2 -ml-2 text-current hover:text-[#B79B63] transition-colors cursor-pointer"
                 aria-label="Open navigation menu"
               >
@@ -163,7 +181,7 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
               >
                 <Heart className="h-5 w-5" />
                 {wishlistCount > 0 && (
-                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center bg-[#B79B63] text-[9px] font-bold text-white">
+                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center bg-[#B79B63] text-[9px] font-bold text-white rounded-full">
                     {wishlistCount}
                   </span>
                 )}
@@ -177,7 +195,7 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
               >
                 <ShoppingBag className="h-5 w-5" />
                 {cartCount > 0 && (
-                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center bg-[#1C1B19] text-[9px] font-bold text-[#FAF7F2]">
+                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center bg-[#1C1B19] text-[9px] font-bold text-[#FAF7F2] rounded-full">
                     {cartCount}
                   </span>
                 )}
@@ -186,80 +204,150 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
           </div>
         </div>
 
-        {/* Mobile Slide-in Drawer */}
-        {mobileMenuOpen && (
+        {/* Enhanced Mobile Slide-in Drawer */}
+        {isMobileMenuOpen && (
           <div className="fixed inset-0 z-50 lg:hidden">
             {/* Backdrop */}
             <div
-              className="fixed inset-0 bg-[#1C1B19]/60 backdrop-blur-xs"
-              onClick={() => setMobileMenuOpen(false)}
+              className="fixed inset-0 bg-[#1C1B19]/65 backdrop-blur-xs transition-opacity duration-300"
+              onClick={() => setIsMobileMenuOpen(false)}
               aria-hidden="true"
             />
 
             {/* Drawer Sheet */}
             <div
-              className="fixed inset-y-0 left-0 w-full max-w-xs bg-[#FAF7F2] p-6 shadow-2xl flex flex-col justify-between overflow-y-auto border-r border-[#E8E2D8]"
-              style={{ animation: "slideInLeft 0.3s ease forwards" }}
+              className="fixed inset-y-0 left-0 w-[85%] max-w-sm bg-[#FAF7F2] shadow-2xl flex flex-col justify-between overflow-y-auto border-r border-[#E8E2D8] transition-transform duration-300"
+              style={{ animation: "slideInLeft 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
             >
-              <div className="space-y-6">
-                {/* Header with Logo */}
+              <div className="p-6 space-y-6">
+                {/* Header with Logo & Close */}
                 <div className="flex items-center justify-between pb-4 border-b border-[#E8E2D8]">
                   <Image
                     src="/logo.png"
                     alt="Sreesha Elegance"
-                    width={120}
-                    height={48}
+                    width={130}
+                    height={52}
                     className="h-12 w-auto object-contain"
                   />
                   <button
                     type="button"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="p-1.5 text-[#1C1B19] hover:text-[#B79B63] transition-colors cursor-pointer"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-2 text-[#1C1B19] hover:text-[#B79B63] transition-colors cursor-pointer -mr-2"
                     aria-label="Close navigation"
                   >
-                    <X className="h-5 w-5" />
+                    <X className="h-6 w-6" />
                   </button>
                 </div>
 
-                {/* Mobile Navigation Links */}
-                <nav aria-label="Mobile Navigation" className="flex flex-col space-y-1">
-                  {NAV_ITEMS.map((item) => (
+                {/* VIP Video Consultation Banner */}
+                <div className="p-3.5 bg-white border border-[#D8C7A5] space-y-2">
+                  <div className="flex items-center gap-2 text-[#B79B63]">
+                    <Phone className="h-4 w-4 shrink-0" />
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-semibold">
+                      VIP Atelier Concierge
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#5A5650] leading-snug">
+                    Schedule a 1-on-1 WhatsApp video call with our Hyderabad saree stylists.
+                  </p>
+                  <a
+                    href="https://wa.me/919876543210?text=Hi%20Sreesha%20Elegance%2C%20I%20would%20like%20to%20book%20a%20virtual%20styling%20consultation"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center w-full py-2 bg-[#2D6A4F] text-white text-[11px] uppercase tracking-wider font-medium hover:bg-[#23533e] transition-colors"
+                  >
+                    WhatsApp Video Call
+                  </a>
+                </div>
+
+                {/* Main Navigation Links */}
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-[#8C867D] font-medium px-1 mb-2">
+                    Couture Collections
+                  </p>
+                  <nav aria-label="Mobile Navigation" className="flex flex-col">
+                    {NAV_ITEMS.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={cn(
+                          "flex items-center justify-between py-3.5 px-2 text-xs uppercase tracking-[0.16em] transition-colors border-b border-[#F0EBE1]",
+                          item.featured
+                            ? "text-[#B79B63] font-semibold"
+                            : "text-[#1C1B19] hover:text-[#B79B63]"
+                        )}
+                      >
+                        <span>{item.label}</span>
+                        <ChevronRight className="h-3.5 w-3.5 text-[#8C867D]" />
+                      </Link>
+                    ))}
+                  </nav>
+                </div>
+
+                {/* Quick Client Care Links */}
+                <div className="pt-2 space-y-1">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-[#8C867D] font-medium px-1 mb-2">
+                    Client Services
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
                     <Link
-                      key={item.href}
-                      href={item.href}
-                      className={cn(
-                        "flex items-center justify-between py-3 text-xs uppercase tracking-[0.16em] transition-colors border-b border-[#F0EBE1]",
-                        item.featured
-                          ? "text-[#B79B63] font-semibold"
-                          : "text-[#1C1B19] hover:text-[#B79B63]"
-                      )}
+                      href="/track-order"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="p-2.5 bg-white border border-[#E8E2D8] text-[#1C1B19] hover:text-[#B79B63] transition-colors text-center"
                     >
-                      <span>{item.label}</span>
-                      <ChevronRight className="h-3.5 w-3.5 text-[#8C867D]" />
+                      Track Order
                     </Link>
-                  ))}
-                </nav>
+                    <Link
+                      href="/size-guide"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="p-2.5 bg-white border border-[#E8E2D8] text-[#1C1B19] hover:text-[#B79B63] transition-colors text-center"
+                    >
+                      Size Guide
+                    </Link>
+                    <Link
+                      href="/shipping-returns"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="p-2.5 bg-white border border-[#E8E2D8] text-[#1C1B19] hover:text-[#B79B63] transition-colors text-center"
+                    >
+                      Returns
+                    </Link>
+                    <Link
+                      href="/faqs"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="p-2.5 bg-white border border-[#E8E2D8] text-[#1C1B19] hover:text-[#B79B63] transition-colors text-center"
+                    >
+                      FAQs
+                    </Link>
+                  </div>
+                </div>
               </div>
 
-              {/* Bottom Boutique Contacts */}
-              <div className="pt-6 border-t border-[#E8E2D8] space-y-4">
-                <div className="space-y-2 text-xs text-[#5A5650]">
-                  <div className="flex items-center gap-2 text-[#1C1B19]">
-                    <MapPin className="h-3.5 w-3.5 text-[#B79B63] shrink-0" />
-                    <span>Road No. 10, Banjara Hills, Hyderabad</span>
+              {/* Bottom Flagship Atelier Address */}
+              <div className="p-6 bg-white border-t border-[#E8E2D8] space-y-3">
+                <div className="space-y-1.5 text-xs text-[#5A5650]">
+                  <div className="flex items-start gap-2 text-[#1C1B19]">
+                    <MapPin className="h-4 w-4 text-[#B79B63] shrink-0 mt-0.5" />
+                    <span className="text-[11px] leading-snug">
+                      Road No. 10, Banjara Hills, Hyderabad, Telangana
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Phone className="h-3.5 w-3.5 text-[#B79B63] shrink-0" />
-                    <a href="tel:+919876543210" className="hover:underline">
+                    <a href="tel:+919876543210" className="hover:underline text-[11px]">
                       +91 98765 43210
                     </a>
                   </div>
                 </div>
 
-                <div className="pt-2 flex items-center justify-between text-[11px] uppercase tracking-wider text-[#8C867D]">
+                <div className="pt-2 flex items-center justify-between text-[11px] uppercase tracking-wider text-[#8C867D] border-t border-[#F0EBE1]">
                   <span>INR ₹ (India)</span>
-                  <Link href="/account" className="text-[#1C1B19] font-medium hover:underline">
-                    Sign In
+                  <Link
+                    href="/account"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-[#1C1B19] font-medium hover:underline"
+                  >
+                    My Account
                   </Link>
                 </div>
               </div>

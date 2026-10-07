@@ -56,7 +56,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
   const suggestedQueries = ["Kanchipuram Silk", "Bridal Lehenga", "Banarasi", "Anarkali", "Velvet"];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-3 sm:pt-24 px-3 sm:px-4">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-[#1C1B19]/75 backdrop-blur-sm transition-opacity"
@@ -66,41 +66,43 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
 
       {/* Modal Card */}
       <div
-        className="relative w-full max-w-2xl bg-[#FAF7F2] border border-[#E8E2D8] shadow-2xl overflow-hidden z-10"
+        className="relative w-full max-w-2xl bg-[#FAF7F2] border border-[#E8E2D8] shadow-2xl overflow-hidden z-10 rounded-sm"
         style={{ animation: "scaleUp 0.2s ease-out forwards" }}
       >
         {/* Search Input Bar */}
-        <div className="p-4 sm:p-6 bg-white border-b border-[#E8E2D8] flex items-center gap-3">
+        <div className="p-3.5 sm:p-6 bg-white border-b border-[#E8E2D8] flex items-center gap-3">
           <Search className="h-5 w-5 text-[#B79B63] shrink-0" />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search pure silk sarees, bridal lehengas, fabrics, colors..."
-            className="w-full text-sm sm:text-base bg-transparent text-[#1C1B19] placeholder:text-[#8C867D] outline-none"
+            placeholder="Search pure silk sarees, bridal lehengas..."
+            className="w-full text-base bg-transparent text-[#1C1B19] placeholder:text-[#8C867D] outline-none"
           />
-          {query ? (
+          {query && (
             <button
               type="button"
               onClick={() => setQuery("")}
-              className="p-1 text-[#8C867D] hover:text-[#1C1B19]"
+              className="p-1.5 text-[#8C867D] hover:text-[#1C1B19] cursor-pointer"
+              aria-label="Clear query"
             >
               <X className="h-4 w-4" />
             </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleClose}
-              className="text-xs uppercase tracking-wider text-[#8C867D] hover:text-[#1C1B19] px-2 py-1 border border-[#E8E2D8]"
-            >
-              ESC
-            </button>
           )}
+          <button
+            type="button"
+            onClick={handleClose}
+            className="text-xs uppercase tracking-wider text-[#8C867D] hover:text-[#1C1B19] px-2.5 py-1 border border-[#E8E2D8] cursor-pointer shrink-0"
+            aria-label="Close search"
+          >
+            <span className="sm:hidden">Close</span>
+            <span className="hidden sm:inline">ESC</span>
+          </button>
         </div>
 
         {/* Suggestions / Results */}
-        <div className="max-h-[60vh] overflow-y-auto p-6 space-y-6">
+        <div className="max-h-[75vh] sm:max-h-[60vh] overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
           {!query.trim() ? (
             <div className="space-y-4">
               <p className="text-[11px] uppercase tracking-[0.2em] text-[#8C867D] font-medium flex items-center gap-1.5">

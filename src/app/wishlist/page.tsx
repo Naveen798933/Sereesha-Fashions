@@ -15,7 +15,7 @@ export default function WishlistPage() {
   const wishlistedProducts = PRODUCTS.filter((p) => wishlist.includes(p.id));
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[#FAF7F2] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-28 sm:pb-12">
       <div className="border-b border-[#E8E2D8] pb-6 mb-8 text-center sm:text-left">
         <h1 className="text-3xl sm:text-4xl font-serif text-[#1C1B19]">Your Wishlist</h1>
         <p className="text-xs text-[#8C867D] mt-1">
@@ -40,7 +40,7 @@ export default function WishlistPage() {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
           {wishlistedProducts.map((product) => (
             <div key={product.id} className="group flex flex-col bg-white border border-[#E8E2D8]">
               <div className="relative aspect-[4/5] bg-[#EFE8DD] overflow-hidden">
