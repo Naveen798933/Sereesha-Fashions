@@ -390,7 +390,13 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
                     : "border-[#E8E2D8] opacity-70 hover:opacity-100"
                 )}
               >
-                <Image src={img} alt="" fill sizes="64px" className="object-cover object-center" />
+                <Image
+                  src={img}
+                  alt={`${product.title} angle ${idx + 1}`}
+                  fill
+                  sizes="64px"
+                  className="object-cover object-center"
+                />
               </button>
             ))}
           </div>

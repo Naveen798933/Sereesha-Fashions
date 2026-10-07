@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/Button";
 import { showToast } from "@/components/ui/Toast";
 
 export default function WishlistPage() {
-  const { wishlist, toggleWishlist, addToCart, setIsCartDrawerOpen } = useCartWishlist();
+  const { wishlist, toggleWishlist, addToCart, setIsCartDrawerOpen, isHydrated } =
+    useCartWishlist();
 
   const wishlistedProducts = PRODUCTS.filter((p) => wishlist.includes(p.id));
 
@@ -24,7 +25,14 @@ export default function WishlistPage() {
         </p>
       </div>
 
-      {wishlistedProducts.length === 0 ? (
+      {!isHydrated ? (
+        <div className="py-24 text-center max-w-md mx-auto space-y-3">
+          <div className="w-8 h-8 border-2 border-[#B79B63] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs text-[#8C867D] uppercase tracking-wider">
+            Retrieving your saved pieces...
+          </p>
+        </div>
+      ) : wishlistedProducts.length === 0 ? (
         <div className="py-20 text-center max-w-md mx-auto space-y-5">
           <div className="h-16 w-16 border border-[#D8C7A5] flex items-center justify-center text-[#B79B63] mx-auto">
             <Heart className="h-8 w-8 stroke-[1.2]" />

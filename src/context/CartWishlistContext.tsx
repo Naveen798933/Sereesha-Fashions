@@ -30,11 +30,20 @@ interface CartWishlistContextType {
   clearCart: () => void;
   toggleWishlist: (productId: string) => void;
   isInWishlist: (productId: string) => boolean;
+  isHydrated: boolean;
 }
+
+const emptySubscribe = () => () => {};
 
 const CartWishlistContext = React.createContext<CartWishlistContextType | undefined>(undefined);
 
 export const CartWishlistProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const isHydrated = React.useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+
   const [cart, setCart] = React.useState<CartItem[]>(() => {
     if (typeof window === "undefined") return [];
     try {
@@ -155,6 +164,7 @@ export const CartWishlistProvider: React.FC<{ children: React.ReactNode }> = ({ 
         clearCart,
         toggleWishlist,
         isInWishlist,
+        isHydrated,
       }}
     >
       {children}

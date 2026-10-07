@@ -19,7 +19,7 @@ import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { showToast } from "@/components/ui/Toast";
 
 export default function CartPage() {
-  const { cart, cartTotal, removeFromCart, updateQuantity } = useCartWishlist();
+  const { cart, cartTotal, removeFromCart, updateQuantity, isHydrated } = useCartWishlist();
 
   const [couponCode, setCouponCode] = React.useState("");
   const [appliedDiscount, setAppliedDiscount] = React.useState<number>(0);
@@ -96,6 +96,19 @@ export default function CartPage() {
           <Button asChild variant="outline" size="lg">
             <Link href="/women/sarees">Continue Browsing</Link>
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isHydrated) {
+    return (
+      <div className="min-h-[70vh] bg-[#FAF7F2] flex items-center justify-center py-24">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-2 border-[#B79B63] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs text-[#8C867D] uppercase tracking-wider">
+            Loading your shopping bag...
+          </p>
         </div>
       </div>
     );

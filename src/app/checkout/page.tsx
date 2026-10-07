@@ -23,18 +23,53 @@ type PaymentMethod = "upi" | "card" | "netbanking" | "cod";
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cart, cartTotal, clearCart } = useCartWishlist();
+  const { cart, cartTotal, clearCart, isHydrated } = useCartWishlist();
 
   // Form State
-  const [formData, setFormData] = React.useState({
-    fullName: "Sreeja Varma",
-    phone: "9849012345",
-    email: "sreeja.varma@example.com",
-    address: "Flat 402, Royal Residency, Road No. 36, Jubilee Hills",
-    city: "Hyderabad",
-    state: "Telangana",
-    pinCode: "500033",
-    notes: "Please call before delivery. Silk Mark inspection requested.",
+  const [formData, setFormData] = React.useState(() => {
+    const defaultData = {
+      fullName: "Sreeja Varma",
+      phone: "9849012345",
+      email: "sreeja.varma@example.com",
+      address: "Flat 402, Royal Residency, Road No. 36, Jubilee Hills",
+      city: "Hyderabad",
+      state: "Telangana",
+      pinCode: "500033",
+      notes: "Please call before delivery. Silk Mark inspection requested.",
+    };
+    if (typeof window === "undefined") return defaultData;
+    try {
+      const stored = localStorage.getItem("sreesha_saved_addresses");
+      if (stored) {
+        interface StoredAddress {
+          name?: string;
+          phone?: string;
+          street?: string;
+          city?: string;
+          state?: string;
+          pinCode?: string;
+          isDefault?: boolean;
+        }
+        const parsed = JSON.parse(stored) as StoredAddress[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const defaultAddr = parsed.find((a) => a.isDefault) || parsed[0];
+          if (defaultAddr) {
+            return {
+              ...defaultData,
+              fullName: defaultAddr.name || defaultData.fullName,
+              phone: defaultAddr.phone?.replace(/[^0-9]/g, "") || defaultData.phone,
+              address: defaultAddr.street || defaultData.address,
+              city: defaultAddr.city || defaultData.city,
+              state: defaultAddr.state || defaultData.state,
+              pinCode: defaultAddr.pinCode || defaultData.pinCode,
+            };
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return defaultData;
   });
 
   const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>("upi");
@@ -186,6 +221,20 @@ export default function CheckoutPage() {
           <Button asChild variant="outline" size="lg">
             <Link href="/women/sarees">Continue Browsing</Link>
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Hydration Guard
+  if (!isHydrated) {
+    return (
+      <div className="min-h-[70vh] bg-[#FAF7F2] flex items-center justify-center py-24">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-2 border-[#B79B63] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs text-[#8C867D] uppercase tracking-wider">
+            Securing boutique checkout...
+          </p>
         </div>
       </div>
     );

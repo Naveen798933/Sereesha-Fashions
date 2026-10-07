@@ -129,6 +129,7 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
   const {
     cartCount,
     wishlistCount,
+    isHydrated,
     setIsCartDrawerOpen,
     isSearchOpen,
     setIsSearchOpen,
@@ -278,7 +279,7 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
                 aria-label="Wishlist"
               >
                 <Heart className="h-5 w-5" />
-                {wishlistCount > 0 && (
+                {isHydrated && wishlistCount > 0 && (
                   <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center bg-[#B79B63] text-[9px] font-bold text-white rounded-full">
                     {wishlistCount}
                   </span>
@@ -292,7 +293,7 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
                 aria-label="Shopping bag"
               >
                 <ShoppingBag className="h-5 w-5" />
-                {cartCount > 0 && (
+                {isHydrated && cartCount > 0 && (
                   <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center bg-[#1C1B19] text-[9px] font-bold text-[#FAF7F2] rounded-full">
                     {cartCount}
                   </span>

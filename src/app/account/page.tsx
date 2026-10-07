@@ -59,21 +59,19 @@ const DEFAULT_ADDRESSES: SavedAddress[] = [
 
 export default function AccountPage() {
   const [activeTab, setActiveTab] = React.useState<"orders" | "addresses" | "styling">("orders");
-  const [orders] = React.useState<Order[]>(() => {
-    if (typeof window === "undefined") return [];
-    return getStoredOrders();
-  });
+  const orders: Order[] = React.useMemo(() => getStoredOrders(), []);
   const [addresses, setAddresses] = React.useState<SavedAddress[]>(() => {
     if (typeof window === "undefined") return DEFAULT_ADDRESSES;
     try {
       const stored = localStorage.getItem("sreesha_saved_addresses");
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
-      return DEFAULT_ADDRESSES;
     } catch {
-      return DEFAULT_ADDRESSES;
+      // ignore
     }
+    return DEFAULT_ADDRESSES;
   });
 
   // Address Modal State
@@ -95,7 +93,9 @@ export default function AccountPage() {
       if (!stored) {
         localStorage.setItem("sreesha_saved_addresses", JSON.stringify(DEFAULT_ADDRESSES));
       }
-    } catch {}
+    } catch {
+      // ignore
+    }
   }, []);
 
   const handleSaveAddress = (e: React.FormEvent) => {

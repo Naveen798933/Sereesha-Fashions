@@ -9,8 +9,14 @@ import { cn } from "@/lib/utils";
 
 export const MobileBottomNav: React.FC = () => {
   const pathname = usePathname();
-  const { cartCount, wishlistCount, setIsCartDrawerOpen, setIsSearchOpen, setIsMobileMenuOpen } =
-    useCartWishlist();
+  const {
+    cartCount,
+    wishlistCount,
+    isHydrated,
+    setIsCartDrawerOpen,
+    setIsSearchOpen,
+    setIsMobileMenuOpen,
+  } = useCartWishlist();
 
   const isPDP =
     (pathname.startsWith("/women/") && pathname.split("/").length >= 4) ||
@@ -86,7 +92,7 @@ export const MobileBottomNav: React.FC = () => {
         >
           <div className="relative">
             <Heart className="h-5 w-5 stroke-[1.75]" />
-            {wishlistCount > 0 && (
+            {isHydrated && wishlistCount > 0 && (
               <span className="absolute -top-1 -right-2 flex h-4 min-w-4 px-1 items-center justify-center bg-[#B79B63] text-[9px] font-bold text-white rounded-full">
                 {wishlistCount}
               </span>
@@ -110,7 +116,7 @@ export const MobileBottomNav: React.FC = () => {
         >
           <div className="relative">
             <ShoppingBag className="h-5 w-5 stroke-[1.75]" />
-            {cartCount > 0 && (
+            {isHydrated && cartCount > 0 && (
               <span className="absolute -top-1 -right-2 flex h-4 min-w-4 px-1 items-center justify-center bg-[#1C1B19] text-[9px] font-bold text-[#FAF7F2] rounded-full">
                 {cartCount}
               </span>

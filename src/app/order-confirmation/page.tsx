@@ -18,36 +18,40 @@ import { Button } from "@/components/ui/Button";
 import { formatINR } from "@/lib/utils";
 import { getOrderById, Order, getStoredOrders } from "@/lib/orders";
 
+const emptySubscribe = () => () => {};
+
 function OrderConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
 
-  const [order, setOrder] = React.useState<Order | null>(() => {
-    if (typeof window === "undefined") return null;
+  const isHydrated = React.useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+
+  const order: Order | null = React.useMemo(() => {
+    if (!isHydrated) return null;
     if (orderId) {
       const found = getOrderById(orderId);
       if (found) return found;
     }
     const all = getStoredOrders();
     return all[0] || null;
-  });
+  }, [orderId, isHydrated]);
 
-  React.useEffect(() => {
-    if (!order) {
-      const timer = setTimeout(() => {
-        if (orderId) {
-          const found = getOrderById(orderId);
-          if (found) {
-            setOrder(found);
-            return;
-          }
-        }
-        const all = getStoredOrders();
-        setOrder(all[0] || null);
-      }, 0);
-      return () => clearTimeout(timer);
-    }
-  }, [orderId, order]);
+  if (!isHydrated) {
+    return (
+      <div className="min-h-[70vh] bg-[#FAF7F2] flex items-center justify-center py-24">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-2 border-[#B79B63] border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-xs text-[#8C867D] uppercase tracking-wider">
+            Verifying verified atelier receipt...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!order) {
     return (
