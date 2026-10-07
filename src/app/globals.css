@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: var(--font-serif), Georgia, Cambria, serif;
+  --font-sans: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --color-ivory: #faf7f2;
+  --color-surface: #ffffff;
+  --color-surface-warm: #f5f2eb;
+  --color-surface-subtle: #efebe2;
+  --color-charcoal: #1c1b19;
+  --color-charcoal-muted: #5a5650;
+  --color-charcoal-subtle: #8c867d;
+  --color-gold: #b79b63;
+  --color-gold-hover: #a3874f;
+  --color-gold-light: #f7f3eb;
+  --color-hairline: #e8e2d8;
+  --color-gold-border: #d8c7a5;
+
+  --color-status-success: #2d6a4f;
+  --color-status-error: #9a3434;
+  --color-status-warning: #b57614;
+  --color-status-info: #3d5a80;
+}
+
+:root {
+  --bg-primary: #faf7f2;
+  --bg-surface: #ffffff;
+  --bg-surface-warm: #f5f2eb;
+  --text-primary: #1c1b19;
+  --text-secondary: #5a5650;
+  --text-muted: #8c867d;
+  --accent-gold: #b79b63;
+  --accent-gold-hover: #a3874f;
+  --border-hairline: #e8e2d8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+/* Custom Luxury Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #faf7f2;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d8c7a5;
+  border-radius: 0px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b79b63;
+}
+
+/* Selection */
+::selection {
+  background: #f7f3eb;
+  color: #1c1b19;
+}
+
+/* Accessibility: Honor prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Micro-label utility */
+.micro-label {
+  font-size: 0.6875rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
