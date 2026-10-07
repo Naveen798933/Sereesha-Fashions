@@ -57,9 +57,9 @@ export default function AboutPage() {
             rich textiles — from royal Jamdani and Paithani to regal gold zardozi embroidery.
           </p>
           <p>
-            At our Banjara Hills flagship atelier, our craftsmen work directly with traditional
-            weaving clusters across Kanchipuram, Varanasi, and Maheshwar, cutting out intermediaries
-            so our patrons receive verified authentic weaves.
+            At our Kukatpally flagship atelier, our craftsmen work directly with traditional weaving
+            clusters across Kanchipuram, Varanasi, and Maheshwar, cutting out intermediaries so our
+            patrons receive verified authentic weaves.
           </p>
           <div className="pt-4 border-t border-[#E8E2D8] flex items-center gap-6 text-center text-xs">
             <div>

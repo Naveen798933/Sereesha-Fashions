@@ -182,7 +182,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
       setPincodeStatus({
         type: "success",
         badge: "Hyderabad Atelier Express",
-        message: "Delivers Tomorrow (Same-Day / Next-Day Dispatch from Banjara Hills Atelier)",
+        message: "Delivers Tomorrow (Same-Day / Next-Day Dispatch from Kukatpally Atelier)",
       });
     } else if (["560", "600", "682", "530"].includes(prefix3)) {
       setPincodeStatus({
@@ -1246,7 +1246,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
                     Need Bespoke Bridal Measurements?
                   </h5>
                   <p className="text-[11px] text-[#8C867D] mt-0.5">
-                    Our master artisans in Banjara Hills provide bespoke tape tailoring for flawless
+                    Our master artisans in Kukatpally provide bespoke tape tailoring for flawless
                     drape fitting.
                   </p>
                 </div>

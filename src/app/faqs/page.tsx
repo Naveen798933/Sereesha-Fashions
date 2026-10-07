@@ -32,7 +32,7 @@ export default function FaqsPage() {
     },
     {
       q: "Can I book a video consultation to see the sarees in real-time?",
-      a: "Absolutely! We encourage virtual styling appointments. Our Banjara Hills stylists will drape the sarees under true daylight illumination and show pallu detailing, zari lustre, and blouse contrast before you finalize your order.",
+      a: "Absolutely! We encourage virtual styling appointments. Our Kukatpally stylists will drape the sarees under true daylight illumination and show pallu detailing, zari lustre, and blouse contrast before you finalize your order.",
     },
     {
       q: "What payment methods do you accept?",

@@ -24,9 +24,10 @@ export default function PrivacyPolicyPage() {
           <h2 className="font-serif text-xl text-[#1C1B19]">1. Commitment to Data Protection</h2>
           <p>
             Sreesha Elegance (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;), operating its
-            boutique atelier from Banjara Hills, Hyderabad, Telangana, respects your digital
-            privacy. This policy outlines how we collect, store, and process personal data in
-            accordance with the Digital Personal Data Protection (DPDP) Act, 2023 of India.
+            boutique atelier at Opp, JNTU Rd, HMT Hills, Kukatpally, Hyderabad, Telangana 500085,
+            respects your digital privacy. This policy outlines how we collect, store, and process
+            personal data in accordance with the Digital Personal Data Protection (DPDP) Act, 2023
+            of India.
           </p>
         </section>
 

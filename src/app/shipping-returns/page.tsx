@@ -39,8 +39,8 @@ export default function ShippingReturnsPage() {
               orders exceeding ₹2,999. Orders below ₹2,999 incur a flat ₹150 nominal shipping fee.
             </li>
             <li>
-              <strong>Ready to Ship Pieces:</strong> Dispatched from our Banjara Hills atelier
-              within 24 to 48 hours. Transit takes 2-4 business days for major metros (Hyderabad,
+              <strong>Ready to Ship Pieces:</strong> Dispatched from our Kukatpally atelier within
+              24 to 48 hours. Transit takes 2-4 business days for major metros (Hyderabad,
               Bengaluru, Chennai, Mumbai, Delhi) and 4-6 days for rest of India.
             </li>
             <li>

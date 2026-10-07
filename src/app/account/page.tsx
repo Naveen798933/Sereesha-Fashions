@@ -436,7 +436,7 @@ export default function AccountPage() {
                   Book a Complimentary 1-on-1 Video Consultation
                 </p>
                 <p className="text-[#5A5650] leading-relaxed">
-                  Our resident master stylists in Banjara Hills will present weaves under studio
+                  Our resident master stylists in Kukatpally will present weaves under studio
                   lighting, guide you on blouse embroidery, and confirm exact body measurements
                   before stitching.
                 </p>

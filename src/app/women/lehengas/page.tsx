@@ -4,7 +4,7 @@ import { constructMetadata } from "@/lib/seo";
 export const metadata = constructMetadata({
   title: "Bridal & Festive Lehengas — Hyderabad Royal Atelier",
   description:
-    "Handcrafted bridal lehengas adorned with antique zardozi, dabka, and real mirrors. Tailored to perfection at our Banjara Hills atelier.",
+    "Handcrafted bridal lehengas adorned with antique zardozi, dabka, and real mirrors. Tailored to perfection at our Kukatpally atelier.",
 });
 
 export default function LehengasPage() {

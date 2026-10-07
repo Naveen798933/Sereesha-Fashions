@@ -93,7 +93,7 @@ export default function SizeGuidePage() {
         <div className="p-4 bg-[#F7F3EB] border border-[#D8C7A5] text-xs text-[#5A5650] space-y-1">
           <p className="font-semibold text-[#1C1B19]">Need Custom Measurement Assistance?</p>
           <p>
-            You can always order with standard sizes and WhatsApp our Banjara Hills atelier at{" "}
+            You can always order with standard sizes and WhatsApp our Kukatpally atelier at{" "}
             <a
               href="https://wa.me/916281344628?text=Hello%20Sreesha%20Elegance%2C%20I%20need%20custom%20blouse%20measurement%20assistance."
               target="_blank"

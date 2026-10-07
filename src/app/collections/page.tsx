@@ -11,7 +11,7 @@ export default function CollectionsPage() {
   return (
     <ProductListingView
       title="The Royal Nizam Collection"
-      subtitle="Bespoke bridal heirlooms and certified pure handloom silk weaves curated from our flagship Banjara Hills atelier."
+      subtitle="Bespoke bridal heirlooms and certified pure handloom silk weaves curated from our flagship Kukatpally atelier."
       collectionFilter="Royal Nizam Edit"
     />
   );

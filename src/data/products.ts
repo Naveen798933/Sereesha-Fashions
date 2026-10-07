@@ -184,7 +184,7 @@ export const PRODUCTS: Product[] = [
     shortDescription:
       "Hand-embroidered by Hyderabad’s master karigars with antique zardozi, real seed pearls, and dabka work, accompanied by double organza dupattas.",
     description:
-      "An ensemble fit for a queen. Handcrafted over 320 man-hours in our Banjara Hills atelier, this bridal lehenga features a flared 16-kali silhouette adorned with heritage Hyderabadi jali patterns, paired with a sweetheart neck blouse and double ceremonial dupattas.",
+      "An ensemble fit for a queen. Handcrafted over 320 man-hours in our Kukatpally atelier, this bridal lehenga features a flared 16-kali silhouette adorned with heritage Hyderabadi jali patterns, paired with a sweetheart neck blouse and double ceremonial dupattas.",
     details: {
       origin: "Handcrafted in Hyderabad, Telangana",
       zariType: "Antique Dull Gold & Zardozi Wire",
@@ -259,7 +259,7 @@ export const PRODUCTS: Product[] = [
     description:
       "Elegance in motion. Cut from breezy Chanderi silk with a comfortable mulmul lining, this Anarkali is adorned with hand-stitched gota patti ribbons along the neck and hemline.",
     details: {
-      origin: "Banjara Hills Boutique Workshop",
+      origin: "Kukatpally Boutique Workshop",
       zariType: "Lappa Gota Lace",
       washCare: "Dry Clean Recommended or Gentle Handwash",
       dispatchTime: "Ships in 24 hours",
