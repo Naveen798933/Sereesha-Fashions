@@ -12,12 +12,20 @@ test.describe("Sreesha Elegance — Mobile Experience", () => {
 
     // 2. Explore button opens mobile drawer
     await page.getByRole("button", { name: /browse collections and categories/i }).click();
-    await expect(page.getByText(/vip atelier concierge/i)).toBeVisible();
     await expect(page.getByText(/couture collections/i)).toBeVisible();
+
+    // Test accordion toggle for Lehengas
+    const lehengaToggle = page.getByRole("button", {
+      name: /toggle bridal & festive lehengas subcategories/i,
+    });
+    await lehengaToggle.click();
+    await expect(page.getByText(/bridal velvet lehengas/i)).toBeVisible();
+    await lehengaToggle.click();
+    await expect(page.getByText(/bridal velvet lehengas/i)).not.toBeVisible();
 
     // Close drawer
     await page.getByRole("button", { name: /close navigation/i }).click();
-    await expect(page.getByText(/vip atelier concierge/i)).not.toBeVisible();
+    await expect(page.getByText(/couture collections/i)).not.toBeVisible();
 
     // 3. Search button opens search modal
     await page.getByRole("button", { name: /search collection/i }).click();
