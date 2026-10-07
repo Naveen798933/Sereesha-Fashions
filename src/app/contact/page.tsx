@@ -42,7 +42,7 @@ export default function ContactPage() {
         </span>
         <h1 className="text-3xl sm:text-5xl font-serif text-[#1C1B19]">Get in Touch</h1>
         <p className="text-xs sm:text-sm text-[#5A5650] max-w-lg mx-auto">
-          Visit our Banjara Hills flagship atelier or book a virtual one-on-one styling consultation
+          Visit our Kukatpally flagship atelier or book a virtual one-on-one styling consultation
           from anywhere in India.
         </p>
       </div>
@@ -58,9 +58,8 @@ export default function ContactPage() {
                 <MapPin className="h-4 w-4 text-[#B79B63] shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <p className="font-semibold text-[#1C1B19]">Atelier &amp; Boutique</p>
-                  <p>Plot No: 650, Advocate Ramalakshmi,</p>
-                  <p>Opp JNTU Rd, HMT Hills, Kukatpally,</p>
-                  <p>Hyderabad, Telangana 500085, India</p>
+                  <p>Opp, JNTU Rd, HMT Hills,</p>
+                  <p>Kukatpally, Hyderabad, Telangana 500085</p>
                   <a
                     href="https://maps.app.goo.gl/KPp3kgQXKQoW5urG6?g_st=ac"
                     target="_blank"
@@ -245,8 +244,7 @@ export default function ContactPage() {
               Find Our Hyderabad Atelier
             </h2>
             <p className="text-xs text-[#5A5650] mt-1">
-              Plot No: 650, Advocate Ramalakshmi, Opp JNTU Rd, HMT Hills, Kukatpally, Hyderabad,
-              Telangana 500085
+              Opp, JNTU Rd, HMT Hills, Kukatpally, Hyderabad, Telangana 500085
             </p>
           </div>
 
@@ -287,8 +285,7 @@ export default function ContactPage() {
               </div>
             </div>
             <p className="text-[#5A5650] text-[11px] leading-relaxed">
-              Plot No: 650, Advocate Ramalakshmi, Opp JNTU Rd, HMT Hills, Kukatpally, Hyderabad,
-              Telangana 500085
+              Opp, JNTU Rd, HMT Hills, Kukatpally, Hyderabad, Telangana 500085
             </p>
             <div className="pt-1 flex items-center justify-between text-[10px] text-[#B79B63] font-semibold border-t border-[#F0EBE1]">
               <span>Open Today: 10:30 AM – 8:30 PM</span>

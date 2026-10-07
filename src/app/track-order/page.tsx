@@ -52,7 +52,7 @@ function TrackOrderContent() {
     return [
       { title: "Order Placed & Verified", date: `${orderDate}`, done: true },
       { title: "Atelier Inspection & Silk Tagged", date: "Verified Silk Mark SMOI", done: true },
-      { title: "Packed in Luxury Hardbox", date: "Banjara Hills Atelier", done: true },
+      { title: "Packed in Luxury Hardbox", date: "Kukatpally Atelier", done: true },
       {
         title: matchedOrder?.carrier
           ? `Dispatched via ${matchedOrder.carrier}`
@@ -194,7 +194,7 @@ function TrackOrderContent() {
               Live Transit Milestones
             </p>
             <span className="text-[10px] text-[#B79B63] font-medium flex items-center gap-1">
-              <MapPin className="h-3 w-3" /> Origin: Banjara Hills Atelier
+              <MapPin className="h-3 w-3" /> Origin: Kukatpally Atelier
             </span>
           </div>
 

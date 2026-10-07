@@ -536,7 +536,7 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
                 >
                   <MapPin className="h-3.5 w-3.5 text-[#B79B63] shrink-0 mt-0.5" />
                   <span className="text-[11px] font-medium leading-snug">
-                    Plot No: 650, HMT Hills, Kukatpally, Hyderabad (View Map)
+                    Opp, JNTU Rd, HMT Hills, Kukatpally, Hyderabad (View Map)
                   </span>
                 </a>
                 <div className="flex items-center gap-2">

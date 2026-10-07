@@ -89,7 +89,7 @@ function OrderConfirmationContent() {
         </div>
         <p className="text-xs sm:text-sm text-[#5A5650] max-w-lg mx-auto leading-relaxed">
           Your order <strong className="text-[#1C1B19]">#{order.id}</strong> has been confirmed with
-          our Banjara Hills flagship atelier. We have dispatched your tax invoice receipt to{" "}
+          our Kukatpally flagship atelier. We have dispatched your tax invoice receipt to{" "}
           <strong className="text-[#1C1B19]">{order.customer.phone}</strong>.
         </p>
 
@@ -252,7 +252,7 @@ function OrderConfirmationContent() {
             <ShieldCheck className="h-4 w-4 text-[#B79B63]" />
             <span>Authorized Silk Mark Certified Atelier • 7-Day Doorstep Exchange</span>
           </div>
-          <span className="font-serif italic text-[#B79B63]">Sreesha Elegance, Banjara Hills</span>
+          <span className="font-serif italic text-[#B79B63]">Sreesha Elegance, Kukatpally</span>
         </div>
       </div>
 

@@ -85,7 +85,7 @@ export default function CartPage() {
           </div>
           <div className="flex justify-between text-[#5A5650]">
             <span>Shipping</span>
-            <span>Banjara Hills Atelier, Hyderabad</span>
+            <span>Kukatpally Atelier, Hyderabad</span>
           </div>
         </div>
 

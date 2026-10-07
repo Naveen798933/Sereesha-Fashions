@@ -12,7 +12,7 @@ export const OrganizationJsonLd: React.FC = () => {
     hasMap: "https://maps.app.goo.gl/KPp3kgQXKQoW5urG6?g_st=ac",
     address: {
       "@type": "PostalAddress",
-      streetAddress: "Plot No: 650, Advocate Ramalakshmi, Opp JNTU Rd, HMT Hills, Kukatpally",
+      streetAddress: "Opp, JNTU Rd, HMT Hills, Kukatpally",
       addressLocality: "Hyderabad",
       addressRegion: "Telangana",
       postalCode: "500085",
