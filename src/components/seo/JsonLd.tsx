@@ -12,16 +12,16 @@ export const OrganizationJsonLd: React.FC = () => {
     hasMap: "https://maps.app.goo.gl/KPp3kgQXKQoW5urG6?g_st=ac",
     address: {
       "@type": "PostalAddress",
-      streetAddress: "Road No. 10, Banjara Hills",
+      streetAddress: "Plot No: 650, Advocate Ramalakshmi, Opp JNTU Rd, HMT Hills, Kukatpally",
       addressLocality: "Hyderabad",
       addressRegion: "Telangana",
-      postalCode: "500034",
+      postalCode: "500085",
       addressCountry: "IN",
     },
     geo: {
       "@type": "GeoCoordinates",
-      latitude: "17.4168",
-      longitude: "78.4382",
+      latitude: "17.5023309",
+      longitude: "78.3963639",
     },
     openingHoursSpecification: [
       {

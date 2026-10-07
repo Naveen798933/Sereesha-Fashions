@@ -58,8 +58,9 @@ export default function ContactPage() {
                 <MapPin className="h-4 w-4 text-[#B79B63] shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <p className="font-semibold text-[#1C1B19]">Atelier &amp; Boutique</p>
-                  <p>Road No. 10, Banjara Hills,</p>
-                  <p>Hyderabad, Telangana 500034, India</p>
+                  <p>Plot No: 650, Advocate Ramalakshmi,</p>
+                  <p>Opp JNTU Rd, HMT Hills, Kukatpally,</p>
+                  <p>Hyderabad, Telangana 500085, India</p>
                   <a
                     href="https://maps.app.goo.gl/KPp3kgQXKQoW5urG6?g_st=ac"
                     target="_blank"
@@ -235,17 +236,17 @@ export default function ContactPage() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-[10px] uppercase tracking-[0.25em] text-[#B79B63] font-semibold">
-                Banjara Hills Flagship
+                Kukatpally Flagship
               </span>
               <span className="h-1.5 w-1.5 rounded-full bg-[#B79B63]" />
-              <span className="text-[10px] text-[#8C867D]">Bespoke Boutique Experience</span>
+              <span className="text-[10px] text-[#8C867D]">Direct Google Maps Location</span>
             </div>
             <h2 className="font-serif text-2xl sm:text-3xl text-[#1C1B19]">
               Find Our Hyderabad Atelier
             </h2>
             <p className="text-xs text-[#5A5650] mt-1">
-              Road No. 10, Banjara Hills, Hyderabad, Telangana 500034 • Valet Parking &amp; Private
-              Bridal Suites Available
+              Plot No: 650, Advocate Ramalakshmi, Opp JNTU Rd, HMT Hills, Kukatpally, Hyderabad,
+              Telangana 500085
             </p>
           </div>
 
@@ -267,7 +268,7 @@ export default function ContactPage() {
         <div className="relative w-full h-[360px] sm:h-[450px] bg-[#EFE8DD]">
           <iframe
             title="Sreesha Elegance Hyderabad Flagship Atelier Location"
-            src="https://maps.google.com/maps?q=Road%20No.%2010,%20Banjara%20Hills,%20Hyderabad,%20Telangana%20500034&t=&z=15&ie=UTF8&iwloc=&output=embed"
+            src="https://maps.google.com/maps?q=17.5023309,78.3963639&hl=en&z=17&output=embed"
             className="w-full h-full border-0 filter contrast-[1.02]"
             loading="lazy"
             allowFullScreen
@@ -286,7 +287,8 @@ export default function ContactPage() {
               </div>
             </div>
             <p className="text-[#5A5650] text-[11px] leading-relaxed">
-              Road No. 10, Banjara Hills, Hyderabad, Telangana 500034
+              Plot No: 650, Advocate Ramalakshmi, Opp JNTU Rd, HMT Hills, Kukatpally, Hyderabad,
+              Telangana 500085
             </p>
             <div className="pt-1 flex items-center justify-between text-[10px] text-[#B79B63] font-semibold border-t border-[#F0EBE1]">
               <span>Open Today: 10:30 AM – 8:30 PM</span>

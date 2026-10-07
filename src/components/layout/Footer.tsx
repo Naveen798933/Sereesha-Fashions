@@ -124,7 +124,8 @@ export const Footer: React.FC = () => {
                 rel="noopener noreferrer"
                 className="hover:text-[#B79B63] transition-colors block"
               >
-                Road No. 10, Banjara Hills, Hyderabad, Telangana 500034{" "}
+                Plot No: 650, Advocate Ramalakshmi, Opp JNTU Rd, HMT Hills, Kukatpally, Hyderabad
+                500085{" "}
                 <span className="text-[#B79B63] underline text-[11px]">(View on Google Maps)</span>
               </a>
               <p>
