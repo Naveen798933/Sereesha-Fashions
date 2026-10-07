@@ -199,7 +199,7 @@ export const CartDrawer: React.FC = () => {
                 onClick={() => setIsCartDrawerOpen(false)}
                 asChild
               >
-                <Link href="/cart">
+                <Link href="/checkout">
                   Checkout <ArrowRight className="h-4 w-4 ml-1.5" />
                 </Link>
               </Button>

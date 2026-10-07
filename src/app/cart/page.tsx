@@ -19,15 +19,14 @@ import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { showToast } from "@/components/ui/Toast";
 
 export default function CartPage() {
-  const { cart, cartTotal, removeFromCart, updateQuantity, clearCart } = useCartWishlist();
+  const { cart, cartTotal, removeFromCart, updateQuantity } = useCartWishlist();
 
   const [couponCode, setCouponCode] = React.useState("");
   const [appliedDiscount, setAppliedDiscount] = React.useState<number>(0);
   const [couponMessage, setCouponMessage] = React.useState<string | null>(null);
 
-  const [isCheckingOut, setIsCheckingOut] = React.useState(false);
-  const [orderCompleted, setOrderCompleted] = React.useState(false);
-  const [orderId, setOrderId] = React.useState<string>("");
+  const [orderCompleted] = React.useState(false);
+  const [orderId] = React.useState<string>("");
 
   const freeShippingThreshold = 2999;
   const shippingFee = cartTotal >= freeShippingThreshold || cartTotal === 0 ? 0 : 150;
@@ -51,19 +50,6 @@ export default function CartPage() {
       setCouponMessage("Invalid coupon code. Try BRIDE15 or ELEGANCE10");
       showToast.error("Invalid coupon code");
     }
-  };
-
-  const handleCheckout = () => {
-    setIsCheckingOut(true);
-    // Simulate secure Razorpay gateway checkout
-    setTimeout(() => {
-      const generatedId = `SE-${Math.floor(10000 + Math.random() * 90000)}`;
-      setOrderId(generatedId);
-      setIsCheckingOut(false);
-      setOrderCompleted(true);
-      clearCart();
-      showToast.success("Payment verified! Order placed successfully.");
-    }, 1800);
   };
 
   if (orderCompleted) {
@@ -293,14 +279,13 @@ export default function CartPage() {
             <Button
               variant="primary"
               size="lg"
-              disabled={isCheckingOut}
-              onClick={handleCheckout}
-              className="w-full"
+              asChild
+              className="w-full text-xs uppercase tracking-wider py-3.5"
             >
-              <Lock className="h-4 w-4 mr-2 text-[#B79B63]" />
-              {isCheckingOut
-                ? "Connecting to Razorpay..."
-                : `Pay ${formatINR(finalTotal)} via Razorpay`}
+              <Link href="/checkout" className="flex items-center justify-center">
+                <Lock className="h-4 w-4 mr-2 text-[#B79B63]" />
+                Proceed to Checkout ({formatINR(finalTotal)})
+              </Link>
             </Button>
 
             <div className="pt-2 text-center text-[10px] text-[#8C867D] space-y-1">

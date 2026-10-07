@@ -46,9 +46,14 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
         return (
           p.title.toLowerCase().includes(q) ||
           p.category.toLowerCase().includes(q) ||
+          p.categoryLabel.toLowerCase().includes(q) ||
           p.fabric.toLowerCase().includes(q) ||
+          p.weave.toLowerCase().includes(q) ||
           p.color.toLowerCase().includes(q) ||
-          p.occasion.toLowerCase().includes(q)
+          p.occasion.toLowerCase().includes(q) ||
+          p.shortDescription.toLowerCase().includes(q) ||
+          p.details.zariType.toLowerCase().includes(q) ||
+          p.details.origin.toLowerCase().includes(q)
         );
       })
     : [];
@@ -157,9 +162,18 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-[11px] uppercase tracking-[0.2em] text-[#8C867D] font-medium">
-                Found {results.length} Pieces
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-[#8C867D] font-medium">
+                  Found {results.length} Pieces
+                </p>
+                <Link
+                  href={`/search?q=${encodeURIComponent(query)}`}
+                  onClick={handleClose}
+                  className="text-xs text-[#B79B63] hover:underline font-medium flex items-center gap-1"
+                >
+                  View full results <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {results.map((product) => (
                   <Link

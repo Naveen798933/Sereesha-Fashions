@@ -66,4 +66,19 @@ test.describe("Sreesha Elegance — Phase 0 Smoke Tests", () => {
     await expect(page.getByRole("heading", { name: /page not found/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /return to boutique/i })).toBeVisible();
   });
+
+  test("New routes (/women, /search, /sarees redirect) resolve correctly", async ({ page }) => {
+    test.setTimeout(60000);
+    // 1. /women loads without 404
+    await page.goto("/women");
+    await expect(page.getByRole("heading", { name: /women's couture & handlooms/i })).toBeVisible();
+
+    // 2. /sarees redirects to /women/sarees
+    await page.goto("/sarees");
+    await expect(page).toHaveURL(/women\/sarees/);
+
+    // 3. /search loads with results
+    await page.goto("/search?q=silk");
+    await expect(page.getByRole("heading", { name: /search results for/i })).toBeVisible();
+  });
 });

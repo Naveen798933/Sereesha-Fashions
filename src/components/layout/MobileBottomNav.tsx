@@ -17,7 +17,9 @@ export const MobileBottomNav: React.FC = () => {
     (pathname.split("/").length === 3 &&
       ["sarees", "lehengas", "kurtis", "contemporary"].includes(pathname.split("/")[1]));
 
-  if (isPDP) {
+  const isCheckout = pathname === "/checkout";
+
+  if (isPDP || isCheckout) {
     return null;
   }
 
