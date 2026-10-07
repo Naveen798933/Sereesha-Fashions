@@ -17,13 +17,13 @@ test.describe("Sreesha Elegance — Phase 0 Smoke Tests", () => {
     await expect(announcement).toBeVisible();
 
     // Main heading
-    await expect(page.getByRole("heading", { name: /elegance, redefined/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /wear your elegance/i })).toBeVisible();
 
     // Footer landmark and Hyderabad details
     const footer = page.locator("footer");
     await expect(footer).toBeVisible();
     await expect(footer).toContainText("Hyderabad");
-    await expect(footer).toContainText("GSTIN");
+    await expect(footer).toContainText("All rights reserved");
   });
 
   test("Design System showcase renders all components in all states", async ({ page }) => {

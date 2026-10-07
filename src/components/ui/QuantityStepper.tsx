@@ -10,6 +10,7 @@ export interface QuantityStepperProps {
   max?: number;
   onChange: (value: number) => void;
   disabled?: boolean;
+  size?: "sm" | "md" | "lg";
   className?: string;
 }
 
@@ -19,6 +20,7 @@ export const QuantityStepper: React.FC<QuantityStepperProps> = ({
   max = 99,
   onChange,
   disabled = false,
+  size = "md",
   className,
 }) => {
   const handleDecrement = () => {
@@ -33,10 +35,15 @@ export const QuantityStepper: React.FC<QuantityStepperProps> = ({
     }
   };
 
+  const heightClass = size === "sm" ? "h-8" : size === "lg" ? "h-12" : "h-10";
+  const btnWidth = size === "sm" ? "w-7" : "w-10";
+  const textWidth = size === "sm" ? "w-9 text-xs" : "w-12 text-xs";
+
   return (
     <div
       className={cn(
-        "inline-flex items-center border border-[#E8E2D8] bg-white h-11",
+        "inline-flex items-center border border-[#E8E2D8] bg-white",
+        heightClass,
         disabled && "opacity-50 pointer-events-none bg-[#F5F2EB]",
         className
       )}
@@ -46,12 +53,20 @@ export const QuantityStepper: React.FC<QuantityStepperProps> = ({
         onClick={handleDecrement}
         disabled={value <= min || disabled}
         aria-label="Decrease quantity"
-        className="w-10 h-full flex items-center justify-center text-[#1C1B19] hover:bg-[#FAF7F2] active:bg-[#ECE6DA] disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
+        className={cn(
+          "h-full flex items-center justify-center text-[#1C1B19] hover:bg-[#FAF7F2] active:bg-[#ECE6DA] disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer",
+          btnWidth
+        )}
       >
-        <Minus className="h-3.5 w-3.5" />
+        <Minus className="h-3 w-3" />
       </button>
 
-      <div className="w-12 h-full flex items-center justify-center text-xs font-medium text-[#1C1B19] select-none border-x border-[#E8E2D8]">
+      <div
+        className={cn(
+          "h-full flex items-center justify-center font-medium text-[#1C1B19] select-none border-x border-[#E8E2D8]",
+          textWidth
+        )}
+      >
         {value}
       </div>
 
@@ -60,9 +75,12 @@ export const QuantityStepper: React.FC<QuantityStepperProps> = ({
         onClick={handleIncrement}
         disabled={value >= max || disabled}
         aria-label="Increase quantity"
-        className="w-10 h-full flex items-center justify-center text-[#1C1B19] hover:bg-[#FAF7F2] active:bg-[#ECE6DA] disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
+        className={cn(
+          "h-full flex items-center justify-center text-[#1C1B19] hover:bg-[#FAF7F2] active:bg-[#ECE6DA] disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer",
+          btnWidth
+        )}
       >
-        <Plus className="h-3.5 w-3.5" />
+        <Plus className="h-3 w-3" />
       </button>
     </div>
   );

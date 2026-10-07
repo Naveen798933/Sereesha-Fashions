@@ -4,9 +4,11 @@ import "./globals.css";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { CartDrawer } from "@/components/layout/CartDrawer";
 import { PageTransitionWrapper } from "@/components/layout/PageTransitionWrapper";
 import { SmoothScrollProvider } from "@/components/layout/SmoothScrollProvider";
 import { ToastProvider } from "@/components/ui/Toast";
+import { CartWishlistProvider } from "@/context/CartWishlistContext";
 import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/seo/JsonLd";
 import { constructMetadata } from "@/lib/seo";
 
@@ -34,13 +36,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <WebSiteJsonLd />
       </head>
       <body className="min-h-full flex flex-col bg-[#FAF7F2] text-[#1C1B19] font-sans antialiased selection:bg-[#F7F3EB] selection:text-[#1C1B19]">
-        <SmoothScrollProvider>
-          <AnnouncementBar />
-          <Header />
-          <PageTransitionWrapper>{children}</PageTransitionWrapper>
-          <Footer />
-          <ToastProvider />
-        </SmoothScrollProvider>
+        <CartWishlistProvider>
+          <SmoothScrollProvider>
+            <AnnouncementBar />
+            <Header />
+            <PageTransitionWrapper>{children}</PageTransitionWrapper>
+            <Footer />
+            <CartDrawer />
+            <ToastProvider />
+          </SmoothScrollProvider>
+        </CartWishlistProvider>
       </body>
     </html>
   );

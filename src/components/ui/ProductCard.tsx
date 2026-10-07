@@ -95,6 +95,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
           {badge === "NEW" && <Badge variant="gold">NEW</Badge>}
           {badge === "BESTSELLER" && <Badge variant="default">BESTSELLER</Badge>}
+          {badge === "SALE" && <Badge variant="sale">SALE</Badge>}
+          {badge === "LIMITED" && <Badge variant="goldSolid">LIMITED</Badge>}
           {discountPercent && <Badge variant="sale">-{discountPercent}%</Badge>}
         </div>
 

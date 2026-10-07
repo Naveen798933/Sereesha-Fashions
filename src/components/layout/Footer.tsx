@@ -2,8 +2,40 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ShieldCheck, Lock, Award, ArrowRight } from "lucide-react";
+import Image from "next/image";
+import { ShieldCheck, Lock, Award, ArrowRight, Phone } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+
+const InstagramIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+  </svg>
+);
+
+const YoutubeIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
+    <path d="m10 15 5-3-5-3z" fill="currentColor" stroke="none" />
+  </svg>
+);
 
 export const Footer: React.FC = () => {
   const [email, setEmail] = React.useState("");
@@ -70,12 +102,13 @@ export const Footer: React.FC = () => {
           {/* Brand Col */}
           <div className="lg:col-span-2 space-y-4 text-left">
             <Link href="/" className="inline-block">
-              <span className="block font-serif text-2xl tracking-[0.14em] uppercase text-white font-normal">
-                Sreesha Elegance
-              </span>
-              <span className="block text-[10px] uppercase tracking-[0.3em] text-[#B79B63] mt-0.5">
-                Wear Your Elegance
-              </span>
+              <Image
+                src="/logo.png"
+                alt="Sreesha Elegance"
+                width={140}
+                height={56}
+                className="h-14 w-auto object-contain brightness-0 invert"
+              />
             </Link>
             <p className="text-xs text-[#A69E92] leading-relaxed max-w-sm">
               Rooted in the royal heritage of Hyderabad, Sreesha Elegance blends timeless Indian
@@ -209,19 +242,54 @@ export const Footer: React.FC = () => {
                 </p>
               </form>
             )}
+
+            {/* Social Links */}
+            <div className="pt-2">
+              <p className="text-[10px] uppercase tracking-[0.18em] text-[#8C867D] mb-3">
+                Follow Us
+              </p>
+              <div className="flex items-center gap-3">
+                <a
+                  href="https://www.instagram.com/sreeshaelegance"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram"
+                  className="h-8 w-8 border border-[#3E3A34] flex items-center justify-center text-[#A69E92] hover:border-[#B79B63] hover:text-[#B79B63] transition-colors"
+                >
+                  <InstagramIcon className="h-4 w-4" />
+                </a>
+                <a
+                  href="https://wa.me/919876543210"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="WhatsApp"
+                  className="h-8 w-8 border border-[#3E3A34] flex items-center justify-center text-[#A69E92] hover:border-[#25D366] hover:text-[#25D366] transition-colors"
+                >
+                  <Phone className="h-4 w-4" />
+                </a>
+                <a
+                  href="https://www.youtube.com/@sreeshaelegance"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="YouTube"
+                  className="h-8 w-8 border border-[#3E3A34] flex items-center justify-center text-[#A69E92] hover:border-[#FF0000] hover:text-[#FF0000] transition-colors"
+                >
+                  <YoutubeIcon className="h-4 w-4" />
+                </a>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Bottom Bar: Legal, GSTIN, Payments */}
         <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-6 text-[11px] text-[#8C867D]">
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-            <span>© 2026 Sreesha Elegance Pvt Ltd. All rights reserved.</span>
-            <span>GSTIN: 36ABCDE1234F1Z5</span>
+            <span>© 2026 Sreesha Elegance. All rights reserved.</span>
             <Link href="/privacy-policy" className="hover:text-white transition-colors">
               Privacy Policy
             </Link>
             <Link href="/terms" className="hover:text-white transition-colors">
-              Terms & Conditions
+              Terms &amp; Conditions
             </Link>
           </div>
 
