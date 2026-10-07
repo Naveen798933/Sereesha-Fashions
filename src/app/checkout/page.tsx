@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   Lock,
   ShieldCheck,
@@ -16,10 +17,12 @@ import { useCartWishlist } from "@/context/CartWishlistContext";
 import { formatINR, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { showToast } from "@/components/ui/Toast";
+import { saveOrder, Order } from "@/lib/orders";
 
 type PaymentMethod = "upi" | "card" | "netbanking" | "cod";
 
 export default function CheckoutPage() {
+  const router = useRouter();
   const { cart, cartTotal, clearCart } = useCartWishlist();
 
   // Form State
@@ -37,8 +40,6 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>("upi");
   const [upiId, setUpiId] = React.useState("sreeja@okhdfcbank");
   const [isProcessing, setIsProcessing] = React.useState(false);
-  const [orderCompleted, setOrderCompleted] = React.useState(false);
-  const [orderId, setOrderId] = React.useState("");
 
   const shippingFee = cartTotal >= 2999 ? 0 : 150;
   const finalTotal = cartTotal + shippingFee;
@@ -74,11 +75,52 @@ export default function CheckoutPage() {
     setTimeout(() => {
       const generatedId = `SE-${Math.floor(10000 + Math.random() * 90000)}`;
       setOrderId(generatedId);
+
+      const newOrder: Order = {
+        id: generatedId,
+        date: new Intl.DateTimeFormat("en-IN", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }).format(new Date()),
+        createdAt: new Date().toISOString(),
+        status: "Order Placed & Verified",
+        carrier: "BlueDart Air Express",
+        trackingNumber: `BD${Math.floor(100000000 + Math.random() * 900000000)}IN`,
+        estimatedDelivery: "In 2 - 4 Business Days",
+        subtotal: cartTotal,
+        shippingFee,
+        discount: 0,
+        total: finalTotal,
+        paymentMethod,
+        customer: {
+          fullName: formData.fullName,
+          phone: formData.phone,
+          email: formData.email,
+          address: formData.address,
+          city: formData.city,
+          state: formData.state,
+          pinCode: formData.pinCode,
+          notes: formData.notes,
+        },
+        items: cart.map((item) => ({
+          id: item.id,
+          title: item.product.title,
+          category: item.product.category,
+          primaryImage: item.product.primaryImage,
+          price: item.product.price,
+          size: item.size,
+          blouseOption: item.blouseOption,
+          quantity: item.quantity,
+        })),
+      };
+
+      saveOrder(newOrder);
       setIsProcessing(false);
-      setOrderCompleted(true);
       clearCart();
       showToast.success("Payment verified! Order placed successfully.");
-    }, 1800);
+      router.push(`/order-confirmation?orderId=${generatedId}`);
+    }, 1600);
   };
 
   // Order Success Screen

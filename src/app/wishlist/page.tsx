@@ -8,9 +8,10 @@ import { useCartWishlist } from "@/context/CartWishlistContext";
 import { PRODUCTS } from "@/data/products";
 import { formatINR } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { showToast } from "@/components/ui/Toast";
 
 export default function WishlistPage() {
-  const { wishlist, toggleWishlist, addToCart } = useCartWishlist();
+  const { wishlist, toggleWishlist, addToCart, setIsCartDrawerOpen } = useCartWishlist();
 
   const wishlistedProducts = PRODUCTS.filter((p) => wishlist.includes(p.id));
 
@@ -86,8 +87,12 @@ export default function WishlistPage() {
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={() => addToCart(product, product.sizes[0])}
-                  className="w-full text-[10px] tracking-wider uppercase"
+                  onClick={() => {
+                    addToCart(product, product.sizes[0]);
+                    showToast.success(`Added ${product.title} to bag`);
+                    setIsCartDrawerOpen(true);
+                  }}
+                  className="w-full text-[10px] tracking-wider uppercase cursor-pointer"
                 >
                   <ShoppingBag className="mr-1.5 h-3.5 w-3.5 text-[#B79B63]" /> Move to Bag
                 </Button>

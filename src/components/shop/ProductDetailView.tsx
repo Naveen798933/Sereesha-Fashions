@@ -18,6 +18,10 @@ import {
   ZoomIn,
   Sparkles,
   Info,
+  Star,
+  ThumbsUp,
+  X,
+  Ruler,
 } from "lucide-react";
 import { Product, PRODUCTS } from "@/data/products";
 import { useCartWishlist } from "@/context/CartWishlistContext";
@@ -33,6 +37,58 @@ import {
   AccordionContent,
 } from "@/components/ui/Accordion";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { showToast } from "@/components/ui/Toast";
+
+interface UserReview {
+  id: string;
+  author: string;
+  city: string;
+  rating: number;
+  date: string;
+  title: string;
+  comment: string;
+  fit: string;
+  verified: boolean;
+}
+
+const INITIAL_REVIEWS: UserReview[] = [
+  {
+    id: "rev-1",
+    author: "Lakshmi Prasanna",
+    city: "Banjara Hills, Hyderabad",
+    rating: 5,
+    date: "02 October 2026",
+    title: "Mesmerizing Zari Luster & Pure Silk Authenticity",
+    comment:
+      "Wore this to my sister's wedding in Hyderabad. The drape is so rich and the gold zari border has that authentic heavy sheen that looks breathtaking under chandeliers. Received non-stop compliments!",
+    fit: "Bespoke Master Fit",
+    verified: true,
+  },
+  {
+    id: "rev-2",
+    author: "Gayatri Krishnan",
+    city: "Indiranagar, Bengaluru",
+    rating: 5,
+    date: "28 September 2026",
+    title: "Silk Mark tag verified, flawless fall & pico finish",
+    comment:
+      "Arrived in 2 days to Bengaluru in the gold-stamped luxury hardbox. Checked the Silk Mark QR code immediately—100% genuine mulberry silk. The masterji custom blouse fits like a dream.",
+    fit: "True to Size",
+    verified: true,
+  },
+  {
+    id: "rev-3",
+    author: "Swathi Rao",
+    city: "Colaba, Mumbai",
+    rating: 5,
+    date: "14 September 2026",
+    title: "Heirloom grade bridal quality",
+    comment:
+      "I was skeptical about buying bridal silk online, but the WhatsApp video preview session gave me complete confidence. The actual saree is even more opulent in hand than photos depict.",
+    fit: "Bespoke Master Fit",
+    verified: true,
+  },
+];
 
 interface ProductDetailViewProps {
   product: Product;
@@ -47,6 +103,21 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
     "Unstitched Matching Blouse (Included)"
   );
   const [quantity, setQuantity] = React.useState(1);
+
+  // In-Page Size Guide Modal State
+  const [isSizeGuideOpen, setIsSizeGuideOpen] = React.useState(false);
+
+  // Customer Reviews State
+  const [reviews, setReviews] = React.useState<UserReview[]>(INITIAL_REVIEWS);
+  const [isWriteReviewOpen, setIsWriteReviewOpen] = React.useState(false);
+  const [newReview, setNewReview] = React.useState({
+    author: "",
+    city: "",
+    rating: 5,
+    title: "",
+    comment: "",
+    fit: "Bespoke Master Fit",
+  });
 
   // Zari Texture Zoom State
   const [isZooming, setIsZooming] = React.useState(false);
@@ -156,6 +227,38 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
 
     const waUrl = `https://wa.me/?text=${encodeURIComponent(shareText + "\n" + shareUrl)}`;
     window.open(waUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const handleReviewSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newReview.author.trim() || !newReview.comment.trim()) {
+      showToast.error("Please provide your name and review thoughts");
+      return;
+    }
+
+    const reviewToAdd: UserReview = {
+      id: `rev-${Date.now()}`,
+      author: newReview.author.trim(),
+      city: newReview.city.trim() || "Hyderabad",
+      rating: newReview.rating,
+      date: "Today",
+      title: newReview.title.trim() || "Exquisite Handloom Craftsmanship",
+      comment: newReview.comment.trim(),
+      fit: newReview.fit,
+      verified: true,
+    };
+
+    setReviews([reviewToAdd, ...reviews]);
+    setIsWriteReviewOpen(false);
+    setNewReview({
+      author: "",
+      city: "",
+      rating: 5,
+      title: "",
+      comment: "",
+      fit: "Bespoke Master Fit",
+    });
+    showToast.success("Thank you! Your verified patron review has been recorded.");
   };
 
   const handleInstantBuy = () => {
@@ -379,9 +482,13 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
                   <span className="uppercase tracking-wider font-medium text-[#1C1B19]">
                     Select Size / Option:
                   </span>
-                  <Link href="/size-guide" className="text-[#B79B63] hover:underline text-[11px]">
-                    Size Guide
-                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setIsSizeGuideOpen(true)}
+                    className="text-[#B79B63] hover:underline text-[11px] cursor-pointer flex items-center gap-1"
+                  >
+                    <Ruler className="h-3 w-3" /> Size Guide
+                  </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {product.sizes.map((sz) => (
@@ -776,6 +883,397 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
                 <p className="text-xs font-semibold text-[#1C1B19] mt-1">{formatINR(item.price)}</p>
               </Link>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Patron Reviews & Verified Testimonials Section */}
+      <section className="mt-12 sm:mt-16 bg-white border border-[#E8E2D8] p-6 sm:p-10 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-[#E8E2D8]">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-[11px] uppercase tracking-[0.25em] text-[#B79B63] font-medium">
+                Authentic Experiences
+              </span>
+              <span className="h-1.5 w-1.5 rounded-full bg-[#B79B63]" />
+              <span className="text-[11px] text-[#8C867D]">Bespoke Patronage</span>
+            </div>
+            <h2 className="font-serif text-2xl sm:text-3xl text-[#1C1B19] font-normal">
+              Patron Reviews &amp; Testimonials
+            </h2>
+            <div className="flex items-center gap-3 mt-2">
+              <div className="flex items-center gap-1 text-[#B79B63]">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-4 w-4 fill-current" />
+                ))}
+              </div>
+              <span className="text-sm font-semibold text-[#1C1B19]">4.9 / 5.0</span>
+              <span className="text-xs text-[#8C867D]">
+                ({reviews.length} Verified Patron{reviews.length !== 1 ? "s" : ""})
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => setIsWriteReviewOpen(!isWriteReviewOpen)}
+              className="text-xs uppercase tracking-wider cursor-pointer"
+            >
+              {isWriteReviewOpen ? "Cancel Review" : "Write a Patron Review"}
+            </Button>
+          </div>
+        </div>
+
+        {/* Collapsible Review Submission Form */}
+        {isWriteReviewOpen && (
+          <form
+            onSubmit={handleReviewSubmit}
+            className="my-8 p-6 bg-[#FAF7F2] border border-[#B79B63]/30 rounded-xs space-y-5 animate-in fade-in duration-200"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif text-lg text-[#1C1B19] font-medium">
+                Record Your Atelier Experience
+              </h3>
+              <span className="text-[11px] text-[#8C867D]">Verified purchase publication</span>
+            </div>
+
+            {/* Rating Stars Selection */}
+            <div>
+              <label className="block text-xs uppercase tracking-wider text-[#1C1B19] font-medium mb-1.5">
+                Your Rating
+              </label>
+              <div className="flex items-center gap-1.5">
+                {[1, 2, 3, 4, 5].map((starVal) => (
+                  <button
+                    key={starVal}
+                    type="button"
+                    onClick={() => setNewReview({ ...newReview, rating: starVal })}
+                    className="p-1 text-[#B79B63] hover:scale-110 transition-transform cursor-pointer"
+                    aria-label={`${starVal} star`}
+                  >
+                    <Star
+                      className={cn(
+                        "h-6 w-6",
+                        starVal <= newReview.rating
+                          ? "fill-[#B79B63] text-[#B79B63]"
+                          : "text-[#D8C7A5]"
+                      )}
+                    />
+                  </button>
+                ))}
+                <span className="ml-2 text-xs font-semibold text-[#1C1B19]">
+                  {newReview.rating} of 5 Stars
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-[#1C1B19] font-medium mb-1">
+                  Full Name / Patron Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newReview.author}
+                  onChange={(e) => setNewReview({ ...newReview, author: e.target.value })}
+                  placeholder="e.g. Radhika Rao"
+                  className="w-full h-10 px-3 text-xs bg-white border border-[#E8E2D8] focus:border-[#B79B63] focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-[#1C1B19] font-medium mb-1">
+                  City / Location
+                </label>
+                <input
+                  type="text"
+                  value={newReview.city}
+                  onChange={(e) => setNewReview({ ...newReview, city: e.target.value })}
+                  placeholder="e.g. Hyderabad, Banjara Hills"
+                  className="w-full h-10 px-3 text-xs bg-white border border-[#E8E2D8] focus:border-[#B79B63] focus:outline-hidden"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-[#1C1B19] font-medium mb-1">
+                  Review Headline
+                </label>
+                <input
+                  type="text"
+                  value={newReview.title}
+                  onChange={(e) => setNewReview({ ...newReview, title: e.target.value })}
+                  placeholder="e.g. Heirloom quality pure zari drape"
+                  className="w-full h-10 px-3 text-xs bg-white border border-[#E8E2D8] focus:border-[#B79B63] focus:outline-hidden"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-[#1C1B19] font-medium mb-1">
+                  Fit &amp; Fall Experience
+                </label>
+                <select
+                  value={newReview.fit}
+                  onChange={(e) => setNewReview({ ...newReview, fit: e.target.value })}
+                  className="w-full h-10 px-3 text-xs bg-white border border-[#E8E2D8] focus:border-[#B79B63] focus:outline-hidden"
+                >
+                  <option value="Bespoke Master Fit">Bespoke Master Fit</option>
+                  <option value="True to Atelier Measure">True to Atelier Measure</option>
+                  <option value="Flawless Bridal Fall">Flawless Bridal Fall</option>
+                  <option value="Luxuriously Roomy">Luxuriously Roomy</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs uppercase tracking-wider text-[#1C1B19] font-medium mb-1">
+                Your Thoughts on Handloom Quality &amp; Finish *
+              </label>
+              <textarea
+                required
+                rows={4}
+                value={newReview.comment}
+                onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                placeholder="Share your experience regarding the silk sheen, zari embroidery, drape weight, and packaging..."
+                className="w-full p-3 text-xs bg-white border border-[#E8E2D8] focus:border-[#B79B63] focus:outline-hidden resize-none"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsWriteReviewOpen(false)}
+                className="text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                className="text-xs uppercase tracking-wider"
+              >
+                Submit Patron Review
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {/* Reviews List */}
+        <div className="mt-8 divide-y divide-[#E8E2D8]">
+          {reviews.map((rev) => (
+            <article key={rev.id} className="py-6 first:pt-0 last:pb-0 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-full bg-[#FAF7F2] border border-[#B79B63]/40 flex items-center justify-center font-serif text-sm font-semibold text-[#B79B63]">
+                    {rev.author.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-[#1C1B19]">{rev.author}</span>
+                      {rev.verified && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#128C7E] bg-[#E8F8F5] px-1.5 py-0.5 border border-[#128C7E]/20">
+                          <Check className="h-2.5 w-2.5" /> Verified Patron
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-[#8C867D]">
+                      {rev.city} • {rev.date}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex text-[#B79B63]">
+                    {[...Array(rev.rating)].map((_, i) => (
+                      <Star key={i} className="h-3.5 w-3.5 fill-current" />
+                    ))}
+                  </div>
+                  <span className="text-[10px] uppercase tracking-wider font-medium text-[#8C867D] bg-[#FAF7F2] px-2 py-0.5 border border-[#E8E2D8]">
+                    {rev.fit}
+                  </span>
+                </div>
+              </div>
+
+              <h4 className="text-xs font-semibold text-[#1C1B19]">{rev.title}</h4>
+              <p className="text-xs text-[#5C564E] leading-relaxed">{rev.comment}</p>
+
+              <div className="pt-1 flex items-center gap-2 text-[11px] text-[#8C867D]">
+                <button
+                  type="button"
+                  onClick={() => showToast.success("Thank you for your feedback!")}
+                  className="inline-flex items-center gap-1 hover:text-[#B79B63] transition-colors cursor-pointer"
+                >
+                  <ThumbsUp className="h-3 w-3" /> Helpful
+                </button>
+                <span>•</span>
+                <span>Inspected by Atelier Quality Council</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* In-Page Size Guide Modal */}
+      {isSizeGuideOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="size-guide-title"
+          className="fixed inset-0 z-50 bg-[#1C1B19]/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+        >
+          <div className="relative w-full max-w-2xl bg-white border border-[#B79B63]/40 shadow-2xl p-5 sm:p-8 my-auto max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between pb-4 border-b border-[#E8E2D8]">
+              <div>
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-[#B79B63] font-semibold mb-1">
+                  <Ruler className="h-3.5 w-3.5" /> Atelier Measurements
+                </div>
+                <h3 id="size-guide-title" className="font-serif text-xl sm:text-2xl text-[#1C1B19]">
+                  Fit &amp; Dimension Handbook
+                </h3>
+                <p className="text-xs text-[#8C867D] mt-0.5">
+                  Handcrafted according to classical Indian proportions and bespoke comfort.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSizeGuideOpen(false)}
+                className="p-1.5 text-[#8C867D] hover:text-[#1C1B19] transition-colors cursor-pointer"
+                aria-label="Close size guide"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="py-5 space-y-6">
+              {/* Saree & Drape Standards */}
+              <div className="bg-[#FAF7F2] p-4 border border-[#E8E2D8]">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-[#1C1B19] mb-2 flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-[#B79B63]" /> Authentic Saree Dimensions
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-[#5C564E]">
+                  <div className="bg-white p-3 border border-[#E8E2D8]">
+                    <span className="block font-medium text-[#1C1B19]">Saree Length</span>
+                    <span className="text-[11px] text-[#8C867D]">5.50 Metres (Full Drape)</span>
+                  </div>
+                  <div className="bg-white p-3 border border-[#E8E2D8]">
+                    <span className="block font-medium text-[#1C1B19]">Saree Width</span>
+                    <span className="text-[11px] text-[#8C867D]">44 – 46 Inches (Standard)</span>
+                  </div>
+                  <div className="bg-white p-3 border border-[#E8E2D8]">
+                    <span className="block font-medium text-[#1C1B19]">Blouse Piece</span>
+                    <span className="text-[11px] text-[#8C867D]">0.80 to 1.0 Metre Unstitched</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ready-to-wear / Blouse Sizing Table */}
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-[#1C1B19] mb-2.5">
+                  Apparel &amp; Blouse Measurements (Inches)
+                </h4>
+                <div className="overflow-x-auto border border-[#E8E2D8]">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-[#FAF7F2] border-b border-[#E8E2D8] text-[10px] uppercase tracking-wider text-[#1C1B19]">
+                      <tr>
+                        <th className="py-2.5 px-3">Size</th>
+                        <th className="py-2.5 px-3">Bust</th>
+                        <th className="py-2.5 px-3">Waist</th>
+                        <th className="py-2.5 px-3">Hip</th>
+                        <th className="py-2.5 px-3">Shoulder</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#E8E2D8] text-[#5C564E]">
+                      <tr>
+                        <td className="py-2 px-3 font-semibold text-[#1C1B19]">XS (34)</td>
+                        <td className="py-2 px-3">32″</td>
+                        <td className="py-2 px-3">26″</td>
+                        <td className="py-2 px-3">36″</td>
+                        <td className="py-2 px-3">13.5″</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 px-3 font-semibold text-[#1C1B19]">S (36)</td>
+                        <td className="py-2 px-3">34″</td>
+                        <td className="py-2 px-3">28″</td>
+                        <td className="py-2 px-3">38″</td>
+                        <td className="py-2 px-3">14.0″</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 px-3 font-semibold text-[#1C1B19]">M (38)</td>
+                        <td className="py-2 px-3">36″</td>
+                        <td className="py-2 px-3">30″</td>
+                        <td className="py-2 px-3">40″</td>
+                        <td className="py-2 px-3">14.5″</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 px-3 font-semibold text-[#1C1B19]">L (40)</td>
+                        <td className="py-2 px-3">38″</td>
+                        <td className="py-2 px-3">32″</td>
+                        <td className="py-2 px-3">42″</td>
+                        <td className="py-2 px-3">15.0″</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 px-3 font-semibold text-[#1C1B19]">XL (42)</td>
+                        <td className="py-2 px-3">40″</td>
+                        <td className="py-2 px-3">34″</td>
+                        <td className="py-2 px-3">44″</td>
+                        <td className="py-2 px-3">15.5″</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 px-3 font-semibold text-[#1C1B19]">XXL (44)</td>
+                        <td className="py-2 px-3">42″</td>
+                        <td className="py-2 px-3">36″</td>
+                        <td className="py-2 px-3">46″</td>
+                        <td className="py-2 px-3">16.0″</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Bespoke Custom Sizing Concierge */}
+              <div className="p-4 border border-[#B79B63]/40 bg-[#F7F3EB]/40 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div>
+                  <h5 className="text-xs font-semibold text-[#1C1B19]">
+                    Need Bespoke Bridal Measurements?
+                  </h5>
+                  <p className="text-[11px] text-[#8C867D] mt-0.5">
+                    Our master artisans in Banjara Hills provide bespoke tape tailoring for flawless
+                    drape fitting.
+                  </p>
+                </div>
+                <a
+                  href={whatsAppInquiryUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#128C7E] text-white text-xs font-medium shrink-0 hover:bg-[#0f7266] transition-colors"
+                >
+                  <Phone className="h-3.5 w-3.5" />
+                  WhatsApp Tailor
+                </a>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="pt-4 border-t border-[#E8E2D8] flex justify-end">
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={() => setIsSizeGuideOpen(false)}
+                className="text-xs uppercase tracking-wider"
+              >
+                Close Guide
+              </Button>
+            </div>
           </div>
         </div>
       )}
