@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   MessageCircle,
   ExternalLink,
+  Navigation,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { showToast } from "@/components/ui/Toast";
@@ -227,6 +228,80 @@ export default function ContactPage() {
           )}
         </div>
       </div>
+
+      {/* Interactive Google Map Section */}
+      <section className="mt-12 sm:mt-16 bg-white border border-[#E8E2D8] overflow-hidden shadow-xs">
+        <div className="p-6 sm:p-8 border-b border-[#E8E2D8] flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] uppercase tracking-[0.25em] text-[#B79B63] font-semibold">
+                Banjara Hills Flagship
+              </span>
+              <span className="h-1.5 w-1.5 rounded-full bg-[#B79B63]" />
+              <span className="text-[10px] text-[#8C867D]">Bespoke Boutique Experience</span>
+            </div>
+            <h2 className="font-serif text-2xl sm:text-3xl text-[#1C1B19]">
+              Find Our Hyderabad Atelier
+            </h2>
+            <p className="text-xs text-[#5A5650] mt-1">
+              Road No. 10, Banjara Hills, Hyderabad, Telangana 500034 • Valet Parking &amp; Private
+              Bridal Suites Available
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <a
+              href="https://maps.app.goo.gl/KPp3kgQXKQoW5urG6?g_st=ac"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1C1B19] text-[#FAF7F2] text-xs uppercase tracking-wider font-semibold hover:bg-[#B79B63] hover:text-[#1C1B19] transition-colors"
+            >
+              <Navigation className="h-3.5 w-3.5" />
+              <span>Get Driving Directions</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        </div>
+
+        {/* Embedded Interactive Map Frame */}
+        <div className="relative w-full h-[360px] sm:h-[450px] bg-[#EFE8DD]">
+          <iframe
+            title="Sreesha Elegance Hyderabad Flagship Atelier Location"
+            src="https://maps.google.com/maps?q=Road%20No.%2010,%20Banjara%20Hills,%20Hyderabad,%20Telangana%20500034&t=&z=15&ie=UTF8&iwloc=&output=embed"
+            className="w-full h-full border-0 filter contrast-[1.02]"
+            loading="lazy"
+            allowFullScreen
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+
+          {/* Floating Atelier Badge Overlay */}
+          <div className="absolute top-4 left-4 hidden sm:block bg-white/95 backdrop-blur-md border border-[#E8E2D8] p-4 shadow-lg max-w-xs text-xs space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-[#FAF7F2] border border-[#B79B63]/40 flex items-center justify-center text-[#B79B63]">
+                <MapPin className="h-4 w-4" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-[#1C1B19]">Sreesha Elegance</h3>
+                <p className="text-[10px] text-[#8C867D]">Flagship Bridal Atelier</p>
+              </div>
+            </div>
+            <p className="text-[#5A5650] text-[11px] leading-relaxed">
+              Road No. 10, Banjara Hills, Hyderabad, Telangana 500034
+            </p>
+            <div className="pt-1 flex items-center justify-between text-[10px] text-[#B79B63] font-semibold border-t border-[#F0EBE1]">
+              <span>Open Today: 10:30 AM – 8:30 PM</span>
+              <a
+                href="https://maps.app.goo.gl/KPp3kgQXKQoW5urG6?g_st=ac"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline flex items-center gap-1"
+              >
+                Maps Link <ExternalLink className="h-2.5 w-2.5" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
