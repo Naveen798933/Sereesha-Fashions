@@ -70,7 +70,7 @@ function OrderConfirmationContent() {
     }
   };
 
-  const whatsAppUpdateUrl = `https://wa.me/919876543210?text=Hello%20Sreesha%20Elegance%2C%20I%20would%20like%20to%20receive%20WhatsApp%20dispatch%20updates%20for%20order%20%23${order.id}.`;
+  const whatsAppUpdateUrl = `https://wa.me/916281344628?text=Hello%20Sreesha%20Elegance%2C%20I%20would%20like%20to%20receive%20WhatsApp%20dispatch%20updates%20for%20order%20%23${order.id}.`;
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] py-8 sm:py-14 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto pb-28 sm:pb-16 print:bg-white print:p-0">

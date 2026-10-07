@@ -40,6 +40,8 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>("upi");
   const [upiId, setUpiId] = React.useState("sreeja@okhdfcbank");
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const [orderCompleted, setOrderCompleted] = React.useState(false);
+  const [orderId, setOrderId] = React.useState("");
 
   const shippingFee = cartTotal >= 2999 ? 0 : 150;
   const finalTotal = cartTotal + shippingFee;
@@ -117,6 +119,7 @@ export default function CheckoutPage() {
 
       saveOrder(newOrder);
       setIsProcessing(false);
+      setOrderCompleted(true);
       clearCart();
       showToast.success("Payment verified! Order placed successfully.");
       router.push(`/order-confirmation?orderId=${generatedId}`);

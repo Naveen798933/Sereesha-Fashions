@@ -385,7 +385,7 @@ export default function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
             <a
-              href="https://wa.me/919876543210?text=Hello%2C%20I%20would%20like%20to%20know%20more%20about%20your%20collections."
+              href="https://wa.me/916281344628?text=Hello%2C%20I%20would%20like%20to%20know%20more%20about%20your%20collections."
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-7 py-3 bg-[#25D366] text-white text-xs uppercase tracking-[0.18em] font-semibold hover:bg-[#1ebe5c] transition-colors"

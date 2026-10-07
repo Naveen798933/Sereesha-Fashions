@@ -441,7 +441,7 @@ export default function AccountPage() {
                   before stitching.
                 </p>
                 <a
-                  href="https://wa.me/919876543210?text=Hello%2C%20I%20would%20like%20to%20schedule%20a%20private%20virtual%20styling%20session%20with%20your%20Hyderabad%20atelier."
+                  href="https://wa.me/916281344628?text=Hello%2C%20I%20would%20like%20to%20schedule%20a%20private%20virtual%20styling%20session%20with%20your%20Hyderabad%20atelier."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#25D366] text-white text-xs uppercase tracking-wider font-semibold hover:bg-[#1ebe5c] transition-colors"

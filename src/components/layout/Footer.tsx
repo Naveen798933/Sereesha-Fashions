@@ -118,8 +118,22 @@ export const Footer: React.FC = () => {
 
             <div className="pt-2 text-xs text-[#C7BEAF] space-y-1">
               <p className="font-medium text-white">Hyderabad Flagship Atelier:</p>
-              <p>Road No. 10, Banjara Hills, Hyderabad, Telangana 500034</p>
-              <p>Concierge: +91 98765 43210 • care@sreeshaelegance.com</p>
+              <a
+                href="https://maps.app.goo.gl/KPp3kgQXKQoW5urG6?g_st=ac"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-[#B79B63] transition-colors block"
+              >
+                Road No. 10, Banjara Hills, Hyderabad, Telangana 500034{" "}
+                <span className="text-[#B79B63] underline text-[11px]">(View on Google Maps)</span>
+              </a>
+              <p>
+                Concierge:{" "}
+                <a href="tel:+916281344628" className="hover:text-white transition-colors">
+                  +91 62813 44628
+                </a>{" "}
+                • care@sreeshaelegance.com
+              </p>
             </div>
           </div>
 
@@ -259,7 +273,7 @@ export const Footer: React.FC = () => {
                   <InstagramIcon className="h-4 w-4" />
                 </a>
                 <a
-                  href="https://wa.me/919876543210"
+                  href="https://wa.me/916281344628"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="WhatsApp"

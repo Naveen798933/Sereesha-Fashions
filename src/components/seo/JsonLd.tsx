@@ -8,7 +8,8 @@ export const OrganizationJsonLd: React.FC = () => {
     description:
       "Premium Indian fashion boutique in Hyderabad specializing in luxury sarees, bridal lehengas, and contemporary ethnic wear.",
     url: process.env.NEXT_PUBLIC_APP_URL || "https://sreeshaelegance.com",
-    telephone: "+91 98765 43210",
+    telephone: "+91 62813 44628",
+    hasMap: "https://maps.app.goo.gl/KPp3kgQXKQoW5urG6?g_st=ac",
     address: {
       "@type": "PostalAddress",
       streetAddress: "Road No. 10, Banjara Hills",

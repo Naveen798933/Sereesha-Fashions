@@ -18,7 +18,7 @@ const ANNOUNCEMENTS = [
   },
   {
     icon: <PhoneCall className="h-3 w-3 shrink-0" />,
-    text: "Book a Free Virtual Styling Consultation — WhatsApp Us at +91 98765 43210",
+    text: "Book a Free Virtual Styling Consultation — WhatsApp Us at +91 62813 44628",
   },
 ];
 
@@ -69,8 +69,8 @@ export const AnnouncementBar: React.FC = () => {
         {/* Right: Phone */}
         <div className="hidden md:flex items-center gap-2 shrink-0">
           <PhoneCall className="h-3 w-3 text-[#B79B63]" />
-          <a href="tel:+919876543210" className="text-[#D8C7A5] hover:text-white transition-colors">
-            +91 98765 43210
+          <a href="tel:+916281344628" className="text-[#D8C7A5] hover:text-white transition-colors">
+            +91 62813 44628
           </a>
         </div>
       </div>

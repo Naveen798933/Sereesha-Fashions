@@ -362,7 +362,7 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
                   Schedule a 1-on-1 WhatsApp video preview with our Hyderabad saree stylists.
                 </p>
                 <a
-                  href="https://wa.me/919876543210?text=Hi%20Sreesha%20Elegance%2C%20I%20would%20like%20to%20book%20a%20virtual%20styling%20consultation"
+                  href="https://wa.me/916281344628?text=Hi%20Sreesha%20Elegance%2C%20I%20would%20like%20to%20book%20a%20virtual%20styling%20consultation"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center w-full py-2 bg-[#2D6A4F] text-white text-[11px] uppercase tracking-wider font-semibold hover:bg-[#23533e] transition-colors gap-1.5 shadow-xs rounded-xs"
@@ -528,19 +528,24 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
             {/* 3. Fixed Bottom Atelier Info (Always Pinned at Bottom) */}
             <div className="p-4 sm:p-5 bg-white border-t border-[#E8E2D8] shrink-0 space-y-2.5 pb-[calc(1rem+env(safe-area-inset-bottom))] text-[#1C1B19]">
               <div className="space-y-1 text-xs">
-                <div className="flex items-start gap-2 text-[#1C1B19]">
+                <a
+                  href="https://maps.app.goo.gl/KPp3kgQXKQoW5urG6?g_st=ac"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start gap-2 text-[#1C1B19] hover:text-[#B79B63] transition-colors"
+                >
                   <MapPin className="h-3.5 w-3.5 text-[#B79B63] shrink-0 mt-0.5" />
-                  <span className="text-[11px] font-medium leading-snug text-[#1C1B19]">
-                    Road No. 10, Banjara Hills, Hyderabad
+                  <span className="text-[11px] font-medium leading-snug">
+                    Road No. 10, Banjara Hills, Hyderabad (View Map)
                   </span>
-                </div>
+                </a>
                 <div className="flex items-center gap-2">
                   <Phone className="h-3.5 w-3.5 text-[#B79B63] shrink-0" />
                   <a
-                    href="tel:+919876543210"
+                    href="tel:+916281344628"
                     className="hover:underline text-[11px] font-medium text-[#1C1B19]"
                   >
-                    +91 98765 43210
+                    +91 62813 44628
                   </a>
                 </div>
               </div>

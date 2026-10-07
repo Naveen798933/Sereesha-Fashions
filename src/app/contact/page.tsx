@@ -1,7 +1,16 @@
 "use client";
 
 import * as React from "react";
-import { Phone, Mail, MapPin, Clock, Send, CheckCircle2, MessageCircle } from "lucide-react";
+import {
+  Phone,
+  Mail,
+  MapPin,
+  Clock,
+  Send,
+  CheckCircle2,
+  MessageCircle,
+  ExternalLink,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { showToast } from "@/components/ui/Toast";
 
@@ -46,10 +55,19 @@ export default function ContactPage() {
             <div className="space-y-4 text-xs text-[#5A5650]">
               <div className="flex items-start gap-3">
                 <MapPin className="h-4 w-4 text-[#B79B63] shrink-0 mt-0.5" />
-                <div>
+                <div className="space-y-1">
                   <p className="font-semibold text-[#1C1B19]">Atelier &amp; Boutique</p>
                   <p>Road No. 10, Banjara Hills,</p>
                   <p>Hyderabad, Telangana 500034, India</p>
+                  <a
+                    href="https://maps.app.goo.gl/KPp3kgQXKQoW5urG6?g_st=ac"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[#B79B63] hover:underline font-medium text-xs pt-0.5"
+                  >
+                    <span>View on Google Maps</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
                 </div>
               </div>
 
@@ -57,8 +75,8 @@ export default function ContactPage() {
                 <Phone className="h-4 w-4 text-[#B79B63] shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-[#1C1B19]">Concierge Phone</p>
-                  <a href="tel:+919876543210" className="hover:underline">
-                    +91 98765 43210
+                  <a href="tel:+916281344628" className="hover:underline">
+                    +91 62813 44628
                   </a>
                 </div>
               </div>
@@ -82,15 +100,23 @@ export default function ContactPage() {
               </div>
             </div>
 
-            {/* Direct WhatsApp Callout */}
-            <div className="pt-4 border-t border-[#E8E2D8]">
+            {/* Direct WhatsApp & Map Callouts */}
+            <div className="pt-4 border-t border-[#E8E2D8] space-y-2.5">
               <a
-                href="https://wa.me/919876543210?text=Hello%20Sreesha%20Elegance%2C%20I%20would%20like%20to%20connect%20with%20a%20personal%20stylist."
+                href="https://wa.me/916281344628?text=Hello%20Sreesha%20Elegance%2C%20I%20would%20like%20to%20connect%20with%20a%20personal%20stylist."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-3 px-4 bg-[#25D366] text-white text-xs uppercase tracking-wider font-semibold flex items-center justify-center gap-2 hover:bg-[#1ebe5c] transition-colors"
               >
                 <MessageCircle className="h-4 w-4" /> Instant WhatsApp Styling
+              </a>
+              <a
+                href="https://maps.app.goo.gl/KPp3kgQXKQoW5urG6?g_st=ac"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2.5 px-4 bg-white border border-[#B79B63] text-[#B79B63] text-xs uppercase tracking-wider font-semibold flex items-center justify-center gap-2 hover:bg-[#FAF7F2] transition-colors"
+              >
+                <MapPin className="h-4 w-4" /> Open Atelier in Google Maps
               </a>
             </div>
           </div>

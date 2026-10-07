@@ -274,7 +274,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
     (p) => p.id !== product.id && p.category === product.category
   ).slice(0, 3);
 
-  const whatsAppInquiryUrl = `https://wa.me/919876543210?text=Hello%20Sreesha%20Elegance%2C%20I%20am%20interested%20in%20${encodeURIComponent(product.title)}%20(SKU%3A%20${product.id}%2C%20${formatINR(product.price)}).%20Can%20you%20help%20me%20with%20customization%20and%20video%20call%20preview%3F`;
+  const whatsAppInquiryUrl = `https://wa.me/916281344628?text=Hello%20Sreesha%20Elegance%2C%20I%20am%20interested%20in%20${encodeURIComponent(product.title)}%20(SKU%3A%20${product.id}%2C%20${formatINR(product.price)}).%20Can%20you%20help%20me%20with%20customization%20and%20video%20call%20preview%3F`;
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] py-6 sm:py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-32 sm:pb-12">

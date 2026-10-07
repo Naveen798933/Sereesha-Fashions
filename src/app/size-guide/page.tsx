@@ -94,8 +94,16 @@ export default function SizeGuidePage() {
           <p className="font-semibold text-[#1C1B19]">Need Custom Measurement Assistance?</p>
           <p>
             You can always order with standard sizes and WhatsApp our Banjara Hills atelier at{" "}
-            <strong>+91 98765 43210</strong> with your custom blouse chest/shoulder/armhole specs.
-            We tailor it free of extra pattern fees for pre-orders.
+            <a
+              href="https://wa.me/916281344628?text=Hello%20Sreesha%20Elegance%2C%20I%20need%20custom%20blouse%20measurement%20assistance."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-[#1C1B19] underline hover:text-[#B79B63] transition-colors"
+            >
+              +91 62813 44628
+            </a>{" "}
+            with your custom blouse chest/shoulder/armhole specs. We tailor it free of extra pattern
+            fees for pre-orders.
           </p>
         </div>
       </div>
