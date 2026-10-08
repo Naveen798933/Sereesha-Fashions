@@ -305,6 +305,9 @@ export const Footer: React.FC = () => {
             <Link href="/terms" className="hover:text-white transition-colors">
               Terms &amp; Conditions
             </Link>
+            <Link href="/admin" className="hover:text-[#B79B63] transition-colors">
+              Atelier Portal
+            </Link>
           </div>
 
           {/* Payment & Security Indicators */}

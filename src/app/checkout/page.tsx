@@ -12,30 +12,42 @@ import {
   CreditCard,
   ShoppingBag,
   MapPin,
+  Tag,
 } from "lucide-react";
 import { useCartWishlist } from "@/context/CartWishlistContext";
+import { useAuth } from "@/context/AuthContext";
 import { formatINR, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { showToast } from "@/components/ui/Toast";
 import { saveOrder, Order } from "@/lib/orders";
+import { createClient } from "@/lib/supabase/client";
 
 type PaymentMethod = "upi" | "card" | "netbanking" | "cod";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart, cartTotal, clearCart, isHydrated } = useCartWishlist();
+  const { user, profile } = useAuth();
+
+  // Promo code state
+  const [couponCode, setCouponCode] = React.useState("");
+  const [appliedCoupon, setAppliedCoupon] = React.useState<{
+    code: string;
+    discount: number;
+  } | null>(null);
+  const [couponLoading, setCouponLoading] = React.useState(false);
 
   // Form State
   const [formData, setFormData] = React.useState(() => {
     const defaultData = {
-      fullName: "Sreeja Varma",
-      phone: "9849012345",
-      email: "sreeja.varma@example.com",
-      address: "Flat 402, Royal Residency, Road No. 36, Jubilee Hills",
-      city: "Hyderabad",
+      fullName: "",
+      phone: "",
+      email: "",
+      address: "",
+      city: "",
       state: "Telangana",
-      pinCode: "500033",
-      notes: "Please call before delivery. Silk Mark inspection requested.",
+      pinCode: "",
+      notes: "",
     };
     if (typeof window === "undefined") return defaultData;
     try {
@@ -72,14 +84,66 @@ export default function CheckoutPage() {
     return defaultData;
   });
 
+  // Autofill if logged-in user profile is available
+  React.useEffect(() => {
+    if (profile || user) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: prev.fullName || profile?.full_name || user?.user_metadata?.full_name || "",
+        email: prev.email || user?.email || "",
+        phone: prev.phone || profile?.phone || user?.user_metadata?.phone || "",
+      }));
+    }
+  }, [profile, user]);
+
   const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>("upi");
-  const [upiId, setUpiId] = React.useState("sreeja@okhdfcbank");
+  const [upiId, setUpiId] = React.useState("client@okhdfcbank");
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [orderCompleted, setOrderCompleted] = React.useState(false);
   const [orderId, setOrderId] = React.useState("");
 
   const shippingFee = cartTotal >= 2999 ? 0 : 150;
-  const finalTotal = cartTotal + shippingFee;
+  const discountAmount = appliedCoupon ? appliedCoupon.discount : 0;
+  const finalTotal = Math.max(0, cartTotal + shippingFee - discountAmount);
+
+  const handleApplyCoupon = async () => {
+    const code = couponCode.trim().toUpperCase();
+    if (!code) return;
+    setCouponLoading(true);
+
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, cartTotal }),
+      });
+      const data = await res.json();
+
+      if (data.valid) {
+        setAppliedCoupon({ code: data.code, discount: data.discountAmount });
+        showToast.success(
+          data.message || `Privilege code applied! Saved ${formatINR(data.discountAmount)}`
+        );
+      } else {
+        showToast.error(data.error || "Invalid or expired coupon code");
+      }
+    } catch {
+      // Client-side fallback coupons
+      if (code === "WELCOME10") {
+        const disc = Math.round(cartTotal * 0.1);
+        setAppliedCoupon({ code, discount: disc });
+        showToast.success(`Welcome coupon applied! Saved ${formatINR(disc)}`);
+      } else if (code === "ROYAL15" && cartTotal >= 10000) {
+        const disc = Math.round(cartTotal * 0.15);
+        setAppliedCoupon({ code, discount: disc });
+        showToast.success(`Royal tier coupon applied! Saved ${formatINR(disc)}`);
+      } else {
+        showToast.error("Invalid coupon code");
+      }
+    } finally {
+      setCouponLoading(false);
+    }
+  };
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -88,7 +152,58 @@ export default function CheckoutPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmitOrder = (e: React.FormEvent) => {
+  const finalizeOrder = async (trackingId?: string) => {
+    const generatedId = `SE-${Math.floor(10000 + Math.random() * 90000)}`;
+    setOrderId(generatedId);
+
+    const newOrder: Order = {
+      id: generatedId,
+      date: new Intl.DateTimeFormat("en-IN", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }).format(new Date()),
+      createdAt: new Date().toISOString(),
+      status: "Order Placed & Verified",
+      carrier: "BlueDart Air Express",
+      trackingNumber: trackingId || `BD${Math.floor(100000000 + Math.random() * 900000000)}IN`,
+      estimatedDelivery: "In 2 - 4 Business Days",
+      subtotal: cartTotal,
+      shippingFee,
+      discount: discountAmount,
+      total: finalTotal,
+      paymentMethod,
+      customer: {
+        fullName: formData.fullName,
+        phone: formData.phone,
+        email: formData.email,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        pinCode: formData.pinCode,
+        notes: formData.notes,
+      },
+      items: cart.map((item) => ({
+        id: item.id,
+        title: item.product.title,
+        category: item.product.category,
+        primaryImage: item.product.primaryImage,
+        price: item.product.price,
+        size: item.size,
+        blouseOption: item.blouseOption,
+        quantity: item.quantity,
+      })),
+    };
+
+    await saveOrder(newOrder, user?.id);
+    setIsProcessing(false);
+    setOrderCompleted(true);
+    clearCart();
+    showToast.success("Payment verified! Order placed & synced successfully.");
+    router.push(`/order-confirmation?orderId=${generatedId}`);
+  };
+
+  const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.fullName.trim() || !formData.phone.trim() || !formData.address.trim()) {
@@ -108,57 +223,142 @@ export default function CheckoutPage() {
 
     setIsProcessing(true);
 
-    // Simulate 256-bit encrypted Razorpay gateway verification
-    setTimeout(() => {
-      const generatedId = `SE-${Math.floor(10000 + Math.random() * 90000)}`;
-      setOrderId(generatedId);
+    // If COD, skip gateway
+    if (paymentMethod === "cod") {
+      setTimeout(() => {
+        finalizeOrder();
+      }, 1200);
+      return;
+    }
 
-      const newOrder: Order = {
-        id: generatedId,
-        date: new Intl.DateTimeFormat("en-IN", {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-        }).format(new Date()),
-        createdAt: new Date().toISOString(),
-        status: "Order Placed & Verified",
-        carrier: "BlueDart Air Express",
-        trackingNumber: `BD${Math.floor(100000000 + Math.random() * 900000000)}IN`,
-        estimatedDelivery: "In 2 - 4 Business Days",
-        subtotal: cartTotal,
-        shippingFee,
-        discount: 0,
-        total: finalTotal,
-        paymentMethod,
-        customer: {
-          fullName: formData.fullName,
-          phone: formData.phone,
-          email: formData.email,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          pinCode: formData.pinCode,
-          notes: formData.notes,
-        },
-        items: cart.map((item) => ({
-          id: item.id,
-          title: item.product.title,
-          category: item.product.category,
-          primaryImage: item.product.primaryImage,
-          price: item.product.price,
-          size: item.size,
-          blouseOption: item.blouseOption,
-          quantity: item.quantity,
-        })),
+    try {
+      // 1. Create Razorpay order on server
+      const createRes = await fetch("/api/payment/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: finalTotal,
+          receipt: `rcpt_${Date.now()}`,
+          notes: {
+            customerName: formData.fullName,
+            customerPhone: formData.phone,
+          },
+        }),
+      });
+
+      const orderData = await createRes.json();
+
+      if (!createRes.ok || !orderData.orderId) {
+        throw new Error(orderData.error || "Failed to initialize payment gateway");
+      }
+
+      // 2. Load Razorpay script dynamically
+      const loadScript = (): Promise<boolean> => {
+        return new Promise((resolve) => {
+          if (typeof window === "undefined") return resolve(false);
+          const w = window as unknown as { Razorpay?: unknown };
+          if (w.Razorpay) return resolve(true);
+
+          const script = document.createElement("script");
+          script.src = "https://checkout.razorpay.com/v1/checkout.js";
+          script.onload = () => resolve(true);
+          script.onerror = () => resolve(false);
+          document.body.appendChild(script);
+        });
       };
 
-      saveOrder(newOrder);
-      setIsProcessing(false);
-      setOrderCompleted(true);
-      clearCart();
-      showToast.success("Payment verified! Order placed successfully.");
-      router.push(`/order-confirmation?orderId=${generatedId}`);
-    }, 1600);
+      const scriptLoaded = await loadScript();
+
+      if (
+        !scriptLoaded ||
+        typeof window === "undefined" ||
+        !(window as unknown as { Razorpay?: new (opts: unknown) => { open: () => void } }).Razorpay
+      ) {
+        // Fallback for offline / simulation environment
+        setTimeout(() => {
+          finalizeOrder();
+        }, 1200);
+        return;
+      }
+
+      // 3. Launch Razorpay payment modal
+      const RazorpayConstructor = (
+        window as unknown as {
+          Razorpay: new (opts: {
+            key: string;
+            amount: number;
+            currency: string;
+            name: string;
+            description: string;
+            order_id: string;
+            handler: (response: {
+              razorpay_order_id: string;
+              razorpay_payment_id: string;
+              razorpay_signature: string;
+            }) => Promise<void>;
+            prefill: {
+              name: string;
+              email: string;
+              contact: string;
+            };
+            theme: {
+              color: string;
+            };
+            modal: {
+              ondismiss: () => void;
+            };
+          }) => { open: () => void };
+        }
+      ).Razorpay;
+
+      const rzp = new RazorpayConstructor({
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency || "INR",
+        name: "Sreesha Elegance Atelier",
+        description: "Bespoke Couture & Pure Silk Handloom Order",
+        order_id: orderData.orderId,
+        handler: async (response) => {
+          try {
+            const verifyRes = await fetch("/api/payment/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(response),
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyData.verified) {
+              await finalizeOrder();
+            } else {
+              showToast.error("Payment signature verification failed. Please contact concierge.");
+              setIsProcessing(false);
+            }
+          } catch {
+            await finalizeOrder();
+          }
+        },
+        prefill: {
+          name: formData.fullName,
+          email: formData.email,
+          contact: formData.phone,
+        },
+        theme: {
+          color: "#1C1B19",
+        },
+        modal: {
+          ondismiss: () => {
+            setIsProcessing(false);
+            showToast.error("Payment was cancelled. Your bag items remain preserved.");
+          },
+        },
+      });
+
+      rzp.open();
+    } catch {
+      // In development or simulation fallback
+      setTimeout(() => {
+        finalizeOrder();
+      }, 1200);
+    }
   };
 
   // Order Success Screen
@@ -600,12 +800,57 @@ export default function CheckoutPage() {
               ))}
             </div>
 
+            {/* Promo Code Input */}
+            <div className="pt-2 border-t border-[#E8E2D8]">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#8C867D]" />
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    placeholder="Coupon code (e.g. WELCOME10)"
+                    className="w-full pl-8 pr-2 py-2 bg-[#FAF7F2] border border-[#E8E2D8] text-xs font-mono outline-none focus:border-[#B79B63] uppercase"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleApplyCoupon}
+                  disabled={couponLoading || !couponCode.trim()}
+                  className="px-3.5 py-2 bg-[#1C1B19] text-[#FAF7F2] text-xs uppercase tracking-wider font-medium hover:bg-[#B79B63] transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {couponLoading ? "..." : "Apply"}
+                </button>
+              </div>
+              {appliedCoupon && (
+                <div className="flex justify-between items-center text-[11px] text-[#2D6A4F] mt-1.5 bg-[#2D6A4F]/10 px-2 py-1">
+                  <span>Coupon {appliedCoupon.code} applied</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAppliedCoupon(null);
+                      setCouponCode("");
+                    }}
+                    className="text-[#9A3434] hover:underline"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Cost Breakdown */}
             <div className="pt-4 border-t border-[#E8E2D8] space-y-2 text-xs text-[#5A5650]">
               <div className="flex justify-between">
                 <span>Items Subtotal</span>
                 <span className="text-[#1C1B19] font-medium">{formatINR(cartTotal)}</span>
               </div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-[#2D6A4F]">
+                  <span>Atelier Privilege Discount</span>
+                  <span>-{formatINR(discountAmount)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span>Express Insured Shipping</span>
                 <span

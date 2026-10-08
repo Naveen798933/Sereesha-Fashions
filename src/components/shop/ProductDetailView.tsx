@@ -38,6 +38,8 @@ import {
 } from "@/components/ui/Accordion";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { showToast } from "@/components/ui/Toast";
+import { trackRecentlyViewed, RecentlyViewed } from "@/components/shop/RecentlyViewed";
+import { createClient } from "@/lib/supabase/client";
 
 interface UserReview {
   id: string;
@@ -136,6 +138,81 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
   const [sleeveStyle, setSleeveStyle] = React.useState("Elbow-Length with Zari Border");
   const [backStyle, setBackStyle] = React.useState("Dori with Handmade Silk Latkans");
 
+  React.useEffect(() => {
+    trackRecentlyViewed(product);
+  }, [product]);
+
+  // Load real reviews from Supabase & stream live patron feedback
+  React.useEffect(() => {
+    async function loadReviews() {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("reviews")
+          .select("*")
+          .eq("product_id", product.id)
+          .order("created_at", { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          const mapped: UserReview[] = data.map((r: any) => ({
+            id: r.id,
+            author: r.author || r.author_name || "Patron",
+            city: r.city || "Hyderabad",
+            rating: Number(r.rating) || 5,
+            date: r.date || "Verified Purchase",
+            title: r.title || "Exquisite Handloom",
+            comment: r.comment || "",
+            fit: r.fit || "Bespoke Master Fit",
+            verified: Boolean(r.verified ?? true),
+          }));
+          setReviews(mapped);
+        }
+      } catch {
+        // fallback to INITIAL_REVIEWS
+      }
+    }
+    loadReviews();
+
+    try {
+      const supabase = createClient();
+      const channel = supabase
+        .channel(`realtime-reviews-${product.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "reviews",
+            filter: `product_id=eq.${product.id}`,
+          },
+          (payload: any) => {
+            if (payload?.new) {
+              const r = payload.new;
+              const newRev: UserReview = {
+                id: r.id,
+                author: r.author || r.author_name || "Patron",
+                city: r.city || "Hyderabad",
+                rating: Number(r.rating) || 5,
+                date: r.date || "Just now",
+                title: r.title || "Exquisite Handloom",
+                comment: r.comment || "",
+                fit: r.fit || "Bespoke Master Fit",
+                verified: Boolean(r.verified ?? true),
+              };
+              setReviews((prev) => [newRev, ...prev.filter((x) => x.id !== newRev.id)]);
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } catch {
+      // offline fallback
+    }
+  }, [product.id]);
+
   const wishlisted = isInWishlist(product.id);
 
   const discountPercent =
@@ -229,19 +306,26 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
     window.open(waUrl, "_blank", "noopener,noreferrer");
   };
 
-  const handleReviewSubmit = (e: React.FormEvent) => {
+  const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newReview.author.trim() || !newReview.comment.trim()) {
       showToast.error("Please provide your name and review thoughts");
       return;
     }
 
+    const reviewId = `rev-${Date.now()}`;
+    const todayStr = new Intl.DateTimeFormat("en-IN", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    }).format(new Date());
+
     const reviewToAdd: UserReview = {
-      id: `rev-${Date.now()}`,
+      id: reviewId,
       author: newReview.author.trim(),
       city: newReview.city.trim() || "Hyderabad",
       rating: newReview.rating,
-      date: "Today",
+      date: todayStr,
       title: newReview.title.trim() || "Exquisite Handloom Craftsmanship",
       comment: newReview.comment.trim(),
       fit: newReview.fit,
@@ -258,7 +342,27 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
       comment: "",
       fit: "Bespoke Master Fit",
     });
-    showToast.success("Thank you! Your verified patron review has been recorded.");
+
+    try {
+      const supabase = createClient();
+      await supabase.from("reviews").insert([
+        {
+          id: reviewId,
+          product_id: product.id,
+          author: reviewToAdd.author,
+          city: reviewToAdd.city,
+          rating: reviewToAdd.rating,
+          date: todayStr,
+          title: reviewToAdd.title,
+          comment: reviewToAdd.comment,
+          fit: reviewToAdd.fit,
+          verified: true,
+        },
+      ]);
+      showToast.success("Thank you! Your verified patron review has been recorded.");
+    } catch {
+      showToast.success("Thank you! Your review has been recorded.");
+    }
   };
 
   const handleInstantBuy = () => {
@@ -1283,6 +1387,9 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
           </div>
         </div>
       )}
+
+      {/* Recently Viewed Boutique Pieces */}
+      <RecentlyViewed currentProductId={product.id} />
 
       {/* Sticky Mobile Bottom Action Bar (Fixed on Mobile Viewports) */}
       <aside

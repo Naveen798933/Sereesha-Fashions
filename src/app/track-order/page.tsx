@@ -6,8 +6,9 @@ import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Search, Truck, CheckCircle2, Clock, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { getOrderById, getStoredOrders, Order } from "@/lib/orders";
+import { getOrderById, fetchOrderById, getStoredOrders, Order } from "@/lib/orders";
 import { formatINR } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 function TrackOrderContent() {
   const searchParams = useSearchParams();
@@ -18,25 +19,63 @@ function TrackOrderContent() {
   const [matchedOrder, setMatchedOrder] = React.useState<Order | null>(() => {
     return getOrderById(urlOrderId || "SE-84920") || null;
   });
+  const [isLiveActive, setIsLiveActive] = React.useState(false);
 
   // Sync state whenever URL search param changes
   React.useEffect(() => {
-    const timer = setTimeout(() => {
-      const idToUse = urlOrderId || "SE-84920";
-      setOrderQuery(idToUse);
-      setSearchedId(idToUse.toUpperCase());
-      const found = getOrderById(idToUse);
+    const idToUse = urlOrderId || "SE-84920";
+    setOrderQuery(idToUse);
+    setSearchedId(idToUse.toUpperCase());
+
+    fetchOrderById(idToUse).then((found) => {
       setMatchedOrder(found || null);
-    }, 0);
-    return () => clearTimeout(timer);
+    });
   }, [urlOrderId]);
 
-  const handleSearch = (e: React.FormEvent) => {
+  // Realtime Supabase Subscription for live order tracking
+  React.useEffect(() => {
+    if (!searchedId) return;
+
+    try {
+      const supabase = createClient();
+      setIsLiveActive(true);
+      const channel = supabase
+        .channel(`realtime-order-${searchedId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "orders",
+            filter: `id=eq.${searchedId}`,
+          },
+          (payload: any) => {
+            if (payload?.new) {
+              fetchOrderById(searchedId).then((updated) => {
+                if (updated) {
+                  setMatchedOrder(updated);
+                }
+              });
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+        setIsLiveActive(false);
+      };
+    } catch {
+      // offline fallback
+    }
+  }, [searchedId]);
+
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (orderQuery.trim()) {
       const clean = orderQuery.trim().toUpperCase();
       setSearchedId(clean);
-      const found = getOrderById(clean);
+      const found = await fetchOrderById(clean);
       setMatchedOrder(found || null);
     }
   };
@@ -126,9 +165,17 @@ function TrackOrderContent() {
       <div className="bg-white border border-[#E8E2D8] p-6 sm:p-10 space-y-8 rounded-xs shadow-xs">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-[#E8E2D8] pb-6">
           <div>
-            <span className="text-[10px] uppercase tracking-wider text-[#8C867D]">
-              Order Reference
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase tracking-wider text-[#8C867D]">
+                Order Reference
+              </span>
+              {isLiveActive && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Live Sync
+                </span>
+              )}
+            </div>
             <p className="text-xl sm:text-2xl font-serif font-semibold text-[#1C1B19]">
               #{searchedId}
             </p>

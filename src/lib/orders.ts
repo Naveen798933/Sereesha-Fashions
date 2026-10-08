@@ -1,5 +1,7 @@
 "use client";
 
+import { createClient } from "@/lib/supabase/client";
+
 export interface OrderCustomer {
   fullName: string;
   phone: string;
@@ -30,7 +32,9 @@ export interface Order {
     | "Order Placed & Verified"
     | "Atelier Inspection & Silk Tagged"
     | "Dispatched via BlueDart Express"
-    | "Delivered";
+    | "Out for Doorstep Delivery"
+    | "Delivered"
+    | "Cancelled";
   carrier: string;
   trackingNumber: string;
   estimatedDelivery: string;
@@ -144,13 +148,233 @@ export function getOrderById(id: string): Order | undefined {
   );
 }
 
-export function saveOrder(order: Order): void {
-  if (typeof window === "undefined") return;
+export async function fetchOrderById(id: string): Promise<Order | undefined> {
+  const normalized = id.trim().toUpperCase();
   try {
-    const current = getStoredOrders();
-    const updated = [order, ...current.filter((o) => o.id !== order.id)];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*, order_items(*)")
+      .or(`id.eq.${normalized},id.eq.${id}`)
+      .single();
+
+    if (!error && data) {
+      return {
+        id: data.id,
+        date: data.date,
+        createdAt: data.created_at,
+        status: data.status,
+        carrier: data.carrier,
+        trackingNumber: data.tracking_number,
+        estimatedDelivery: data.estimated_delivery,
+        subtotal: Number(data.subtotal),
+        shippingFee: Number(data.shipping_fee),
+        discount: Number(data.discount),
+        total: Number(data.total),
+        paymentMethod: data.payment_method,
+        customer: data.customer,
+        items: (data.order_items || []).map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          category: item.category || "Ethnic Wear",
+          primaryImage: item.primary_image || "",
+          price: Number(item.price),
+          size: item.size,
+          blouseOption: item.blouse_option,
+          quantity: item.quantity,
+        })),
+      };
+    }
   } catch (err) {
-    console.error("Failed to save order to localStorage:", err);
+    console.warn("Supabase order fetch fallback to local:", err);
+  }
+
+  return getOrderById(id);
+}
+
+export async function fetchUserOrders(userId?: string, userPhone?: string): Promise<Order[]> {
+  const cleanPhone = userPhone?.replace(/\D/g, "");
+  if (userId || cleanPhone) {
+    try {
+      const supabase = createClient();
+      let query = supabase.from("orders").select("*, order_items(*)");
+
+      if (userId && cleanPhone) {
+        query = query.or(`user_id.eq.${userId},customer->>phone.eq.${cleanPhone}`);
+      } else if (userId) {
+        query = query.eq("user_id", userId);
+      } else if (cleanPhone) {
+        query = query.eq("customer->>phone", cleanPhone);
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        return data.map((o: any) => ({
+          id: o.id,
+          date: o.date,
+          createdAt: o.created_at,
+          status: o.status,
+          carrier: o.carrier,
+          trackingNumber: o.tracking_number,
+          estimatedDelivery: o.estimated_delivery,
+          subtotal: Number(o.subtotal),
+          shippingFee: Number(o.shipping_fee),
+          discount: Number(o.discount),
+          total: Number(o.total),
+          paymentMethod: o.payment_method,
+          customer: o.customer,
+          items: (o.order_items || []).map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            category: item.category,
+            primaryImage: item.primary_image,
+            price: Number(item.price),
+            size: item.size,
+            blouseOption: item.blouse_option,
+            quantity: item.quantity,
+          })),
+        }));
+      }
+    } catch (err) {
+      console.warn("Could not fetch remote user orders:", err);
+    }
+  }
+
+  return getStoredOrders();
+}
+
+export async function saveOrder(order: Order, userId?: string): Promise<void> {
+  // Always persist locally
+  if (typeof window !== "undefined") {
+    try {
+      const current = getStoredOrders();
+      const updated = [order, ...current.filter((o) => o.id !== order.id)];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    } catch (err) {
+      console.error("Failed to save order to localStorage:", err);
+    }
+  }
+
+  // Persist to Supabase if available
+  try {
+    const supabase = createClient();
+    const payload = {
+      id: order.id,
+      user_id: userId || null,
+      date: order.date,
+      status: order.status,
+      carrier: order.carrier,
+      tracking_number: order.trackingNumber,
+      estimated_delivery: order.estimatedDelivery,
+      subtotal: order.subtotal,
+      shipping_fee: order.shippingFee,
+      discount: order.discount,
+      total: order.total,
+      payment_method: order.paymentMethod,
+      customer: order.customer,
+    };
+
+    let { error: orderError } = await supabase.from("orders").insert(payload);
+
+    // If UUID validation fails because user_id column in remote DB is still UUID type, retry with user_id: null
+    if (
+      orderError &&
+      (orderError.code === "22P02" || orderError.message?.toLowerCase().includes("uuid"))
+    ) {
+      const { error: retryError } = await supabase.from("orders").insert({
+        ...payload,
+        user_id: null,
+      });
+      orderError = retryError;
+    }
+
+    if (orderError) {
+      console.warn("Supabase order insert notice:", orderError.message);
+      return;
+    }
+
+    if (order.items && order.items.length > 0) {
+      const itemsToInsert = order.items.map((it) => ({
+        order_id: order.id,
+        product_id: it.id,
+        title: it.title,
+        category: it.category,
+        primary_image: it.primaryImage,
+        price: it.price,
+        size: it.size,
+        blouse_option: it.blouseOption || null,
+        quantity: it.quantity,
+      }));
+
+      await supabase.from("order_items").insert(itemsToInsert);
+    }
+  } catch (err) {
+    console.warn("Supabase order sync error:", err);
+  }
+}
+
+export async function updateOrderStatus(
+  orderId: string,
+  newStatus: Order["status"]
+): Promise<boolean> {
+  // 1. Update local storage
+  if (typeof window !== "undefined") {
+    try {
+      const current = getStoredOrders();
+      const updated = current.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    } catch (e) {
+      console.warn("Local storage order status update warning:", e);
+    }
+  }
+
+  // 2. Update Supabase
+  try {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .eq("id", orderId);
+    return !error;
+  } catch (e) {
+    console.warn("Supabase order status update error:", e);
+    return false;
+  }
+}
+
+export async function updateOrderTracking(
+  orderId: string,
+  trackingNumber: string,
+  carrier: string = "BlueDart Express"
+): Promise<boolean> {
+  // 1. Update local storage
+  if (typeof window !== "undefined") {
+    try {
+      const current = getStoredOrders();
+      const updated = current.map((o) =>
+        o.id === orderId ? { ...o, trackingNumber, carrier } : o
+      );
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    } catch (e) {
+      console.warn("Local storage tracking update warning:", e);
+    }
+  }
+
+  // 2. Update Supabase
+  try {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("orders")
+      .update({
+        tracking_number: trackingNumber,
+        carrier,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", orderId);
+    return !error;
+  } catch (e) {
+    console.warn("Supabase order tracking update error:", e);
+    return false;
   }
 }

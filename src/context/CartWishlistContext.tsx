@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Product } from "@/data/products";
 import { showToast } from "@/components/ui/Toast";
+import { createClient } from "@/lib/supabase/client";
 
 export interface CartItem {
   id: string;
@@ -85,6 +86,32 @@ export const CartWishlistProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [wishlist]);
 
+  // Sync wishlist with Supabase for authenticated users
+  React.useEffect(() => {
+    async function syncSupabaseWishlist() {
+      try {
+        const supabase = createClient();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session?.user) {
+          const { data, error } = await supabase
+            .from("wishlists")
+            .select("product_id")
+            .eq("user_id", session.user.id);
+
+          if (!error && data) {
+            const remoteIds = data.map((d: any) => d.product_id);
+            setWishlist((prev) => Array.from(new Set([...prev, ...remoteIds])));
+          }
+        }
+      } catch {
+        // offline fallback
+      }
+    }
+    syncSupabaseWishlist();
+  }, []);
+
   const addToCart = (
     product: Product,
     size?: string,
@@ -128,13 +155,40 @@ export const CartWishlistProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const toggleWishlist = (productId: string) => {
     setWishlist((prev) => {
       const exists = prev.includes(productId);
+      const next = exists ? prev.filter((id) => id !== productId) : [...prev, productId];
+
       if (exists) {
         showToast.info("Removed from your wishlist");
-        return prev.filter((id) => id !== productId);
       } else {
         showToast.success("Saved to your wishlist");
-        return [...prev, productId];
       }
+
+      // Persist to Supabase if authenticated
+      (async () => {
+        try {
+          const supabase = createClient();
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          if (session?.user) {
+            if (exists) {
+              await supabase
+                .from("wishlists")
+                .delete()
+                .eq("user_id", session.user.id)
+                .eq("product_id", productId);
+            } else {
+              await supabase
+                .from("wishlists")
+                .insert([{ user_id: session.user.id, product_id: productId }]);
+            }
+          }
+        } catch {
+          // ignore
+        }
+      })();
+
+      return next;
     });
   };
 

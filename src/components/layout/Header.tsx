@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartWishlist } from "@/context/CartWishlistContext";
+import { useAuth } from "@/context/AuthContext";
 import { SearchModal } from "@/components/layout/SearchModal";
 
 interface NavItem {
@@ -136,6 +137,7 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
     isMobileMenuOpen,
     setIsMobileMenuOpen,
   } = useCartWishlist();
+  const { user } = useAuth();
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -266,11 +268,15 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
               </button>
 
               <Link
-                href="/account"
-                className="hidden sm:flex items-center justify-center p-2 text-current hover:text-[#B79B63] transition-colors"
-                aria-label="Account"
+                href={user ? "/account" : "/login"}
+                className="relative hidden sm:flex items-center justify-center p-2 text-current hover:text-[#B79B63] transition-colors"
+                aria-label={user ? "My Account" : "Sign In / Register"}
+                title={user ? "My Account" : "Sign In / Register"}
               >
                 <User className="h-5 w-5" />
+                {user && (
+                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#2D6A4F] ring-2 ring-white" />
+                )}
               </Link>
 
               <Link
@@ -554,11 +560,11 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
               <div className="pt-2 flex items-center justify-between text-[11px] uppercase tracking-wider text-[#1C1B19] border-t border-[#F0EBE1]">
                 <span className="font-semibold text-[#3A3632]">INR ₹ (India)</span>
                 <Link
-                  href="/account"
+                  href={user ? "/account" : "/login"}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="text-[#1C1B19] font-bold hover:text-[#B79B63] transition-colors"
                 >
-                  My Account
+                  {user ? "My Account" : "Sign In / Register"}
                 </Link>
               </div>
             </div>

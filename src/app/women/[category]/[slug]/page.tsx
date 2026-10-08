@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getProductBySlug, PRODUCTS } from "@/data/products";
+import { getProductBySlug, fetchProductBySlug, PRODUCTS } from "@/data/products";
 import { ProductDetailView } from "@/components/shop/ProductDetailView";
 import { constructMetadata } from "@/lib/seo";
 
@@ -19,7 +19,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await fetchProductBySlug(slug);
   if (!product) return {};
 
   return constructMetadata({
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await fetchProductBySlug(slug);
 
   if (!product) {
     notFound();

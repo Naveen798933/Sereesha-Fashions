@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { PRODUCTS } from "@/data/products";
+import { formatINR } from "@/lib/utils";
 
 // ─── Category Tiles ────────────────────────────────────────────────────────────
 const CATEGORIES = [
@@ -67,14 +68,6 @@ const TESTIMONIALS = [
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function formatINR(n: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(n);
-}
-
 const BADGE_STYLES: Record<string, string> = {
   BESTSELLER: "bg-[#1C1B19] text-[#FAF7F2]",
   NEW: "bg-[#B79B63] text-white",

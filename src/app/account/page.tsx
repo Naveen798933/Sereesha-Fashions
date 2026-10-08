@@ -14,11 +14,15 @@ import {
   Trash2,
   Truck,
   ExternalLink,
+  LogOut,
+  User as UserIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { formatINR, cn } from "@/lib/utils";
-import { getStoredOrders, Order } from "@/lib/orders";
+import { getStoredOrders, fetchUserOrders, Order } from "@/lib/orders";
 import { showToast } from "@/components/ui/Toast";
+import { useAuth } from "@/context/AuthContext";
+import { createClient } from "@/lib/supabase/client";
 
 interface SavedAddress {
   id: string;
@@ -58,8 +62,9 @@ const DEFAULT_ADDRESSES: SavedAddress[] = [
 ];
 
 export default function AccountPage() {
+  const { user, profile, signOut, isLoading } = useAuth();
   const [activeTab, setActiveTab] = React.useState<"orders" | "addresses" | "styling">("orders");
-  const orders: Order[] = React.useMemo(() => getStoredOrders(), []);
+  const [orders, setOrders] = React.useState<Order[]>(() => getStoredOrders());
   const [addresses, setAddresses] = React.useState<SavedAddress[]>(() => {
     if (typeof window === "undefined") return DEFAULT_ADDRESSES;
     try {
@@ -73,6 +78,44 @@ export default function AccountPage() {
     }
     return DEFAULT_ADDRESSES;
   });
+
+  // Load orders from Supabase if user is logged in
+  React.useEffect(() => {
+    fetchUserOrders(user?.id, profile?.phone || user?.phone).then((loaded) => {
+      if (loaded && loaded.length > 0) {
+        setOrders(loaded);
+      }
+    });
+  }, [user, profile]);
+
+  // Load addresses from Supabase if logged in
+  React.useEffect(() => {
+    if (!user) return;
+    const fetchRemoteAddresses = async () => {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase.from("addresses").select("*").eq("user_id", user.id);
+
+        if (!error && data && data.length > 0) {
+          const mapped: SavedAddress[] = data.map((d: any) => ({
+            id: d.id,
+            name: d.name,
+            phone: d.phone,
+            street: d.street,
+            city: d.city,
+            state: d.state,
+            pinCode: d.pin_code,
+            isDefault: d.is_default,
+            type: d.type as any,
+          }));
+          setAddresses(mapped);
+        }
+      } catch (err) {
+        console.warn("Addresses fetch error:", err);
+      }
+    };
+    fetchRemoteAddresses();
+  }, [user]);
 
   // Address Modal State
   const [isAddressModalOpen, setIsAddressModalOpen] = React.useState(false);
@@ -135,12 +178,21 @@ export default function AccountPage() {
     showToast.success("New delivery destination saved successfully");
   };
 
-  const handleDeleteAddress = (id: string) => {
+  const handleDeleteAddress = async (id: string) => {
     const updated = addresses.filter((a) => a.id !== id);
     setAddresses(updated);
     try {
       localStorage.setItem("sreesha_saved_addresses", JSON.stringify(updated));
     } catch {}
+
+    if (user) {
+      try {
+        const supabase = createClient();
+        await supabase.from("addresses").delete().eq("id", id).eq("user_id", user.id);
+      } catch (err) {
+        console.warn("Could not delete address from Supabase:", err);
+      }
+    }
     showToast.success("Address removed");
   };
 
@@ -156,22 +208,51 @@ export default function AccountPage() {
     showToast.success("Default delivery destination updated");
   };
 
+  const displayName =
+    profile?.full_name ||
+    user?.user_metadata?.full_name ||
+    (user ? "Valued Client" : "Guest Client");
+  const displayEmail = profile?.email || user?.email || "Guest Session";
+  const displayInitial = (displayName || "S").charAt(0).toUpperCase();
+
   return (
     <div className="min-h-screen bg-[#FAF7F2] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-28 sm:pb-12">
+      {/* Guest Session Notification Banner if not logged in */}
+      {!user && !isLoading && (
+        <div className="bg-[#FAF7F2] border border-[#D8C7A5] p-4 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <UserIcon className="h-5 w-5 text-[#B79B63]" />
+            <p className="text-xs text-[#5A5650]">
+              You are currently viewing orders stored on this device.{" "}
+              <strong className="text-[#1C1B19]">Sign in</strong> to sync your orders across all
+              devices.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/login?redirect=/account">Sign In</Link>
+            </Button>
+            <Button asChild variant="primary" size="sm">
+              <Link href="/register?redirect=/account">Register</Link>
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Header Profile Summary */}
       <div className="bg-white border border-[#E8E2D8] p-6 sm:p-8 mb-8 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6 shadow-xs">
         <div className="flex items-center gap-4 text-center sm:text-left">
           <div className="h-16 w-16 bg-[#1C1B19] text-[#B79B63] flex items-center justify-center font-serif text-2xl font-semibold border border-[#B79B63]">
-            S
+            {displayInitial}
           </div>
           <div>
-            <h1 className="font-serif text-2xl sm:text-3xl text-[#1C1B19]">Sreeja Varma</h1>
+            <h1 className="font-serif text-2xl sm:text-3xl text-[#1C1B19]">{displayName}</h1>
             <p className="text-xs text-[#5A5650] mt-0.5">
-              sreeja.varma@example.com • +91 98490 12345
+              {displayEmail} {profile?.phone ? `• ${profile.phone}` : ""}
             </p>
             <div className="flex items-center gap-2 mt-2">
               <span className="px-2.5 py-0.5 bg-[#F7F3EB] text-[#B79B63] border border-[#D8C7A5] text-[10px] uppercase tracking-wider font-semibold">
-                Boutique Gold Patron
+                {user ? "Verified Client Patron" : "Guest Patron"}
               </span>
               <span className="text-[11px] text-[#8C867D]">
                 • {orders.length} Handloom Purchases
@@ -180,7 +261,17 @@ export default function AccountPage() {
           </div>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="border-[#B79B63]/40 text-[#B79B63] hover:bg-[#B79B63]/10"
+          >
+            <Link href="/admin">
+              <ShieldCheck className="mr-1.5 h-3.5 w-3.5" /> Admin Portal
+            </Link>
+          </Button>
           <Button asChild variant="outline" size="sm">
             <Link href="/wishlist">
               <Heart className="mr-1.5 h-3.5 w-3.5" /> Wishlist
@@ -189,6 +280,17 @@ export default function AccountPage() {
           <Button asChild variant="primary" size="sm">
             <Link href="/women/sarees">Shop New Drops</Link>
           </Button>
+          {user && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => signOut()}
+              className="text-[#9A3434] hover:bg-[#9A3434]/10 cursor-pointer"
+            >
+              <LogOut className="mr-1.5 h-3.5 w-3.5" /> Sign Out
+            </Button>
+          )}
         </div>
       </div>
 
