@@ -101,7 +101,7 @@ export const CartWishlistProvider: React.FC<{ children: React.ReactNode }> = ({ 
             .eq("user_id", session.user.id);
 
           if (!error && data) {
-            const remoteIds = data.map((d: any) => d.product_id);
+            const remoteIds = (data as { product_id: string }[]).map((d) => d.product_id);
             setWishlist((prev) => Array.from(new Set([...prev, ...remoteIds])));
           }
         }

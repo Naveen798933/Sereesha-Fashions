@@ -21,7 +21,17 @@ export async function POST(req: Request) {
     let order;
     try {
       order = await razorpay.orders.create(options);
-    } catch (rzpErr: unknown) {
+    } catch {
+      if (
+        process.env.NODE_ENV === "production" &&
+        process.env.RAZORPAY_KEY_ID &&
+        process.env.RAZORPAY_KEY_SECRET
+      ) {
+        return NextResponse.json(
+          { error: "Payment gateway error. Please try again." },
+          { status: 502 }
+        );
+      }
       // In dev or demo mode without live Razorpay keys, gracefully provide mock order
       const orderId = `order_rzp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       order = {

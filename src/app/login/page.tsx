@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Phone, ArrowRight, ShieldCheck, Sparkles, User, Smartphone, Sparkle } from "lucide-react";
+import { ArrowRight, ShieldCheck, Sparkles, User, Sparkle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";

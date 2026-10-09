@@ -25,7 +25,7 @@ interface AuthResponse {
   success: boolean;
   error?: string;
   notFound?: boolean;
-  customer?: any;
+  customer?: CustomerSession;
 }
 
 interface AuthContextType {
@@ -239,8 +239,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       applyCustomerSession(customer);
       showToast.success(data.message || `Welcome back, ${customer.name}!`);
       return { success: true, customer };
-    } catch (err: any) {
-      const msg = err.message || "Failed to sign in. Please try again.";
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to sign in. Please try again.";
       showToast.error(msg);
       return { success: false, error: msg };
     }
@@ -266,8 +266,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       applyCustomerSession(customer);
       showToast.success(data.message || `Welcome to Sreesha Elegance, ${customer.name}!`);
       return { success: true, customer };
-    } catch (err: any) {
-      const msg = err.message || "Failed to register account.";
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to register account.";
       showToast.error(msg);
       return { success: false, error: msg };
     }
@@ -286,9 +286,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       showToast.success("Welcome back to Sreesha Elegance");
       return { error: null };
-    } catch (err: any) {
-      showToast.error(err.message || "Failed to sign in");
-      return { error: err };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to sign in";
+      showToast.error(msg);
+      return { error: err as Error };
     }
   };
 
@@ -313,9 +314,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       showToast.success("Registration successful!");
       return { error: null };
-    } catch (err: any) {
-      showToast.error(err.message || "Failed to sign up");
-      return { error: err };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to sign up";
+      showToast.error(msg);
+      return { error: err as Error };
     }
   };
 
@@ -328,7 +330,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setProfile(null);
       showToast.info("Signed out of boutique session");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Sign out error:", err);
     }
   };

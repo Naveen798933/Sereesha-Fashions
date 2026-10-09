@@ -20,7 +20,6 @@ import { formatINR, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { showToast } from "@/components/ui/Toast";
 import { saveOrder, Order } from "@/lib/orders";
-import { createClient } from "@/lib/supabase/client";
 
 type PaymentMethod = "upi" | "card" | "netbanking" | "cod";
 

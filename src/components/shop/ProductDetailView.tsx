@@ -153,8 +153,21 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
           .eq("product_id", product.id)
           .order("created_at", { ascending: false });
 
+        interface DbReviewRecord {
+          id: string;
+          author?: string;
+          author_name?: string;
+          city?: string;
+          rating?: number | string;
+          date?: string;
+          title?: string;
+          comment?: string;
+          fit?: string;
+          verified?: boolean;
+        }
+
         if (!error && data && data.length > 0) {
-          const mapped: UserReview[] = data.map((r: any) => ({
+          const mapped: UserReview[] = (data as unknown as DbReviewRecord[]).map((r) => ({
             id: r.id,
             author: r.author || r.author_name || "Patron",
             city: r.city || "Hyderabad",
@@ -185,18 +198,18 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
             table: "reviews",
             filter: `product_id=eq.${product.id}`,
           },
-          (payload: any) => {
+          (payload: { new?: Record<string, unknown> }) => {
             if (payload?.new) {
               const r = payload.new;
               const newRev: UserReview = {
-                id: r.id,
-                author: r.author || r.author_name || "Patron",
-                city: r.city || "Hyderabad",
+                id: String(r.id || Date.now()),
+                author: String(r.author || r.author_name || "Patron"),
+                city: String(r.city || "Hyderabad"),
                 rating: Number(r.rating) || 5,
-                date: r.date || "Just now",
-                title: r.title || "Exquisite Handloom",
-                comment: r.comment || "",
-                fit: r.fit || "Bespoke Master Fit",
+                date: String(r.date || "Just now"),
+                title: String(r.title || "Exquisite Handloom"),
+                comment: String(r.comment || ""),
+                fit: String(r.fit || "Bespoke Master Fit"),
                 verified: Boolean(r.verified ?? true),
               };
               setReviews((prev) => [newRev, ...prev.filter((x) => x.id !== newRev.id)]);

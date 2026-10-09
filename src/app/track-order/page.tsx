@@ -49,7 +49,7 @@ function TrackOrderContent() {
             table: "orders",
             filter: `id=eq.${searchedId}`,
           },
-          (payload: any) => {
+          (payload: { new?: Record<string, unknown> }) => {
             if (payload?.new) {
               fetchOrderById(searchedId).then((updated) => {
                 if (updated) {

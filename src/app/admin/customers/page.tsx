@@ -12,7 +12,6 @@ import {
   Sparkles,
   RefreshCw,
   Download,
-  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { showToast } from "@/components/ui/Toast";

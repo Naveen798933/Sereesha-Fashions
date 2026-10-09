@@ -47,6 +47,36 @@ export interface Order {
   items: OrderItem[];
 }
 
+export type OrderStatus = Order["status"];
+
+export interface DbOrderItem {
+  id: string;
+  title: string;
+  category?: string;
+  primary_image?: string;
+  price: number | string;
+  size: string;
+  blouse_option?: string;
+  quantity: number;
+}
+
+export interface DbOrder {
+  id: string;
+  date: string;
+  created_at: string;
+  status: OrderStatus;
+  carrier: string;
+  tracking_number: string;
+  estimated_delivery: string;
+  subtotal: number | string;
+  shipping_fee: number | string;
+  discount: number | string;
+  total: number | string;
+  payment_method: Order["paymentMethod"];
+  customer: OrderCustomer;
+  order_items?: DbOrderItem[];
+}
+
 const STORAGE_KEY = "sreesha_elegance_orders";
 
 const INITIAL_SAMPLE_ORDERS: Order[] = [
@@ -173,7 +203,7 @@ export async function fetchOrderById(id: string): Promise<Order | undefined> {
         total: Number(data.total),
         paymentMethod: data.payment_method,
         customer: data.customer,
-        items: (data.order_items || []).map((item: any) => ({
+        items: ((data.order_items || []) as DbOrderItem[]).map((item) => ({
           id: item.id,
           title: item.title,
           category: item.category || "Ethnic Wear",
@@ -210,7 +240,7 @@ export async function fetchUserOrders(userId?: string, userPhone?: string): Prom
       const { data, error } = await query.order("created_at", { ascending: false });
 
       if (!error && data && data.length > 0) {
-        return data.map((o: any) => ({
+        return (data as unknown as DbOrder[]).map((o) => ({
           id: o.id,
           date: o.date,
           createdAt: o.created_at,
@@ -224,11 +254,11 @@ export async function fetchUserOrders(userId?: string, userPhone?: string): Prom
           total: Number(o.total),
           paymentMethod: o.payment_method,
           customer: o.customer,
-          items: (o.order_items || []).map((item: any) => ({
+          items: ((o.order_items || []) as DbOrderItem[]).map((item) => ({
             id: item.id,
             title: item.title,
-            category: item.category,
-            primaryImage: item.primary_image,
+            category: item.category || "Ethnic Wear",
+            primaryImage: item.primary_image || "",
             price: Number(item.price),
             size: item.size,
             blouseOption: item.blouse_option,

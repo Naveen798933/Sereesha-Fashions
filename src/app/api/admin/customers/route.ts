@@ -5,9 +5,17 @@ import path from "path";
 
 const CUSTOMERS_FILE_PATH = path.join(process.cwd(), "src", "data", "customers.json");
 
+interface CustomerRecord {
+  id: string;
+  name: string;
+  phone: string;
+  role: string;
+  created_at: string;
+}
+
 export async function GET() {
   try {
-    let customers: any[] = [];
+    let customers: CustomerRecord[] = [];
 
     // 1. Read from local JSON file
     if (fs.existsSync(CUSTOMERS_FILE_PATH)) {
@@ -29,9 +37,9 @@ export async function GET() {
 
       if (!error && dbCustomers && dbCustomers.length > 0) {
         // Merge and deduplicate by phone
-        const map = new Map<string, any>();
+        const map = new Map<string, CustomerRecord>();
         customers.forEach((c) => map.set(c.phone, c));
-        dbCustomers.forEach((c) => map.set(c.phone, c));
+        (dbCustomers as CustomerRecord[]).forEach((c) => map.set(c.phone, c));
         customers = Array.from(map.values());
       }
     } catch {}
@@ -41,10 +49,8 @@ export async function GET() {
       customers,
       total: customers.length,
     });
-  } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message || "Failed to load customers" },
-      { status: 500 }
-    );
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to load customers";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

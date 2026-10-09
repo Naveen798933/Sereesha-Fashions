@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Tag, Plus, Check, Trash2, Copy, Sparkles, AlertCircle } from "lucide-react";
+import { Plus, Check, Trash2, Copy } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatINR } from "@/lib/utils";
 import { showToast } from "@/components/ui/Toast";
@@ -189,7 +189,7 @@ export default function AdminCouponsPage() {
             </label>
             <select
               value={newType}
-              onChange={(e) => setNewType(e.target.value as any)}
+              onChange={(e) => setNewType(e.target.value as "percentage" | "fixed")}
               className="w-full text-xs p-2.5 border border-stone-200 rounded-xs bg-white focus:outline-none focus:border-[#B79B63]"
             >
               <option value="percentage">Percentage (% OFF)</option>
@@ -253,80 +253,88 @@ export default function AdminCouponsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E8E2D8]/60">
-              {coupons.map((c) => (
-                <tr key={c.code} className="hover:bg-stone-50/50 transition-colors">
-                  <td className="p-3.5 pl-5">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-[#1C1B19] tracking-wider bg-[#FAF7F2] px-2 py-1 border border-[#E8E2D8] rounded-2xs">
-                        {c.code}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleCopyCode(c.code)}
-                        className="p-1 text-stone-400 hover:text-[#B79B63] transition-colors"
-                        title="Copy Code"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+              {loading && coupons.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-stone-400 italic">
+                    Loading atelier promotional vouchers...
                   </td>
+                </tr>
+              ) : (
+                coupons.map((c) => (
+                  <tr key={c.code} className="hover:bg-stone-50/50 transition-colors">
+                    <td className="p-3.5 pl-5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-[#1C1B19] tracking-wider bg-[#FAF7F2] px-2 py-1 border border-[#E8E2D8] rounded-2xs">
+                          {c.code}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyCode(c.code)}
+                          className="p-1 text-stone-400 hover:text-[#B79B63] transition-colors"
+                          title="Copy Code"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
 
-                  <td className="p-3.5 font-semibold text-[#1C1B19]">
-                    {c.discount_type === "percentage"
-                      ? `${c.discount_value}% OFF`
-                      : `${formatINR(c.discount_value)} FLAT OFF`}
-                  </td>
+                    <td className="p-3.5 font-semibold text-[#1C1B19]">
+                      {c.discount_type === "percentage"
+                        ? `${c.discount_value}% OFF`
+                        : `${formatINR(c.discount_value)} FLAT OFF`}
+                    </td>
 
-                  <td className="p-3.5 text-stone-600">
-                    {c.min_order > 0 ? (
-                      <span>Orders above {formatINR(c.min_order)}</span>
-                    ) : (
-                      <span className="text-stone-400">No minimum limit</span>
-                    )}
-                  </td>
-
-                  <td className="p-3.5">
-                    <button
-                      type="button"
-                      onClick={() => toggleCouponStatus(c.code)}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium border transition-colors cursor-pointer ${
-                        c.active
-                          ? "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
-                          : "bg-stone-100 text-stone-600 border-stone-200 hover:bg-stone-200"
-                      }`}
-                    >
-                      {c.active ? (
-                        <>
-                          <Check className="w-2.5 h-2.5" /> Active
-                        </>
+                    <td className="p-3.5 text-stone-600">
+                      {c.min_order > 0 ? (
+                        <span>Orders above {formatINR(c.min_order)}</span>
                       ) : (
-                        <span>Disabled</span>
+                        <span className="text-stone-400">No minimum limit</span>
                       )}
-                    </button>
-                  </td>
+                    </td>
 
-                  <td className="p-3.5 pr-5 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                    <td className="p-3.5">
                       <button
                         type="button"
                         onClick={() => toggleCouponStatus(c.code)}
-                        className="text-[11px] uppercase tracking-wider font-semibold text-[#B79B63] hover:text-[#1C1B19] transition-colors cursor-pointer"
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium border transition-colors cursor-pointer ${
+                          c.active
+                            ? "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
+                            : "bg-stone-100 text-stone-600 border-stone-200 hover:bg-stone-200"
+                        }`}
                       >
-                        {c.active ? "Deactivate" : "Activate"}
+                        {c.active ? (
+                          <>
+                            <Check className="w-2.5 h-2.5" /> Active
+                          </>
+                        ) : (
+                          <span>Disabled</span>
+                        )}
                       </button>
+                    </td>
 
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteCoupon(c.code)}
-                        className="p-1 text-stone-400 hover:text-rose-600 transition-colors cursor-pointer ml-1"
-                        title="Delete Coupon"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    <td className="p-3.5 pr-5 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => toggleCouponStatus(c.code)}
+                          className="text-[11px] uppercase tracking-wider font-semibold text-[#B79B63] hover:text-[#1C1B19] transition-colors cursor-pointer"
+                        >
+                          {c.active ? "Deactivate" : "Activate"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCoupon(c.code)}
+                          className="p-1 text-stone-400 hover:text-rose-600 transition-colors cursor-pointer ml-1"
+                          title="Delete Coupon"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

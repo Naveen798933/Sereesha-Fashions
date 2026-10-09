@@ -9,19 +9,13 @@ import {
   Package,
   ArrowUpRight,
   Clock,
-  CheckCircle2,
-  Truck,
-  Plus,
-  ShieldCheck,
   Tag,
   KeyRound,
-  ExternalLink,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { Order, getStoredOrders } from "@/lib/orders";
+import { Order, DbOrder, DbOrderItem, getStoredOrders } from "@/lib/orders";
 import { formatINR } from "@/lib/utils";
 import { PRODUCTS } from "@/data/products";
-import { Button } from "@/components/ui/Button";
 
 export default function AdminOverviewPage() {
   const [orders, setOrders] = React.useState<Order[]>([]);
@@ -48,7 +42,7 @@ export default function AdminOverviewPage() {
           .order("created_at", { ascending: false });
 
         if (!error && dbOrders && dbOrders.length > 0) {
-          const mapped: Order[] = dbOrders.map((o: any) => ({
+          const mapped: Order[] = (dbOrders as unknown as DbOrder[]).map((o) => ({
             id: o.id,
             date: o.date,
             createdAt: o.created_at,
@@ -62,11 +56,11 @@ export default function AdminOverviewPage() {
             total: Number(o.total),
             paymentMethod: o.payment_method,
             customer: o.customer,
-            items: (o.order_items || []).map((it: any) => ({
+            items: ((o.order_items || []) as DbOrderItem[]).map((it) => ({
               id: it.id,
               title: it.title,
-              category: it.category,
-              primaryImage: it.primary_image,
+              category: it.category || "Ethnic Wear",
+              primaryImage: it.primary_image || "",
               price: Number(it.price),
               size: it.size,
               blouseOption: it.blouse_option,
@@ -116,7 +110,6 @@ export default function AdminOverviewPage() {
   const pendingOrders = orders.filter(
     (o) => o.status !== "Delivered" && o.status !== "Cancelled"
   ).length;
-  const deliveredOrders = orders.filter((o) => o.status === "Delivered").length;
 
   return (
     <div className="space-y-8">

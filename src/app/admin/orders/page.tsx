@@ -5,28 +5,25 @@ import Image from "next/image";
 import {
   Search,
   Filter,
-  CheckCircle2,
-  Clock,
   Truck,
   RotateCw,
-  ExternalLink,
   MessageSquare,
   Printer,
-  ChevronRight,
   Eye,
   X,
   Phone,
   Mail,
   MapPin,
-  Tag,
   ShieldCheck,
   Send,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
   Order,
+  OrderStatus,
+  DbOrder,
+  DbOrderItem,
   getStoredOrders,
-  saveOrder,
   updateOrderStatus,
   updateOrderTracking,
 } from "@/lib/orders";
@@ -65,7 +62,7 @@ export default function AdminOrdersPage() {
         .order("created_at", { ascending: false });
 
       if (!error && dbOrders && dbOrders.length > 0) {
-        const mapped: Order[] = dbOrders.map((o: any) => ({
+        const mapped: Order[] = (dbOrders as unknown as DbOrder[]).map((o) => ({
           id: o.id,
           date: o.date,
           createdAt: o.created_at,
@@ -79,11 +76,11 @@ export default function AdminOrdersPage() {
           total: Number(o.total),
           paymentMethod: o.payment_method,
           customer: o.customer,
-          items: (o.order_items || []).map((it: any) => ({
+          items: ((o.order_items || []) as DbOrderItem[]).map((it) => ({
             id: it.id,
             title: it.title,
-            category: it.category,
-            primaryImage: it.primary_image,
+            category: it.category || "Ethnic Wear",
+            primaryImage: it.primary_image || "",
             price: Number(it.price),
             size: it.size,
             blouseOption: it.blouse_option,
@@ -130,13 +127,12 @@ export default function AdminOrdersPage() {
   }, []);
 
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
-    await updateOrderStatus(orderId, newStatus as any);
+    const status = newStatus as OrderStatus;
+    await updateOrderStatus(orderId, status);
 
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus as any } : o))
-    );
+    setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status } : o)));
     if (selectedOrder && selectedOrder.id === orderId) {
-      setSelectedOrder((prev) => (prev ? { ...prev, status: newStatus as any } : null));
+      setSelectedOrder((prev) => (prev ? { ...prev, status } : null));
     }
     showToast.success(`Order #${orderId} status set to "${newStatus}"`);
   };

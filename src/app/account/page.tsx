@@ -97,7 +97,18 @@ export default function AccountPage() {
         const { data, error } = await supabase.from("addresses").select("*").eq("user_id", user.id);
 
         if (!error && data && data.length > 0) {
-          const mapped: SavedAddress[] = data.map((d: any) => ({
+          interface RemoteAddressRow {
+            id: string;
+            name: string;
+            phone: string;
+            street: string;
+            city: string;
+            state: string;
+            pin_code: string;
+            is_default: boolean;
+            type: string;
+          }
+          const mapped: SavedAddress[] = (data as unknown as RemoteAddressRow[]).map((d) => ({
             id: d.id,
             name: d.name,
             phone: d.phone,
@@ -106,7 +117,7 @@ export default function AccountPage() {
             state: d.state,
             pinCode: d.pin_code,
             isDefault: d.is_default,
-            type: d.type as any,
+            type: d.type === "Work" || d.type === "Atelier" ? d.type : "Home",
           }));
           setAddresses(mapped);
         }

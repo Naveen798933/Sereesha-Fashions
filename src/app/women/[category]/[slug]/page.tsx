@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getProductBySlug, fetchProductBySlug, PRODUCTS } from "@/data/products";
+import { fetchProductBySlug, PRODUCTS } from "@/data/products";
 import { ProductDetailView } from "@/components/shop/ProductDetailView";
 import { constructMetadata } from "@/lib/seo";
 

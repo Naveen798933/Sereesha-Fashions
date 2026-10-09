@@ -3,19 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Package,
-  Search,
-  ExternalLink,
-  Check,
-  X,
-  Plus,
-  Filter,
-  Sparkles,
-  Trash2,
-  AlertCircle,
-  Tag,
-} from "lucide-react";
+import { Package, Search, ExternalLink, Check, X, Plus, Trash2 } from "lucide-react";
 import { PRODUCTS, Product } from "@/data/products";
 import { formatINR } from "@/lib/utils";
 import { showToast } from "@/components/ui/Toast";
@@ -499,7 +487,7 @@ export default function AdminProductsPage() {
                   </label>
                   <select
                     value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value as any)}
+                    onChange={(e) => setNewCategory(e.target.value as Product["category"])}
                     className="w-full px-3 py-2 text-xs border border-stone-200 rounded-xs focus:border-[#B79B63] outline-none bg-white"
                   >
                     <option value="sarees">Silk Sarees</option>

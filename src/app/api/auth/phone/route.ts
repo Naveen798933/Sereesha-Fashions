@@ -90,7 +90,7 @@ export async function POST(req: Request) {
       if (!searchError && dbCustomer) {
         existingCustomer = dbCustomer as CustomerRecord;
       }
-    } catch (dbErr) {
+    } catch {
       // Supabase table might not exist yet or offline
     }
 
