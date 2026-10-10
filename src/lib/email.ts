@@ -95,8 +95,8 @@ export async function sendOrderConfirmationEmail(
           </tr>
           <tr>
             <td style="padding: 20px; text-align: center; background-color: #FAF6F0; border-top: 1px solid #F3ECE2; font-family: sans-serif; font-size: 11px; color: #8F7661;">
-              For bespoke atelier inquiries or assistance: concierge@sreeshaelegance.com | +91 91234 56789<br>
-              Road No. 36, Jubilee Hills, Hyderabad 500033
+              For bespoke atelier inquiries or assistance: concierge@sreeshaelegance.com | +91 62813 44628<br>
+              Opp, JNTU Rd, HMT Hills, Kukatpally, Hyderabad 500085
             </td>
           </tr>
         </table>

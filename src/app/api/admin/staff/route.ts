@@ -39,12 +39,22 @@ function saveAdmins(admins: AdminRecord[]): boolean {
   }
 }
 
-// GET: Retrieve all active admin records
+function sanitizeAdmin(
+  admin: AdminRecord
+): Omit<AdminRecord, "ownerId"> & { hasPasscode: boolean } {
+  const { ownerId, ...safe } = admin;
+  return {
+    ...safe,
+    hasPasscode: Boolean(ownerId && ownerId.length >= 4),
+  };
+}
+
+// GET: Retrieve all active admin records (Sanitized, secrets never returned)
 export async function GET() {
   const admins = loadAdmins();
   return NextResponse.json({
     success: true,
-    admins,
+    admins: admins.map(sanitizeAdmin),
     count: admins.length,
   });
 }
@@ -85,7 +95,7 @@ export async function POST(request: NextRequest) {
         }
         return NextResponse.json({
           success: true,
-          admin: matched,
+          admin: sanitizeAdmin(matched),
           message: `Authenticated as ${matched.displayName} (${matched.role})`,
         });
       }
@@ -155,8 +165,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      admin: newAdmin,
-      admins: updatedList,
+      admin: sanitizeAdmin(newAdmin),
+      admins: updatedList.map(sanitizeAdmin),
       message: `Staff access granted to ${cleanName} (${role})`,
     });
   } catch (error) {
@@ -201,7 +211,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: `Revoked admin access for ${target.displayName}`,
-      admins: filtered,
+      admins: filtered.map(sanitizeAdmin),
     });
   } catch (error) {
     console.error("Staff deletion error:", error);

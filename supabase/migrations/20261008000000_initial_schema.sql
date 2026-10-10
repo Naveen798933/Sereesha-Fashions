@@ -58,6 +58,32 @@ CREATE TABLE IF NOT EXISTS public.customers (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 3.2 STAFF ADMINISTRATORS TABLE (Separated admin authority, root owner + delegated roles)
+CREATE TABLE IF NOT EXISTS public.staff_admins (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  display_name TEXT NOT NULL,
+  phone TEXT NOT NULL UNIQUE,
+  owner_id TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'Store Manager',
+  status TEXT NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Suspended')),
+  is_owner BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Seed default permanent root owner (sreesha, 6281344628, 8899)
+INSERT INTO public.staff_admins (id, name, display_name, phone, owner_id, role, status, is_owner)
+VALUES ('admin_owner_primary', 'sreesha', 'Sreesha', '6281344628', '8899', 'Super Admin / Owner', 'Active', true)
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  display_name = EXCLUDED.display_name,
+  phone = EXCLUDED.phone,
+  owner_id = EXCLUDED.owner_id,
+  role = EXCLUDED.role,
+  status = EXCLUDED.status,
+  is_owner = EXCLUDED.is_owner;
+
 -- 4. SAVED ADDRESSES TABLE
 CREATE TABLE IF NOT EXISTS public.addresses (
   id TEXT PRIMARY KEY DEFAULT ('addr_' || substr(md5(random()::text), 1, 8)),
@@ -224,11 +250,14 @@ CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON public.reviews(product_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_rating ON public.reviews(rating);
 
 CREATE INDEX IF NOT EXISTS idx_wishlists_user_id ON public.wishlists(user_id);
+CREATE INDEX IF NOT EXISTS idx_staff_admins_phone ON public.staff_admins(phone);
+CREATE INDEX IF NOT EXISTS idx_staff_admins_status ON public.staff_admins(status);
 
 -- 11. ROW LEVEL SECURITY (RLS)
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.staff_admins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.addresses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
@@ -363,6 +392,12 @@ CREATE POLICY "Anyone can update coupons" ON public.coupons FOR UPDATE USING (tr
 DROP POLICY IF EXISTS "Anyone can delete coupons" ON public.coupons;
 CREATE POLICY "Anyone can delete coupons" ON public.coupons FOR DELETE USING (true);
 
+-- Staff Admins: Service role or admin access only (No unauthenticated public read of passcodes)
+DROP POLICY IF EXISTS "Public cannot read staff passcodes" ON public.staff_admins;
+DROP POLICY IF EXISTS "Service role can manage staff_admins" ON public.staff_admins;
+CREATE POLICY "Service role can manage staff_admins" ON public.staff_admins
+  FOR ALL USING (auth.role() = 'service_role');
+
 -- 12. AUTOMATED TIMESTAMPS & USER TRIGGERS
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
 RETURNS TRIGGER AS $$
@@ -390,6 +425,11 @@ CREATE TRIGGER on_addresses_updated_at
 DROP TRIGGER IF EXISTS on_orders_updated_at ON public.orders;
 CREATE TRIGGER on_orders_updated_at
   BEFORE UPDATE ON public.orders
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+DROP TRIGGER IF EXISTS on_staff_admins_updated_at ON public.staff_admins;
+CREATE TRIGGER on_staff_admins_updated_at
+  BEFORE UPDATE ON public.staff_admins
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()

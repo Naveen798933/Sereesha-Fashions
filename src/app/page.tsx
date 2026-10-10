@@ -144,7 +144,7 @@ export default function HomePage() {
             <span className="hidden sm:inline h-3 w-px bg-[#D8C7A5]" />
             <span className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-[#B79B63]" />
-              Jubilee Hills, Hyderabad
+              Kukatpally, Hyderabad
             </span>
           </div>
         </div>
@@ -434,7 +434,7 @@ export default function HomePage() {
               href="/contact"
               className="inline-flex items-center gap-2 px-7 py-3.5 border border-[#1C1B19] text-[#1C1B19] text-xs uppercase tracking-[0.18em] font-semibold hover:bg-[#1C1B19] hover:text-white transition-colors"
             >
-              Visit Jubilee Hills Atelier
+              Visit Hyderabad Atelier
             </Link>
           </div>
         </div>

@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   KeyRound,
   Search,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { showToast } from "@/components/ui/Toast";
@@ -56,9 +57,6 @@ export default function AdminStaffPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [formError, setFormError] = React.useState<string | null>(null);
 
-  // Passcode reveal map (id -> boolean)
-  const [revealedIds, setRevealedIds] = React.useState<Record<string, boolean>>({});
-  const [isOwnerPasscodeRevealed, setIsOwnerPasscodeRevealed] = React.useState(false);
   const [showNewPasscode, setShowNewPasscode] = React.useState(false);
 
   // Fetch admin staff list on mount
@@ -88,10 +86,6 @@ export default function AdminStaffPage() {
   React.useEffect(() => {
     fetchAdmins();
   }, [fetchAdmins]);
-
-  const toggleReveal = (id: string) => {
-    setRevealedIds((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
 
   const handleAddStaff = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -261,23 +255,12 @@ export default function AdminStaffPage() {
             <span className="font-semibold text-white font-mono">+91 62813 44628</span>
           </div>
           <div className="flex justify-between items-center text-stone-400">
-            <span>Owner Passcode:</span>
+            <span>Passcode Status:</span>
             <div className="inline-flex items-center gap-1.5 bg-[#24221E] px-2 py-0.5 border border-[#B79B63]/30">
-              <span className="font-bold text-[#B79B63] font-mono tracking-widest">
-                {isOwnerPasscodeRevealed ? DEFAULT_OWNER_ADMIN.ownerId : "••••"}
+              <Lock className="w-3 h-3 text-[#B79B63]" />
+              <span className="font-bold text-[#B79B63] font-mono text-[11px] tracking-wider">
+                Protected PIN
               </span>
-              <button
-                type="button"
-                onClick={() => setIsOwnerPasscodeRevealed(!isOwnerPasscodeRevealed)}
-                className="text-stone-400 hover:text-white p-0.5 cursor-pointer"
-                title={isOwnerPasscodeRevealed ? "Hide Passcode" : "Reveal Passcode"}
-              >
-                {isOwnerPasscodeRevealed ? (
-                  <EyeOff className="w-3 h-3" />
-                ) : (
-                  <Eye className="w-3 h-3" />
-                )}
-              </button>
             </div>
           </div>
           <div className="flex justify-between items-center text-stone-400">
@@ -334,7 +317,6 @@ export default function AdminStaffPage() {
                 </tr>
               ) : (
                 filteredAdmins.map((admin) => {
-                  const isRevealed = revealedIds[admin.id];
                   return (
                     <tr key={admin.id} className="hover:bg-[#FAF7F2]/60 transition-colors">
                       {/* Name */}
@@ -374,22 +356,11 @@ export default function AdminStaffPage() {
 
                       {/* PIN / Passcode */}
                       <td className="p-4">
-                        <div className="inline-flex items-center gap-2">
-                          <span className="font-mono font-bold tracking-widest text-[#1C1B19]">
-                            {isRevealed ? admin.ownerId : "••••"}
+                        <div className="inline-flex items-center gap-1.5 text-stone-600 bg-stone-100 px-2 py-0.5 rounded-2xs border border-stone-200">
+                          <Lock className="w-3 h-3 text-[#B79B63]" />
+                          <span className="font-mono text-[11px] tracking-wider font-semibold">
+                            Encrypted PIN
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => toggleReveal(admin.id)}
-                            className="text-[#8C867D] hover:text-[#1C1B19] p-1 cursor-pointer"
-                            title={isRevealed ? "Hide Passcode" : "Reveal Passcode"}
-                          >
-                            {isRevealed ? (
-                              <EyeOff className="w-3.5 h-3.5" />
-                            ) : (
-                              <Eye className="w-3.5 h-3.5" />
-                            )}
-                          </button>
                         </div>
                       </td>
 
