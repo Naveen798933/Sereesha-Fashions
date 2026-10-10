@@ -86,6 +86,20 @@ export const CartWishlistProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [wishlist]);
 
+  const getEffectiveUserId = (sessionUserId?: string): string | null => {
+    if (sessionUserId) return sessionUserId;
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("sreesha_auth_customer");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed?.id) return parsed.id;
+        }
+      } catch {}
+    }
+    return null;
+  };
+
   // Sync wishlist with Supabase for authenticated users
   React.useEffect(() => {
     async function syncSupabaseWishlist() {
@@ -94,11 +108,12 @@ export const CartWishlistProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const {
           data: { session },
         } = await supabase.auth.getSession();
-        if (session?.user) {
+        const effectiveUserId = getEffectiveUserId(session?.user?.id);
+        if (effectiveUserId) {
           const { data, error } = await supabase
             .from("wishlists")
             .select("product_id")
-            .eq("user_id", session.user.id);
+            .eq("user_id", effectiveUserId);
 
           if (!error && data) {
             const remoteIds = (data as { product_id: string }[]).map((d) => d.product_id);
@@ -170,17 +185,18 @@ export const CartWishlistProvider: React.FC<{ children: React.ReactNode }> = ({ 
           const {
             data: { session },
           } = await supabase.auth.getSession();
-          if (session?.user) {
+          const effectiveUserId = getEffectiveUserId(session?.user?.id);
+          if (effectiveUserId) {
             if (exists) {
               await supabase
                 .from("wishlists")
                 .delete()
-                .eq("user_id", session.user.id)
+                .eq("user_id", effectiveUserId)
                 .eq("product_id", productId);
             } else {
               await supabase
                 .from("wishlists")
-                .insert([{ user_id: session.user.id, product_id: productId }]);
+                .insert([{ user_id: effectiveUserId, product_id: productId }]);
             }
           }
         } catch {

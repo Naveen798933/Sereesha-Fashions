@@ -13,6 +13,8 @@ import {
   ShoppingBag,
   X,
   Check,
+  ShieldCheck,
+  Award,
 } from "lucide-react";
 import { PRODUCTS } from "@/data/products";
 import { useCartWishlist } from "@/context/CartWishlistContext";
@@ -272,6 +274,26 @@ export const ProductListingView: React.FC<ProductListingViewProps> = ({
         ))}
       </div>
 
+      {/* Royal Atelier Assurance Ribbon */}
+      <div className="mb-6 p-3 bg-[#F7F3EB] border border-[#E8E2D8] flex flex-wrap items-center justify-between gap-3 text-xs text-[#5A5650]">
+        <div className="flex items-center gap-2">
+          <Award className="h-4 w-4 text-[#B79B63]" />
+          <span>
+            <strong className="text-[#1C1B19]">100% Certified Mulberry Silk:</strong> Authentic
+            weaves sourced directly from master loomed cooperatives.
+          </span>
+        </div>
+        <div className="hidden md:flex items-center gap-4 text-[11px] text-[#8C867D]">
+          <span className="flex items-center gap-1">
+            <ShieldCheck className="h-3.5 w-3.5 text-[#2D6A4F]" /> Silk Mark Certified
+          </span>
+          <span>•</span>
+          <span>Complimentary Fall &amp; Pico Hemming</span>
+          <span>•</span>
+          <span>Insured Pan-India Dispatch</span>
+        </div>
+      </div>
+
       {/* Product Grid (Responsive: 1-col or 2-col on mobile, 3-col on md, 4-col on lg) */}
       {sortedProducts.length === 0 ? (
         <div className="p-16 text-center bg-white border border-[#E8E2D8] space-y-4">
@@ -311,7 +333,7 @@ export const ProductListingView: React.FC<ProductListingViewProps> = ({
             return (
               <div
                 key={product.id}
-                className="group flex flex-col bg-white border border-[#E8E2D8] hover:border-[#D8C7A5] transition-colors relative"
+                className="group flex flex-col bg-white border border-[#E8E2D8] hover:border-[#D8C7A5] transition-all duration-300 relative luxury-card"
               >
                 {/* 4:5 Aspect Ratio Image */}
                 <div className="relative aspect-[4/5] overflow-hidden bg-[#EFE8DD]">

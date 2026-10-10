@@ -40,7 +40,9 @@ export async function POST(req: Request) {
     hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
     const generatedSignature = hmac.digest("hex");
 
-    const isMatch = generatedSignature === razorpay_signature;
+    const genBuf = Buffer.from(generatedSignature, "utf-8");
+    const sigBuf = Buffer.from(String(razorpay_signature), "utf-8");
+    const isMatch = genBuf.length === sigBuf.length && crypto.timingSafeEqual(genBuf, sigBuf);
 
     if (!isMatch) {
       return NextResponse.json(

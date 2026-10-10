@@ -172,11 +172,9 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
   }, [isMobileMenuOpen, setIsMobileMenuOpen]);
 
   // Close mobile drawer on route change
-  const [prevPathname, setPrevPathname] = React.useState(pathname);
-  if (prevPathname !== pathname) {
-    setPrevPathname(pathname);
+  React.useEffect(() => {
     setIsMobileMenuOpen(false);
-  }
+  }, [pathname, setIsMobileMenuOpen]);
 
   const toggleCategory = (label: string) => {
     setExpandedCategory((prev) => (prev === label ? null : label));
@@ -308,6 +306,8 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
             </div>
           </div>
         </div>
+        {/* Subtle gold accent underline */}
+        <div className="h-[1.5px] w-full bg-gradient-to-r from-transparent via-[#B79B63]/40 to-transparent" />
       </header>
 
       {/* Enhanced Mobile Slide-in Drawer with Interactive Collections List (Placed outside <header> to prevent backdrop-filter containing block constraint) */}

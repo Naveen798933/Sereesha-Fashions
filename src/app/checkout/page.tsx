@@ -195,6 +195,35 @@ export default function CheckoutPage() {
     };
 
     await saveOrder(newOrder, user?.id);
+
+    // Dispatch luxury atelier confirmation email if customer email provided
+    if (formData.email && formData.email.includes("@")) {
+      fetch("/api/order/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: generatedId,
+          customerName: formData.fullName,
+          customerEmail: formData.email,
+          total: finalTotal,
+          items: newOrder.items.map((it) => ({
+            title: it.title,
+            size: it.size,
+            quantity: it.quantity,
+            price: it.price,
+            image: it.primaryImage,
+          })),
+          shippingAddress: {
+            street: formData.address,
+            city: formData.city,
+            state: formData.state,
+            pinCode: formData.pinCode,
+          },
+          trackingNumber: newOrder.trackingNumber,
+        }),
+      }).catch((err) => console.warn("Email dispatch notice:", err));
+    }
+
     setIsProcessing(false);
     setOrderCompleted(true);
     clearCart();
@@ -464,7 +493,7 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-[#FAF7F2] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-28 sm:pb-12">
       {/* Checkout Header */}
-      <div className="border-b border-[#E8E2D8] pb-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="border-b border-[#E8E2D8] pb-6 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <span className="text-[11px] uppercase tracking-[0.25em] text-[#B79B63] font-bold">
             Boutique Checkout
@@ -476,6 +505,30 @@ export default function CheckoutPage() {
         <div className="flex items-center gap-2 text-xs text-[#2D6A4F] bg-[#2D6A4F]/10 px-3 py-1.5 border border-[#2D6A4F]/20 font-medium">
           <ShieldCheck className="h-4 w-4" />
           <span>256-Bit Encrypted Secure Checkout</span>
+        </div>
+      </div>
+
+      {/* 3-Step Checkout Progression Stepper */}
+      <div className="mb-8 p-3 sm:p-4 bg-white border border-[#E8E2D8] flex items-center justify-between max-w-2xl mx-auto rounded-xs shadow-2xs text-xs">
+        <Link href="/cart" className="flex items-center gap-2 text-[#2D6A4F] hover:underline">
+          <div className="h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-[#2D6A4F]/10 border border-[#2D6A4F] flex items-center justify-center font-bold text-[10px] sm:text-[11px]">
+            ✓
+          </div>
+          <span className="font-medium hidden sm:inline">1. Bag Review</span>
+        </Link>
+        <div className="h-[1px] flex-1 bg-[#B79B63] mx-2 sm:mx-3" />
+        <div className="flex items-center gap-2 text-[#1C1B19]">
+          <div className="h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-[#1C1B19] text-white flex items-center justify-center font-bold text-[10px] sm:text-[11px]">
+            2
+          </div>
+          <span className="font-semibold">2. Shipping Destination</span>
+        </div>
+        <div className="h-[1px] flex-1 bg-[#E8E2D8] mx-2 sm:mx-3" />
+        <div className="flex items-center gap-2 text-[#8C867D]">
+          <div className="h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-[#FAF7F2] border border-[#E8E2D8] flex items-center justify-center font-medium text-[10px] sm:text-[11px]">
+            3
+          </div>
+          <span className="hidden sm:inline">3. Payment &amp; Verify</span>
         </div>
       </div>
 

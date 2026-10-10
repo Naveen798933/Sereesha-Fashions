@@ -118,3 +118,101 @@ body {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
 }
+
+/* Luxury Royal Gold Gradient Text */
+.gold-gradient-text {
+  background: linear-gradient(135deg, #b79b63 0%, #dfca9a 50%, #b79b63 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Gold Shimmer Keyframe */
+@keyframes goldShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.gold-shimmer-bg {
+  background: linear-gradient(90deg, #b79b63 0%, #e8d8b6 50%, #b79b63 100%);
+  background-size: 200% 100%;
+  animation: goldShimmer 4s infinite linear;
+}
+
+/* Luxury Royal Card Hover Effect */
+.luxury-card {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid #e8e2d8;
+}
+
+.luxury-card:hover {
+  border-color: #d8c7a5;
+  box-shadow: 0 12px 32px -8px rgba(28, 27, 25, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Royal Hairline Divider with Diamond Center */
+.royal-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.royal-divider::before,
+.royal-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #d8c7a5, transparent);
+}
+
+/* Glassmorphism Panel */
+.glass-panel {
+  background: rgba(250, 247, 242, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(216, 199, 165, 0.4);
+}
+
+/* Royal Luxury Gold Glow */
+.gold-glow {
+  box-shadow: 0 0 20px -3px rgba(183, 155, 99, 0.25);
+}
+
+.gold-glow-hover:hover {
+  box-shadow: 0 0 25px -2px rgba(183, 155, 99, 0.35);
+}
+
+/* Soft Floating Badge Animation */
+@keyframes royalFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.royal-float {
+  animation: royalFloat 3.5s ease-in-out infinite;
+}
+
+/* Luxury Input Field */
+.luxury-input {
+  background-color: #ffffff;
+  border: 1px solid #e8e2d8;
+  color: #1c1b19;
+  transition: all 0.25s ease;
+}
+
+.luxury-input:focus {
+  border-color: #b79b63;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(183, 155, 99, 0.15);
+}

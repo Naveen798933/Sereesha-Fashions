@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { fetchProductBySlug, PRODUCTS } from "@/data/products";
 import { ProductDetailView } from "@/components/shop/ProductDetailView";
 import { constructMetadata } from "@/lib/seo";
+import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 
 interface PageProps {
   params: Promise<{
@@ -30,12 +31,29 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function ProductDetailPage({ params }: PageProps) {
-  const { slug } = await params;
+  const { category, slug } = await params;
   const product = await fetchProductBySlug(slug);
 
   if (!product) {
     notFound();
   }
 
-  return <ProductDetailView product={product} />;
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://sreeshaelegance.com";
+  const breadcrumbItems = [
+    { name: "Home", url: `${siteUrl}` },
+    { name: "Women", url: `${siteUrl}/women` },
+    {
+      name: product.categoryLabel || category,
+      url: `${siteUrl}/women/${category}`,
+    },
+    { name: product.title, url: `${siteUrl}/women/${category}/${slug}` },
+  ];
+
+  return (
+    <>
+      <ProductJsonLd product={product} />
+      <BreadcrumbJsonLd items={breadcrumbItems} />
+      <ProductDetailView product={product} />
+    </>
+  );
 }

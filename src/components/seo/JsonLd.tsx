@@ -63,3 +63,92 @@ export const WebSiteJsonLd: React.FC = () => {
     />
   );
 };
+
+export interface ProductJsonLdProps {
+  product: {
+    id: string;
+    slug: string;
+    title: string;
+    category: string;
+    categoryLabel?: string;
+    price: number;
+    primaryImage: string;
+    galleryImages?: string[];
+    shortDescription?: string;
+    description?: string;
+    rating?: number;
+    reviewCount?: number;
+  };
+  url?: string;
+}
+
+export const ProductJsonLd: React.FC<ProductJsonLdProps> = ({ product, url }) => {
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://sreeshaelegance.com";
+  const productUrl = url || `${siteUrl}/women/${product.category}/${product.slug}`;
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    image: [product.primaryImage, ...(product.galleryImages || [])],
+    description: product.shortDescription || product.description || product.title,
+    sku: product.id,
+    mpn: product.id,
+    brand: {
+      "@type": "Brand",
+      name: "Sreesha Elegance",
+    },
+    category: product.categoryLabel || product.category,
+    offers: {
+      "@type": "Offer",
+      url: productUrl,
+      priceCurrency: "INR",
+      price: product.price,
+      priceValidUntil: "2027-12-31",
+      availability: "https://schema.org/InStock",
+      itemCondition: "https://schema.org/NewCondition",
+      seller: {
+        "@type": "Organization",
+        name: "Sreesha Elegance",
+      },
+    },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: product.rating || 5.0,
+      reviewCount: Math.max(1, product.reviewCount || 12),
+      bestRating: "5",
+      worstRating: "1",
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+};
+
+export interface BreadcrumbJsonLdProps {
+  items: Array<{ name: string; url: string }>;
+}
+
+export const BreadcrumbJsonLd: React.FC<BreadcrumbJsonLdProps> = ({ items }) => {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
+};

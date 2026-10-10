@@ -14,11 +14,17 @@ interface CustomerRecord {
   updated_at: string;
 }
 
+let memoryCustomerCache: CustomerRecord[] | null = null;
+
 function readLocalCustomers(): CustomerRecord[] {
+  if (memoryCustomerCache) {
+    return memoryCustomerCache;
+  }
   try {
     if (fs.existsSync(CUSTOMERS_FILE_PATH)) {
       const content = fs.readFileSync(CUSTOMERS_FILE_PATH, "utf-8");
-      return JSON.parse(content || "[]");
+      memoryCustomerCache = JSON.parse(content || "[]");
+      return memoryCustomerCache || [];
     }
   } catch (err) {
     console.warn("Could not read local customers file:", err);
@@ -27,25 +33,29 @@ function readLocalCustomers(): CustomerRecord[] {
 }
 
 function saveLocalCustomer(customer: CustomerRecord): void {
+  const list = [...readLocalCustomers()];
+  const existingIndex = list.findIndex((c) => c.phone === customer.phone);
+  if (existingIndex >= 0) {
+    list[existingIndex] = {
+      ...list[existingIndex],
+      ...customer,
+      updated_at: new Date().toISOString(),
+    };
+  } else {
+    list.push(customer);
+  }
+  memoryCustomerCache = list;
+
   try {
-    const list = readLocalCustomers();
-    const existingIndex = list.findIndex((c) => c.phone === customer.phone);
-    if (existingIndex >= 0) {
-      list[existingIndex] = {
-        ...list[existingIndex],
-        ...customer,
-        updated_at: new Date().toISOString(),
-      };
-    } else {
-      list.push(customer);
+    if (process.env.NODE_ENV !== "production") {
+      const dir = path.dirname(CUSTOMERS_FILE_PATH);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.writeFileSync(CUSTOMERS_FILE_PATH, JSON.stringify(list, null, 2), "utf-8");
     }
-    const dir = path.dirname(CUSTOMERS_FILE_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(CUSTOMERS_FILE_PATH, JSON.stringify(list, null, 2), "utf-8");
   } catch (err) {
-    console.warn("Could not write to local customers file:", err);
+    console.warn("Local customer disk persistence bypassed in serverless environment:", err);
   }
 }
 

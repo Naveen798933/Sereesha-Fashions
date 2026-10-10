@@ -13,10 +13,12 @@ const DEFAULT_DESCRIPTION =
   "Discover handcrafted luxury sarees, bridal lehengas, designer anarkalis, and contemporary silhouettes from our Hyderabad boutique atelier. Wear your elegance.";
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://sreeshaelegance.com";
 
+const DEFAULT_OG_IMAGE = "/logo.png";
+
 export function constructMetadata({
   title,
   description = DEFAULT_DESCRIPTION,
-  image = "/images/og-default.jpg",
+  image = DEFAULT_OG_IMAGE,
   noIndex = false,
   canonical,
 }: MetadataOptions = {}): Metadata {
