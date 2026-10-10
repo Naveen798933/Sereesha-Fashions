@@ -136,13 +136,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   };
 
-  const handleAutoFillOwner = () => {
-    setNameInput("sreesha");
-    setPhoneInput("6281344628");
-    setOwnerIdInput("8899");
-    setAuthError(null);
-  };
-
   const handleSignOutAdmin = () => {
     clearClientAdminSession();
     setIsAuthorized(false);
@@ -193,34 +186,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </p>
           </div>
 
-          {/* Quick-fill Owner details helper card */}
-          <div className="bg-[#24221E] border border-[#3E3A34] p-3.5 rounded-xs space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-stone-400 uppercase tracking-wider flex items-center gap-1 font-semibold text-[#B79B63]">
-                <ShieldCheck className="h-3.5 w-3.5" /> Registered Owner
-              </span>
-              <button
-                type="button"
-                onClick={handleAutoFillOwner}
-                className="text-[11px] text-[#B79B63] hover:underline cursor-pointer font-medium"
-              >
-                Auto-Fill Owner Credentials
-              </button>
-            </div>
-            <div className="text-[11px] text-stone-300 grid grid-cols-3 gap-2 pt-1 border-t border-[#33302B]">
-              <div>
-                <span className="text-[9px] text-stone-500 block uppercase">Name</span>
-                <span className="font-semibold text-white">sreesha</span>
-              </div>
-              <div>
-                <span className="text-[9px] text-stone-500 block uppercase">Mobile</span>
-                <span className="font-semibold text-white">6281344628</span>
-              </div>
-              <div>
-                <span className="text-[9px] text-stone-500 block uppercase">Owner ID</span>
-                <span className="font-semibold text-[#B79B63] font-mono">8899</span>
-              </div>
-            </div>
+          {/* Confidential Atelier Security Notice */}
+          <div className="bg-[#24221E]/60 border border-[#3E3A34] p-3.5 rounded-xs flex items-center gap-2.5 text-stone-400 text-xs">
+            <ShieldCheck className="h-4 w-4 text-[#B79B63] shrink-0" />
+            <span className="text-[11px] leading-relaxed">
+              Confidential Atelier Portal. Please authenticate with your registered Administrator
+              credentials.
+            </span>
           </div>
 
           {/* Error Message */}
@@ -247,7 +219,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     setNameInput(e.target.value);
                     if (authError) setAuthError(null);
                   }}
-                  placeholder="e.g. sreesha"
+                  placeholder="Administrator name"
                   className="w-full pl-10 pr-4 py-2.5 bg-[#141312] border border-[#3E3A34] text-sm text-[#FAF7F2] font-medium outline-none focus:border-[#B79B63] rounded-xs"
                 />
               </div>
@@ -272,7 +244,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     setPhoneInput(e.target.value.replace(/\D/g, ""));
                     if (authError) setAuthError(null);
                   }}
-                  placeholder="6281344628"
+                  placeholder="10-digit registered mobile"
                   className="w-full pl-20 pr-4 py-2.5 bg-[#141312] border border-[#3E3A34] text-sm text-[#FAF7F2] font-medium tracking-wider outline-none focus:border-[#B79B63] rounded-xs"
                 />
               </div>
@@ -294,7 +266,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     setOwnerIdInput(e.target.value);
                     if (authError) setAuthError(null);
                   }}
-                  placeholder="8899"
+                  placeholder="Enter security passcode"
                   className="w-full pl-10 pr-10 py-2.5 bg-[#141312] border border-[#3E3A34] text-sm text-[#FAF7F2] font-mono tracking-widest outline-none focus:border-[#B79B63] rounded-xs"
                 />
                 <button

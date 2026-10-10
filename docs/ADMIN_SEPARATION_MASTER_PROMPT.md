@@ -84,10 +84,13 @@ export interface AdminRecord {
 - **Mode 3 — Atelier Admin**:
   - Distinct royal dark theme card with key crest.
   - Inputs Required:
-    1. `adminName`: Full Name (`sreesha`)
-    2. `adminPhone`: Registered Mobile (`6281344628`)
-    3. `adminOwnerId`: Owner ID / Passcode (`8899`) with show/hide eye toggle.
-  - Quick-Fill chip for Owner credentials for streamlined operational access.
+    1. `adminName`: Registered Administrator Full Name
+    2. `adminPhone`: Registered 10-Digit Mobile
+    3. `adminOwnerId`: Secret Owner ID / Passcode with password mask and show/hide eye toggle.
+  - **Confidentiality & Zero-Leakage Policy**:
+    - No public Quick-Fill helper chips or exposed plaintext credentials on the login screen.
+    - Input fields employ generic, non-revealing placeholders (`"Administrator name"`, `"10-digit registered mobile"`, `"Enter security passcode"`).
+    - Secret passcodes are masked by default (`type="password"`) with eye toggle visibility control.
   - Verification calls `POST /api/admin/staff` with `{ action: "verify_login" }` and falls back to client-side `verifyAdminCredentials`.
   - On Successful Verification:
     - Stores `sreesha_admin_authorized = "true"` in `sessionStorage` / `localStorage`.

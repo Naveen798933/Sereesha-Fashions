@@ -10,7 +10,7 @@ import {
   ArrowUpRight,
   Clock,
   Tag,
-  KeyRound,
+  ShieldCheck,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Order, DbOrder, DbOrderItem, getStoredOrders } from "@/lib/orders";
@@ -127,14 +127,14 @@ export default function AdminOverviewPage() {
           </p>
         </div>
 
-        {/* Manager Quick Access Badge */}
+        {/* Admin Session Security Status Badge */}
         <div className="flex items-center gap-2 bg-[#FAF7F2] border border-[#E8E2D8] px-3.5 py-2 rounded-xs self-start sm:self-auto">
-          <KeyRound className="w-4 h-4 text-[#B79B63]" />
+          <ShieldCheck className="w-4 h-4 text-[#B79B63]" />
           <div className="text-left text-xs">
             <span className="text-[10px] uppercase tracking-wider text-stone-400 block font-medium">
-              Access PIN:
+              Access Gate:
             </span>
-            <span className="font-mono font-bold text-[#1C1B19]">8899</span>
+            <span className="font-semibold text-[#1C1B19]">Authorized Session</span>
           </div>
         </div>
       </div>

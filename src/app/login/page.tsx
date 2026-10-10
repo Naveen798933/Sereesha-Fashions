@@ -240,13 +240,6 @@ function AuthForm() {
     }
   };
 
-  const handleAutofillOwner = () => {
-    setAdminName("sreesha");
-    setAdminPhone("6281344628");
-    setAdminOwnerId("8899");
-    setAdminErrorMessage(null);
-  };
-
   return (
     <div className="min-h-[85vh] bg-[#FAF7F2] py-10 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
       <div
@@ -495,34 +488,13 @@ function AuthForm() {
               </p>
             </div>
 
-            {/* Registered Owner Helper Badge */}
-            <div className="bg-[#24221E] border border-[#3E3A34] p-3 text-xs space-y-1.5 rounded-xs">
-              <div className="flex items-center justify-between text-stone-400 text-[10px] uppercase tracking-wider">
-                <span className="flex items-center gap-1 text-[#B79B63] font-semibold">
-                  <ShieldCheck className="h-3 w-3" /> Registered Owner Credentials
-                </span>
-                <button
-                  type="button"
-                  onClick={handleAutofillOwner}
-                  className="text-[#B79B63] hover:underline cursor-pointer"
-                >
-                  Quick Fill
-                </button>
-              </div>
-              <div className="text-[11px] text-stone-300 grid grid-cols-3 gap-2 pt-1 border-t border-[#33302B]">
-                <div>
-                  <span className="text-[9px] text-stone-500 block uppercase">Name:</span>
-                  <span className="font-semibold text-white">sreesha</span>
-                </div>
-                <div>
-                  <span className="text-[9px] text-stone-500 block uppercase">Mobile:</span>
-                  <span className="font-semibold text-white">6281344628</span>
-                </div>
-                <div>
-                  <span className="text-[9px] text-stone-500 block uppercase">Owner ID:</span>
-                  <span className="font-semibold text-[#B79B63] font-mono">8899</span>
-                </div>
-              </div>
+            {/* Confidential Atelier Security Notice */}
+            <div className="bg-[#24221E]/60 border border-[#3E3A34] p-3 text-xs rounded-xs flex items-center gap-2.5 text-stone-400">
+              <ShieldCheck className="h-4 w-4 text-[#B79B63] shrink-0" />
+              <span className="text-[11px] leading-relaxed">
+                Authorized Personnel Only. Please provide your registered Administrator credentials
+                to access the Atelier Management Suite.
+              </span>
             </div>
 
             {/* Admin Error Message Banner */}
@@ -549,7 +521,7 @@ function AuthForm() {
                       setAdminName(e.target.value);
                       if (adminErrorMessage) setAdminErrorMessage(null);
                     }}
-                    placeholder="e.g. sreesha"
+                    placeholder="Administrator name"
                     className="w-full pl-10 pr-4 py-3 bg-[#141312] border border-[#3E3A34] text-sm text-[#FAF7F2] font-medium outline-none focus:border-[#B79B63] transition-colors rounded-xs"
                   />
                 </div>
@@ -570,7 +542,7 @@ function AuthForm() {
                     required
                     value={adminPhone}
                     onChange={handleAdminPhoneChange}
-                    placeholder="6281344628"
+                    placeholder="10-digit registered mobile"
                     className="w-full pl-20 pr-4 py-3 bg-[#141312] border border-[#3E3A34] text-sm text-[#FAF7F2] font-medium tracking-wider outline-none focus:border-[#B79B63] transition-colors rounded-xs"
                   />
                 </div>
@@ -592,7 +564,7 @@ function AuthForm() {
                       setAdminOwnerId(e.target.value);
                       if (adminErrorMessage) setAdminErrorMessage(null);
                     }}
-                    placeholder="e.g. 8899"
+                    placeholder="Enter security passcode"
                     className="w-full pl-10 pr-10 py-3 bg-[#141312] border border-[#3E3A34] text-sm text-[#FAF7F2] font-mono tracking-widest outline-none focus:border-[#B79B63] transition-colors rounded-xs"
                   />
                   <button

@@ -58,6 +58,8 @@ export default function AdminStaffPage() {
 
   // Passcode reveal map (id -> boolean)
   const [revealedIds, setRevealedIds] = React.useState<Record<string, boolean>>({});
+  const [isOwnerPasscodeRevealed, setIsOwnerPasscodeRevealed] = React.useState(false);
+  const [showNewPasscode, setShowNewPasscode] = React.useState(false);
 
   // Fetch admin staff list on mount
   const fetchAdmins = React.useCallback(async () => {
@@ -260,9 +262,23 @@ export default function AdminStaffPage() {
           </div>
           <div className="flex justify-between items-center text-stone-400">
             <span>Owner Passcode:</span>
-            <span className="font-bold text-[#B79B63] font-mono tracking-widest bg-[#24221E] px-2 py-0.5 border border-[#B79B63]/30">
-              8899
-            </span>
+            <div className="inline-flex items-center gap-1.5 bg-[#24221E] px-2 py-0.5 border border-[#B79B63]/30">
+              <span className="font-bold text-[#B79B63] font-mono tracking-widest">
+                {isOwnerPasscodeRevealed ? DEFAULT_OWNER_ADMIN.ownerId : "••••"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsOwnerPasscodeRevealed(!isOwnerPasscodeRevealed)}
+                className="text-stone-400 hover:text-white p-0.5 cursor-pointer"
+                title={isOwnerPasscodeRevealed ? "Hide Passcode" : "Reveal Passcode"}
+              >
+                {isOwnerPasscodeRevealed ? (
+                  <EyeOff className="w-3 h-3" />
+                ) : (
+                  <Eye className="w-3 h-3" />
+                )}
+              </button>
+            </div>
           </div>
           <div className="flex justify-between items-center text-stone-400">
             <span>Access Status:</span>
@@ -442,7 +458,7 @@ export default function AdminStaffPage() {
                     required
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
-                    placeholder="e.g. Priya Varma"
+                    placeholder="Staff member full name"
                     className="w-full pl-9 pr-3 py-2.5 bg-[#141312] border border-[#3E3A34] text-white focus:border-[#B79B63] outline-none"
                   />
                 </div>
@@ -462,7 +478,7 @@ export default function AdminStaffPage() {
                     maxLength={10}
                     value={newPhone}
                     onChange={(e) => setNewPhone(e.target.value.replace(/\D/g, ""))}
-                    placeholder="98490 11223"
+                    placeholder="10-digit mobile number"
                     className="w-full pl-14 pr-3 py-2.5 bg-[#141312] border border-[#3E3A34] text-white focus:border-[#B79B63] outline-none font-mono tracking-wider"
                   />
                 </div>
@@ -472,20 +488,32 @@ export default function AdminStaffPage() {
                 <label className="block text-stone-300 font-semibold mb-1 uppercase tracking-wider text-[11px]">
                   Assigned Passcode / Access ID *
                 </label>
-                <div className="relative">
+                <div className="relative flex items-center">
                   <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-500" />
                   <input
-                    type="text"
+                    type={showNewPasscode ? "text" : "password"}
                     required
                     maxLength={10}
                     value={newOwnerId}
                     onChange={(e) => setNewOwnerId(e.target.value)}
-                    placeholder="e.g. 5566"
-                    className="w-full pl-9 pr-3 py-2.5 bg-[#141312] border border-[#3E3A34] text-white focus:border-[#B79B63] outline-none font-mono tracking-widest"
+                    placeholder="Enter confidential passcode"
+                    className="w-full pl-9 pr-10 py-2.5 bg-[#141312] border border-[#3E3A34] text-white focus:border-[#B79B63] outline-none font-mono tracking-widest"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPasscode(!showNewPasscode)}
+                    className="absolute right-3 text-stone-400 hover:text-white p-1"
+                    title={showNewPasscode ? "Hide Passcode" : "Reveal Passcode"}
+                  >
+                    {showNewPasscode ? (
+                      <EyeOff className="w-3.5 h-3.5" />
+                    ) : (
+                      <Eye className="w-3.5 h-3.5" />
+                    )}
+                  </button>
                 </div>
                 <p className="text-[10px] text-stone-500 mt-1">
-                  At least 4 alphanumeric characters (e.g. 5566, 7788)
+                  At least 4 alphanumeric characters (confidential)
                 </p>
               </div>
 
