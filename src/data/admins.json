@@ -1,0 +1,13 @@
+[
+  {
+    "id": "admin_owner_primary",
+    "name": "sreesha",
+    "displayName": "Sreesha",
+    "phone": "6281344628",
+    "ownerId": "8899",
+    "role": "Super Admin / Owner",
+    "status": "Active",
+    "isOwner": true,
+    "createdAt": "2026-10-10T00:00:00.000Z"
+  }
+]
