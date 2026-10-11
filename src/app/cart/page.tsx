@@ -99,6 +99,7 @@ export default function CartPage() {
   if (!isHydrated) {
     return (
       <div className="min-h-[70vh] bg-[#FAF7F2] flex items-center justify-center py-24">
+        <h1 className="sr-only">Royal Shopping Bag</h1>
         <div className="text-center space-y-3">
           <div className="w-10 h-10 border-2 border-[#B79B63] border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-xs text-[#8C867D] uppercase tracking-widest font-medium">

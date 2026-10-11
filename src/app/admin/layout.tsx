@@ -159,6 +159,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen bg-[#1C1B19] flex items-center justify-center">
+        <h1 className="sr-only">Admin Portal Authentication</h1>
         <div className="w-8 h-8 border-2 border-[#B79B63] border-t-transparent rounded-full animate-spin" />
       </div>
     );
