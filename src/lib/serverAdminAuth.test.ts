@@ -106,33 +106,33 @@ describe("Three-Level Admin Authentication System", () => {
     const expected = getExpectedAdminCredentials();
 
     it("succeeds when all 3 credentials match exactly", () => {
-      const isIdValid = safeCompare("sreesha", expected.adminId.toLowerCase());
-      const isPasswordValid = safeCompare("Sreesha@Atelier2026", expected.password);
-      const isCodeValid = safeCompare("8899", expected.securityCode);
+      const isIdValid = safeCompare(expected.adminId, expected.adminId.toLowerCase());
+      const isPasswordValid = safeCompare(expected.password, expected.password);
+      const isCodeValid = safeCompare(expected.securityCode, expected.securityCode);
 
       expect(isIdValid && isPasswordValid && isCodeValid).toBe(true);
     });
 
     it("fails when Level 1 (Admin ID) is incorrect", () => {
-      const isIdValid = safeCompare("wrong_admin", expected.adminId.toLowerCase());
-      const isPasswordValid = safeCompare("Sreesha@Atelier2026", expected.password);
-      const isCodeValid = safeCompare("8899", expected.securityCode);
+      const isIdValid = safeCompare("wrong_admin_999", expected.adminId.toLowerCase());
+      const isPasswordValid = safeCompare(expected.password, expected.password);
+      const isCodeValid = safeCompare(expected.securityCode, expected.securityCode);
 
       expect(isIdValid && isPasswordValid && isCodeValid).toBe(false);
     });
 
     it("fails when Level 2 (Password) is incorrect", () => {
-      const isIdValid = safeCompare("sreesha", expected.adminId.toLowerCase());
+      const isIdValid = safeCompare(expected.adminId, expected.adminId.toLowerCase());
       const isPasswordValid = safeCompare("WrongPassword123", expected.password);
-      const isCodeValid = safeCompare("8899", expected.securityCode);
+      const isCodeValid = safeCompare(expected.securityCode, expected.securityCode);
 
       expect(isIdValid && isPasswordValid && isCodeValid).toBe(false);
     });
 
     it("fails when Level 3 (Security Code) is incorrect", () => {
-      const isIdValid = safeCompare("sreesha", expected.adminId.toLowerCase());
-      const isPasswordValid = safeCompare("Sreesha@Atelier2026", expected.password);
-      const isCodeValid = safeCompare("1234", expected.securityCode);
+      const isIdValid = safeCompare(expected.adminId, expected.adminId.toLowerCase());
+      const isPasswordValid = safeCompare(expected.password, expected.password);
+      const isCodeValid = safeCompare("0000", expected.securityCode);
 
       expect(isIdValid && isPasswordValid && isCodeValid).toBe(false);
     });

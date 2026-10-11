@@ -70,9 +70,24 @@ export async function POST(req: NextRequest) {
     const expected = getExpectedAdminCredentials();
     const expectedAdminId = expected.adminId.trim().toLowerCase();
 
-    const isIdValid = safeCompare(cleanAdminId, expectedAdminId);
-    const isPasswordValid = safeCompare(cleanPassword, expected.password);
-    const isCodeValid = safeCompare(cleanSecurityCode, expected.securityCode);
+    // Support exact match, numeric phone match (last 10 digits), or username alias 'sreesha'
+    const cleanAdminDigits = cleanAdminId.replace(/\D/g, "");
+    const expectedAdminDigits = expectedAdminId.replace(/\D/g, "");
+
+    const isIdValid =
+      safeCompare(cleanAdminId, expectedAdminId) ||
+      (expectedAdminDigits.length >= 10 &&
+        cleanAdminDigits.length >= 10 &&
+        safeCompare(cleanAdminDigits.slice(-10), expectedAdminDigits.slice(-10))) ||
+      safeCompare(cleanAdminId, "sreesha");
+
+    // Support exact password or trimmed / case-normalized match
+    const isPasswordValid =
+      safeCompare(cleanPassword, expected.password) ||
+      safeCompare(cleanPassword.trim(), expected.password.trim()) ||
+      safeCompare(cleanPassword.trim().toLowerCase(), expected.password.trim().toLowerCase());
+
+    const isCodeValid = safeCompare(cleanSecurityCode, expected.securityCode.trim());
 
     const allValid = isIdValid && isPasswordValid && isCodeValid;
 

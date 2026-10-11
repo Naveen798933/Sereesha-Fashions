@@ -17,8 +17,8 @@ export interface ExpectedCredentials {
  */
 export function getExpectedAdminCredentials(): ExpectedCredentials {
   return {
-    adminId: process.env.ADMIN_ID || "sreesha",
-    password: process.env.ADMIN_PASSWORD || "Sreesha@Atelier2026",
+    adminId: process.env.ADMIN_ID || "6281344628",
+    password: process.env.ADMIN_PASSWORD || "Sreesha elegance",
     securityCode: process.env.ADMIN_SECURITY_CODE || "8899",
   };
 }
