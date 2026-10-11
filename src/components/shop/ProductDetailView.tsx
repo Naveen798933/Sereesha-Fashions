@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Heart,
   ShoppingBag,
@@ -22,6 +23,7 @@ import {
   ThumbsUp,
   X,
   Ruler,
+  Play,
 } from "lucide-react";
 import { Product, PRODUCTS } from "@/data/products";
 import { useCartWishlist } from "@/context/CartWishlistContext";
@@ -40,6 +42,7 @@ import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { showToast } from "@/components/ui/Toast";
 import { trackRecentlyViewed, RecentlyViewed } from "@/components/shop/RecentlyViewed";
 import { createClient } from "@/lib/supabase/client";
+import { getAdminReviews } from "@/lib/catalog";
 
 interface UserReview {
   id: string;
@@ -97,9 +100,11 @@ interface ProductDetailViewProps {
 }
 
 export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product }) => {
-  const { addToCart, toggleWishlist, isInWishlist, setIsCartDrawerOpen } = useCartWishlist();
+  const router = useRouter();
+  const { addToCart, toggleWishlist, isInWishlist } = useCartWishlist();
 
   const [activeImage, setActiveImage] = React.useState(product.primaryImage);
+  const [isVideoActive, setIsVideoActive] = React.useState(false);
   const [selectedSize, setSelectedSize] = React.useState(product.sizes[0] || "Standard");
   const [selectedBlouse, setSelectedBlouse] = React.useState(
     "Unstitched Matching Blouse (Included)"
@@ -111,6 +116,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
 
   // Customer Reviews State
   const [reviews, setReviews] = React.useState<UserReview[]>(INITIAL_REVIEWS);
+  const [showAllReviews, setShowAllReviews] = React.useState(false);
   const [isWriteReviewOpen, setIsWriteReviewOpen] = React.useState(false);
   const [newReview, setNewReview] = React.useState({
     author: "",
@@ -146,11 +152,33 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
   React.useEffect(() => {
     async function loadReviews() {
       try {
+        const stored = getAdminReviews().filter(
+          (r) =>
+            (r.productId === product.id || r.productId === product.slug) && r.status === "approved"
+        );
+        if (stored.length > 0) {
+          const mappedFromStorage: UserReview[] = stored.map((r) => ({
+            id: r.id,
+            author: r.author,
+            city: r.city,
+            rating: r.rating,
+            date: r.date,
+            title: r.title,
+            comment: r.comment,
+            fit: r.fit,
+            verified: r.verified,
+          }));
+          setReviews(mappedFromStorage);
+        }
+      } catch {}
+
+      try {
         const supabase = createClient();
         const { data, error } = await supabase
           .from("reviews")
           .select("*")
           .eq("product_id", product.id)
+          .eq("status", "approved")
           .order("created_at", { ascending: false });
 
         interface DbReviewRecord {
@@ -224,9 +252,14 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
     } catch {
       // offline fallback
     }
-  }, [product.id]);
+  }, [product.id, product.slug]);
 
   const wishlisted = isInWishlist(product.id);
+
+  const avgRating =
+    reviews.length > 0
+      ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+      : "5.0";
 
   const discountPercent =
     product.originalPrice && product.originalPrice > product.price
@@ -357,6 +390,25 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
     });
 
     try {
+      const currentAdminReviews = getAdminReviews();
+      currentAdminReviews.unshift({
+        id: reviewId,
+        productId: product.id,
+        productTitle: product.title,
+        author: reviewToAdd.author,
+        city: reviewToAdd.city,
+        rating: reviewToAdd.rating,
+        date: todayStr,
+        title: reviewToAdd.title,
+        comment: reviewToAdd.comment,
+        fit: reviewToAdd.fit,
+        verified: true,
+        status: "approved",
+      });
+      localStorage.setItem("sreesha_admin_reviews", JSON.stringify(currentAdminReviews));
+    } catch {}
+
+    try {
       const supabase = createClient();
       await supabase.from("reviews").insert([
         {
@@ -370,6 +422,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
           comment: reviewToAdd.comment,
           fit: reviewToAdd.fit,
           verified: true,
+          status: "approved",
         },
       ]);
       showToast.success("Thank you! Your verified patron review has been recorded.");
@@ -384,7 +437,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
         ? `${selectedBlouse} (${neckline}, ${sleeveStyle}, ${backStyle})`
         : selectedBlouse;
     addToCart(product, selectedSize, customSummary, quantity);
-    setIsCartDrawerOpen(true);
+    router.push("/checkout");
   };
 
   const relatedProducts = PRODUCTS.filter(
@@ -410,72 +463,103 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 bg-white border border-[#E8E2D8] p-4 sm:p-10 shadow-xs">
         {/* Left: Gallery Column (7 cols on lg) */}
         <div className="lg:col-span-7 space-y-4">
-          {/* Main Large Image with Zari Magnifier */}
-          <div
-            className="relative aspect-[4/5] w-full overflow-hidden bg-[#EFE8DD] border border-[#E8E2D8] select-none group"
-            onMouseEnter={() => setIsZooming(true)}
-            onMouseLeave={() => setIsZooming(false)}
-            onMouseMove={handleMouseMove}
-          >
-            <div
-              className="relative w-full h-full transition-transform duration-200 ease-out"
-              style={{
-                transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
-                transform: isZooming ? "scale(2.2)" : "scale(1)",
-              }}
-            >
-              <Image
-                src={activeImage}
-                alt={product.title}
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 55vw"
-                className="object-cover object-center pointer-events-none"
+          {/* Main Large Media (Image with Zari Magnifier OR Video Player) */}
+          {isVideoActive && product.videoUrl ? (
+            <div className="relative aspect-[4/5] w-full overflow-hidden bg-black border border-[#E8E2D8] flex items-center justify-center">
+              <video
+                src={product.videoUrl}
+                controls
+                autoPlay
+                playsInline
+                className="w-full h-full object-contain"
               />
-            </div>
-
-            {/* Badges */}
-            <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex flex-col gap-1.5 z-10 pointer-events-none">
-              {product.badge === "NEW" && <Badge variant="gold">NEW</Badge>}
-              {product.badge === "BESTSELLER" && <Badge variant="default">BESTSELLER</Badge>}
-              {product.badge === "LIMITED" && <Badge variant="goldSolid">LIMITED</Badge>}
-              {discountPercent && <Badge variant="sale">-{discountPercent}%</Badge>}
-            </div>
-
-            {/* Quick Actions (Share & Wishlist) */}
-            <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
               <button
                 type="button"
-                onClick={handleShareWithFamily}
-                className="h-9 w-9 sm:h-10 sm:w-10 bg-white/95 backdrop-blur-xs flex items-center justify-center text-[#1C1B19] hover:text-[#25D366] transition-colors border border-[#E8E2D8] shadow-xs cursor-pointer"
-                title="Share ensemble with family on WhatsApp"
-                aria-label="Share ensemble with family"
+                onClick={() => setIsVideoActive(false)}
+                className="absolute top-3 right-3 bg-black/80 hover:bg-black text-white text-xs px-2.5 py-1 rounded-2xs flex items-center gap-1.5 z-20 cursor-pointer border border-white/20 transition-colors"
               >
-                <Share2 className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
+                <X className="w-3.5 h-3.5" /> Back to Photos
               </button>
-              <button
-                type="button"
-                onClick={() => toggleWishlist(product.id)}
-                className="h-9 w-9 sm:h-10 sm:w-10 bg-white/95 backdrop-blur-xs flex items-center justify-center text-[#1C1B19] hover:text-[#9A3434] transition-colors border border-[#E8E2D8] shadow-xs cursor-pointer"
-                aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            </div>
+          ) : (
+            <div
+              className="relative aspect-[4/5] w-full overflow-hidden bg-[#EFE8DD] border border-[#E8E2D8] select-none group"
+              onMouseEnter={() => setIsZooming(true)}
+              onMouseLeave={() => setIsZooming(false)}
+              onMouseMove={handleMouseMove}
+            >
+              <div
+                className="relative w-full h-full transition-transform duration-200 ease-out"
+                style={{
+                  transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
+                  transform: isZooming ? "scale(2.2)" : "scale(1)",
+                }}
               >
-                <Heart
-                  className={cn(
-                    "h-4 w-4 sm:h-5 sm:w-5 transition-colors",
-                    wishlisted ? "fill-[#9A3434] text-[#9A3434]" : "text-[#1C1B19]"
-                  )}
+                <Image
+                  src={activeImage}
+                  alt={product.title}
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 55vw"
+                  className="object-cover object-center pointer-events-none"
                 />
-              </button>
-            </div>
+              </div>
 
-            {/* Zari Zoom Guide Indicator */}
-            <div className="absolute bottom-3 left-3 z-10 pointer-events-none bg-white/95 backdrop-blur-xs px-2.5 py-1 border border-[#E8E2D8] flex items-center gap-1.5 text-[10px] text-[#5A5650] uppercase tracking-wider font-medium shadow-2xs">
-              <ZoomIn className="h-3 w-3 text-[#B79B63]" />
-              <span>
-                {isZooming ? "Magnifying 2.2x Zari Weave" : "Hover to Inspect Zari Weave"}
-              </span>
+              {/* Badges */}
+              <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex flex-col gap-1.5 z-10 pointer-events-none">
+                {product.badge === "NEW" && <Badge variant="gold">NEW</Badge>}
+                {product.badge === "BESTSELLER" && <Badge variant="default">BESTSELLER</Badge>}
+                {product.badge === "LIMITED" && <Badge variant="goldSolid">LIMITED</Badge>}
+                {discountPercent && <Badge variant="sale">-{discountPercent}%</Badge>}
+              </div>
+
+              {/* Quick Actions (Share & Wishlist) */}
+              <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleShareWithFamily}
+                  className="h-9 w-9 sm:h-10 sm:w-10 bg-white/95 backdrop-blur-xs flex items-center justify-center text-[#1C1B19] hover:text-[#25D366] transition-colors border border-[#E8E2D8] shadow-xs cursor-pointer"
+                  title="Share ensemble with family on WhatsApp"
+                  aria-label="Share ensemble with family"
+                >
+                  <Share2 className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toggleWishlist(product.id)}
+                  className="h-9 w-9 sm:h-10 sm:w-10 bg-white/95 backdrop-blur-xs flex items-center justify-center text-[#1C1B19] hover:text-[#9A3434] transition-colors border border-[#E8E2D8] shadow-xs cursor-pointer"
+                  aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                >
+                  <Heart
+                    className={cn(
+                      "h-4 w-4 sm:h-5 sm:w-5 transition-colors",
+                      wishlisted ? "fill-[#9A3434] text-[#9A3434]" : "text-[#1C1B19]"
+                    )}
+                  />
+                </button>
+              </div>
+
+              {/* Video Spotlight Callout if Video Exists */}
+              {product.videoUrl && (
+                <button
+                  type="button"
+                  onClick={() => setIsVideoActive(true)}
+                  className="absolute bottom-3 right-3 z-10 bg-[#1C1B19]/90 hover:bg-[#1C1B19] text-[#FAF7F2] px-3 py-1.5 border border-[#B79B63] flex items-center gap-1.5 text-[11px] font-semibold tracking-wider uppercase shadow-md cursor-pointer transition-colors"
+                >
+                  <Play className="h-3.5 w-3.5 text-[#B79B63] fill-current" />
+                  <span>Watch Video</span>
+                </button>
+              )}
+
+              {/* Zari Zoom Guide Indicator */}
+              <div className="absolute bottom-3 left-3 z-10 pointer-events-none bg-white/95 backdrop-blur-xs px-2.5 py-1 border border-[#E8E2D8] flex items-center gap-1.5 text-[10px] text-[#5A5650] uppercase tracking-wider font-medium shadow-2xs">
+                <ZoomIn className="h-3 w-3 text-[#B79B63]" />
+                <span>
+                  {isZooming ? "Magnifying 2.2x Zari Weave" : "Hover to Inspect Zari Weave"}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Mobile Dot Indicators */}
           <div className="flex sm:hidden items-center justify-center gap-1.5 pt-1">
@@ -483,26 +567,65 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
               <button
                 key={idx}
                 type="button"
-                onClick={() => setActiveImage(img)}
+                onClick={() => {
+                  setIsVideoActive(false);
+                  setActiveImage(img);
+                }}
                 className={cn(
                   "h-1.5 rounded-full transition-all cursor-pointer",
-                  activeImage === img ? "w-6 bg-[#B79B63]" : "w-1.5 bg-[#D8C7A5]"
+                  !isVideoActive && activeImage === img ? "w-6 bg-[#B79B63]" : "w-1.5 bg-[#D8C7A5]"
                 )}
                 aria-label={`View photo ${idx + 1}`}
               />
             ))}
+            {product.videoUrl && (
+              <button
+                type="button"
+                onClick={() => setIsVideoActive(true)}
+                className={cn(
+                  "h-1.5 rounded-full transition-all cursor-pointer",
+                  isVideoActive ? "w-6 bg-[#B79B63]" : "w-1.5 bg-[#D8C7A5]"
+                )}
+                aria-label="View product video"
+              />
+            )}
           </div>
 
           {/* Thumbnail Strip */}
           <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar pb-1">
+            {/* Optional Video Thumbnail */}
+            {product.videoUrl && (
+              <button
+                type="button"
+                onClick={() => setIsVideoActive(true)}
+                className={cn(
+                  "relative h-16 w-14 sm:h-20 sm:w-16 shrink-0 overflow-hidden border cursor-pointer transition-all bg-[#141312] text-white flex flex-col items-center justify-center gap-1",
+                  isVideoActive
+                    ? "border-[#B79B63] ring-1 ring-[#B79B63]"
+                    : "border-[#E8E2D8] opacity-80 hover:opacity-100"
+                )}
+                title="Watch Video Spotlight"
+              >
+                <div className="w-6 h-6 rounded-full bg-[#B79B63]/20 flex items-center justify-center">
+                  <Play className="w-3.5 h-3.5 text-[#B79B63] fill-current" />
+                </div>
+                <span className="text-[9px] uppercase tracking-wider font-bold text-[#B79B63]">
+                  Video
+                </span>
+              </button>
+            )}
+
             {product.galleryImages.map((img, idx) => (
               <button
                 key={idx}
                 type="button"
-                onClick={() => setActiveImage(img)}
+                onClick={() => {
+                  setIsVideoActive(false);
+                  setActiveImage(img);
+                }}
                 className={cn(
                   "relative h-16 w-14 sm:h-20 sm:w-16 shrink-0 overflow-hidden border cursor-pointer transition-all",
-                  activeImage === img
+                  !isVideoActive && activeImage === img
                     ? "border-[#B79B63] ring-1 ring-[#B79B63]"
                     : "border-[#E8E2D8] opacity-70 hover:opacity-100"
                 )}
@@ -1024,17 +1147,56 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
             <h2 className="font-serif text-2xl sm:text-3xl text-[#1C1B19] font-normal">
               Patron Reviews &amp; Testimonials
             </h2>
-            <div className="flex items-center gap-3 mt-2">
-              <div className="flex items-center gap-1 text-[#B79B63]">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-current" />
-                ))}
+            {reviews.length > 0 ? (
+              <div className="space-y-3 mt-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1 text-[#B79B63]">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={cn(
+                          "h-4 w-4",
+                          i < Math.round(Number(avgRating))
+                            ? "fill-[#B79B63] text-[#B79B63]"
+                            : "text-[#D8C7A5]"
+                        )}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm font-semibold text-[#1C1B19]">{avgRating} / 5.0</span>
+                  <span className="text-xs text-[#8C867D]">
+                    ({reviews.length} Verified Patron{reviews.length !== 1 ? "s" : ""})
+                  </span>
+                </div>
+
+                {/* Rating Distribution Breakdown (Section 6.C) */}
+                <div className="max-w-xs space-y-1 pt-1">
+                  {[5, 4, 3, 2, 1].map((stars) => {
+                    const count = reviews.filter((r) => r.rating === stars).length;
+                    const pct = Math.round((count / reviews.length) * 100);
+                    return (
+                      <div
+                        key={stars}
+                        className="flex items-center gap-2 text-[10px] text-[#8C867D]"
+                      >
+                        <span className="w-10 text-right">{stars} Star</span>
+                        <div className="flex-1 h-1.5 bg-[#E8E2D8] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-[#B79B63] rounded-full"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <span className="w-8">{pct}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <span className="text-sm font-semibold text-[#1C1B19]">4.9 / 5.0</span>
-              <span className="text-xs text-[#8C867D]">
-                ({reviews.length} Verified Patron{reviews.length !== 1 ? "s" : ""})
-              </span>
-            </div>
+            ) : (
+              <p className="text-xs text-[#8C867D] mt-2">
+                No patron reviews yet • Be the first to share your experience
+              </p>
+            )}
           </div>
 
           <div>
@@ -1188,59 +1350,99 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
           </form>
         )}
 
-        {/* Reviews List */}
-        <div className="mt-8 divide-y divide-[#E8E2D8]">
-          {reviews.map((rev) => (
-            <article key={rev.id} className="py-6 first:pt-0 last:pb-0 space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-[#FAF7F2] border border-[#B79B63]/40 flex items-center justify-center font-serif text-sm font-semibold text-[#B79B63]">
-                    {rev.author.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-[#1C1B19]">{rev.author}</span>
-                      {rev.verified && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#128C7E] bg-[#E8F8F5] px-1.5 py-0.5 border border-[#128C7E]/20">
-                          <Check className="h-2.5 w-2.5" /> Verified Patron
-                        </span>
-                      )}
+        {/* Reviews List & Pagination (Section 6.B Requirements) */}
+        {reviews.length === 0 ? (
+          <div className="text-center py-12 px-4 border border-dashed border-[#D8C7A5] bg-[#FAF7F2] rounded-xs mt-8">
+            <Star className="h-8 w-8 text-[#B79B63] mx-auto mb-2 opacity-60" />
+            <h4 className="font-serif text-base text-[#1C1B19]">
+              Be the First to Review this Masterpiece
+            </h4>
+            <p className="text-xs text-[#8C867D] max-w-md mx-auto mt-1 mb-4">
+              Share your thoughts on the handloom drape, silk luster, and atelier craftsmanship.
+            </p>
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={() => setIsWriteReviewOpen(true)}
+              className="text-xs uppercase tracking-wider"
+            >
+              Write a Patron Review
+            </Button>
+          </div>
+        ) : (
+          <div className="mt-8">
+            <div className="divide-y divide-[#E8E2D8]">
+              {(showAllReviews ? reviews : reviews.slice(0, 3)).map((rev) => (
+                <article key={rev.id} className="py-6 first:pt-0 last:pb-0 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-full bg-[#FAF7F2] border border-[#B79B63]/40 flex items-center justify-center font-serif text-sm font-semibold text-[#B79B63]">
+                        {rev.author.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-[#1C1B19]">{rev.author}</span>
+                          {rev.verified && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#128C7E] bg-[#E8F8F5] px-1.5 py-0.5 border border-[#128C7E]/20">
+                              <Check className="h-2.5 w-2.5" /> Verified Patron
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-[#8C867D]">
+                          {rev.city} • {rev.date}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-[10px] text-[#8C867D]">
-                      {rev.city} • {rev.date}
-                    </p>
+
+                    <div className="flex items-center gap-2">
+                      <div className="flex text-[#B79B63]">
+                        {[...Array(rev.rating)].map((_, i) => (
+                          <Star key={i} className="h-3.5 w-3.5 fill-current" />
+                        ))}
+                      </div>
+                      <span className="text-[10px] uppercase tracking-wider font-medium text-[#8C867D] bg-[#FAF7F2] px-2 py-0.5 border border-[#E8E2D8]">
+                        {rev.fit}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-2">
-                  <div className="flex text-[#B79B63]">
-                    {[...Array(rev.rating)].map((_, i) => (
-                      <Star key={i} className="h-3.5 w-3.5 fill-current" />
-                    ))}
+                  <h4 className="text-xs font-semibold text-[#1C1B19]">{rev.title}</h4>
+                  <p className="text-xs text-[#5C564E] leading-relaxed">{rev.comment}</p>
+
+                  <div className="pt-1 flex items-center gap-2 text-[11px] text-[#8C867D]">
+                    <button
+                      type="button"
+                      onClick={() => showToast.success("Thank you for your feedback!")}
+                      className="inline-flex items-center gap-1 hover:text-[#B79B63] transition-colors cursor-pointer"
+                    >
+                      <ThumbsUp className="h-3 w-3" /> Helpful
+                    </button>
+                    <span>•</span>
+                    <span>Inspected by Atelier Quality Council</span>
                   </div>
-                  <span className="text-[10px] uppercase tracking-wider font-medium text-[#8C867D] bg-[#FAF7F2] px-2 py-0.5 border border-[#E8E2D8]">
-                    {rev.fit}
-                  </span>
-                </div>
-              </div>
+                </article>
+              ))}
+            </div>
 
-              <h4 className="text-xs font-semibold text-[#1C1B19]">{rev.title}</h4>
-              <p className="text-xs text-[#5C564E] leading-relaxed">{rev.comment}</p>
-
-              <div className="pt-1 flex items-center gap-2 text-[11px] text-[#8C867D]">
+            {/* View More Reviews (Section 6.B Requirement) */}
+            {reviews.length > 3 && (
+              <div className="pt-8 text-center border-t border-[#E8E2D8] mt-6">
                 <button
                   type="button"
-                  onClick={() => showToast.success("Thank you for your feedback!")}
-                  className="inline-flex items-center gap-1 hover:text-[#B79B63] transition-colors cursor-pointer"
+                  onClick={() => setShowAllReviews((prev) => !prev)}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-semibold uppercase tracking-wider border border-[#B79B63] text-[#B79B63] hover:bg-[#B79B63] hover:text-white transition-all cursor-pointer shadow-2xs"
                 >
-                  <ThumbsUp className="h-3 w-3" /> Helpful
+                  {showAllReviews ? (
+                    <>Show Less (Display Top 3 Reviews)</>
+                  ) : (
+                    <>View More Reviews ({reviews.length - 3} More Reviews)</>
+                  )}
                 </button>
-                <span>•</span>
-                <span>Inspected by Atelier Quality Council</span>
               </div>
-            </article>
-          ))}
-        </div>
+            )}
+          </div>
+        )}
       </section>
 
       {/* In-Page Size Guide Modal */}

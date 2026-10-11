@@ -15,12 +15,14 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { Order, DbOrder, DbOrderItem, getStoredOrders } from "@/lib/orders";
 import { formatINR } from "@/lib/utils";
-import { PRODUCTS } from "@/data/products";
+import { getAdminProducts, getCategories } from "@/lib/catalog";
 
 export default function AdminOverviewPage() {
   const [orders, setOrders] = React.useState<Order[]>([]);
   const [customerCount, setCustomerCount] = React.useState<number>(0);
   const [loading, setLoading] = React.useState(true);
+  const [products] = React.useState(() => getAdminProducts());
+  const [categories] = React.useState(() => getCategories());
 
   React.useEffect(() => {
     // Load registered patrons count
@@ -177,6 +179,38 @@ export default function AdminOverviewPage() {
 
         <div className="bg-white p-5 border border-[#E8E2D8] rounded-xs shadow-xs">
           <div className="flex items-center justify-between text-stone-500 mb-2">
+            <span className="text-xs uppercase tracking-wider font-medium">Catalog Ensembles</span>
+            <Package className="w-4 h-4 text-amber-600" />
+          </div>
+          <div className="text-2xl font-serif font-bold text-[#1C1B19]">{products.length}</div>
+          <p className="text-[11px] text-stone-400 mt-1">
+            <span className="text-emerald-600 font-semibold">
+              {products.filter((p) => p.status !== "archived" && p.status !== "draft").length}{" "}
+              active
+            </span>{" "}
+            •{" "}
+            <span className="text-rose-600 font-medium">
+              {products.filter((p) => p.inStock === false).length} out of stock
+            </span>
+          </p>
+        </div>
+
+        <div className="bg-white p-5 border border-[#E8E2D8] rounded-xs shadow-xs">
+          <div className="flex items-center justify-between text-stone-500 mb-2">
+            <span className="text-xs uppercase tracking-wider font-medium">Categories</span>
+            <Tag className="w-4 h-4 text-purple-600" />
+          </div>
+          <div className="text-2xl font-serif font-bold text-[#1C1B19]">{categories.length}</div>
+          <Link
+            href="/admin/categories"
+            className="text-[11px] text-[#B79B63] hover:underline mt-1 block font-medium"
+          >
+            Manage collections →
+          </Link>
+        </div>
+
+        <div className="bg-white p-5 border border-[#E8E2D8] rounded-xs shadow-xs">
+          <div className="flex items-center justify-between text-stone-500 mb-2">
             <span className="text-xs uppercase tracking-wider font-medium">Patron Registry</span>
             <Users className="w-4 h-4 text-emerald-600" />
           </div>
@@ -188,24 +222,10 @@ export default function AdminOverviewPage() {
             Manage patrons →
           </Link>
         </div>
-
-        <div className="bg-white p-5 border border-[#E8E2D8] rounded-xs shadow-xs">
-          <div className="flex items-center justify-between text-stone-500 mb-2">
-            <span className="text-xs uppercase tracking-wider font-medium">Active Ensembles</span>
-            <Package className="w-4 h-4 text-amber-600" />
-          </div>
-          <div className="text-2xl font-serif font-bold text-[#1C1B19]">{PRODUCTS.length}</div>
-          <Link
-            href="/admin/products"
-            className="text-[11px] text-[#B79B63] hover:underline mt-1 block font-medium"
-          >
-            Stock levels →
-          </Link>
-        </div>
       </div>
 
       {/* Quick Access Action Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <Link
           href="/admin/orders"
           className="p-4 bg-white border border-[#E8E2D8] hover:border-[#B79B63] rounded-xs shadow-xs group transition-all"
@@ -229,9 +249,37 @@ export default function AdminOverviewPage() {
             <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-[#B79B63] transition-colors" />
           </div>
           <p className="font-semibold text-xs text-[#1C1B19] uppercase tracking-wider">
-            Add Products
+            Products &amp; Stock
           </p>
-          <p className="text-[11px] text-stone-400 mt-0.5">Update catalog &amp; weaves</p>
+          <p className="text-[11px] text-stone-400 mt-0.5">CRUD, media &amp; video</p>
+        </Link>
+
+        <Link
+          href="/admin/categories"
+          className="p-4 bg-white border border-[#E8E2D8] hover:border-[#B79B63] rounded-xs shadow-xs group transition-all"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <Tag className="w-5 h-5 text-[#B79B63]" />
+            <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-[#B79B63] transition-colors" />
+          </div>
+          <p className="font-semibold text-xs text-[#1C1B19] uppercase tracking-wider">
+            Categories
+          </p>
+          <p className="text-[11px] text-stone-400 mt-0.5">{categories.length} active edits</p>
+        </Link>
+
+        <Link
+          href="/admin/reviews"
+          className="p-4 bg-white border border-[#E8E2D8] hover:border-[#B79B63] rounded-xs shadow-xs group transition-all"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <ShieldCheck className="w-5 h-5 text-[#B79B63]" />
+            <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-[#B79B63] transition-colors" />
+          </div>
+          <p className="font-semibold text-xs text-[#1C1B19] uppercase tracking-wider">
+            Patron Reviews
+          </p>
+          <p className="text-[11px] text-stone-400 mt-0.5">Moderate ratings</p>
         </Link>
 
         <Link
@@ -242,10 +290,8 @@ export default function AdminOverviewPage() {
             <Users className="w-5 h-5 text-[#B79B63]" />
             <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-[#B79B63] transition-colors" />
           </div>
-          <p className="font-semibold text-xs text-[#1C1B19] uppercase tracking-wider">
-            Patron Directory
-          </p>
-          <p className="text-[11px] text-stone-400 mt-0.5">Direct WhatsApp concierge</p>
+          <p className="font-semibold text-xs text-[#1C1B19] uppercase tracking-wider">Patrons</p>
+          <p className="text-[11px] text-stone-400 mt-0.5">Client directory</p>
         </Link>
 
         <Link

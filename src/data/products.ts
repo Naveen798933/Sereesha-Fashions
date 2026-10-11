@@ -29,6 +29,16 @@ export interface Product {
     washCare: string;
     dispatchTime: string;
   };
+  videoUrl?: string;
+  sku?: string;
+  brand?: string;
+  status?: "active" | "draft" | "archived";
+  stock?: number;
+  inStock?: boolean;
+  colors?: string[];
+  tags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export const PRODUCTS: Product[] = [

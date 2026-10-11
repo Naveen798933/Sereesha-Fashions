@@ -11,27 +11,15 @@ import {
   Users,
   ArrowLeft,
   Lock,
-  KeyRound,
   Menu,
   X,
   ChevronRight,
-  Eye,
-  EyeOff,
-  ShieldCheck,
+  FolderTree,
+  Star,
   UserCheck,
-  User,
-  ShieldAlert,
 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
 import { showToast } from "@/components/ui/Toast";
-import {
-  AdminRecord,
-  getClientAdminSession,
-  saveClientAdminSession,
-  clearClientAdminSession,
-  verifyAdminCredentials,
-  getClientStaffList,
-} from "@/lib/adminAuth";
+import { AdminRecord, getClientAdminSession, clearClientAdminSession } from "@/lib/adminAuth";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -40,121 +28,53 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [currentAdmin, setCurrentAdmin] = React.useState<AdminRecord | null>(null);
   const [isAuthorized, setIsAuthorized] = React.useState<boolean>(false);
   const [isCheckingAuth, setIsCheckingAuth] = React.useState<boolean>(true);
-
-  // Form Inputs for Admin Verification
-  const [nameInput, setNameInput] = React.useState("");
-  const [phoneInput, setPhoneInput] = React.useState("");
-  const [ownerIdInput, setOwnerIdInput] = React.useState("");
-  const [showOwnerId, setShowOwnerId] = React.useState(false);
-  const [rememberDevice, setRememberDevice] = React.useState(true);
-  const [authError, setAuthError] = React.useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
-  // Check authorization on mount
+  // If we are on the dedicated admin login page, bypass the layout shell
+  const isLoginPage = pathname === "/admin/login";
+
+  // Check authorization on mount & pathname changes
   React.useEffect(() => {
+    if (isLoginPage) {
+      setIsCheckingAuth(false);
+      return;
+    }
+
     const session = getClientAdminSession();
     if (session) {
       setCurrentAdmin(session);
       setIsAuthorized(true);
+      setIsCheckingAuth(false);
     } else {
       setIsAuthorized(false);
+      setIsCheckingAuth(false);
+      router.replace("/admin/login");
     }
-    setIsCheckingAuth(false);
-  }, []);
-
-  const handleUnlock = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthError(null);
-
-    const cleanName = nameInput.trim();
-    const cleanPhone = phoneInput.replace(/\D/g, "");
-    const cleanOwnerId = ownerIdInput.trim();
-
-    if (!cleanName || cleanPhone.length !== 10 || !cleanOwnerId) {
-      setAuthError("Please provide Administrator Name, 10-digit Phone, and Owner ID.");
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // 1. Try server verification first
-      const res = await fetch("/api/admin/staff", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "verify_login",
-          name: cleanName,
-          phone: cleanPhone,
-          ownerId: cleanOwnerId,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.success && data.admin) {
-        saveClientAdminSession(data.admin, rememberDevice);
-        setCurrentAdmin(data.admin);
-        setIsAuthorized(true);
-        showToast.success(`Welcome, ${data.admin.displayName}! Atelier Portal Unlocked.`);
-        return;
-      }
-
-      // 2. Client-side local verification fallback
-      const staffList = getClientStaffList();
-      const localResult = verifyAdminCredentials(cleanName, cleanPhone, cleanOwnerId, staffList);
-
-      if (localResult.success && localResult.admin) {
-        saveClientAdminSession(localResult.admin, rememberDevice);
-        setCurrentAdmin(localResult.admin);
-        setIsAuthorized(true);
-        showToast.success(`Welcome, ${localResult.admin.displayName}!`);
-        return;
-      }
-
-      setAuthError(
-        data.error ||
-          localResult.error ||
-          "Access Denied. Check your Name, registered Mobile, and Owner ID."
-      );
-    } catch {
-      // Local fallback in case network fails
-      const staffList = getClientStaffList();
-      const fallbackResult = verifyAdminCredentials(cleanName, cleanPhone, cleanOwnerId, staffList);
-
-      if (fallbackResult.success && fallbackResult.admin) {
-        saveClientAdminSession(fallbackResult.admin, rememberDevice);
-        setCurrentAdmin(fallbackResult.admin);
-        setIsAuthorized(true);
-        showToast.success(`Welcome, ${fallbackResult.admin.displayName}!`);
-      } else {
-        setAuthError(fallbackResult.error || "Verification failed. Check your admin credentials.");
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  }, [pathname, isLoginPage, router]);
 
   const handleSignOutAdmin = () => {
     clearClientAdminSession();
     setIsAuthorized(false);
     setCurrentAdmin(null);
-    setNameInput("");
-    setPhoneInput("");
-    setOwnerIdInput("");
     showToast.info("Admin session locked");
-    router.push("/login?tab=admin");
+    router.push("/admin/login");
   };
 
   const navLinks = [
     { href: "/admin", label: "Overview", icon: LayoutDashboard },
-    { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
-    { href: "/admin/products", label: "Inventory", icon: Package },
-    { href: "/admin/customers", label: "Patrons", icon: Users },
-    { href: "/admin/coupons", label: "Coupons", icon: Tag },
-    { href: "/admin/staff", label: "Staff & Access", icon: UserCheck },
+    { href: "/admin/products", label: "Products & Catalog", icon: Package },
+    { href: "/admin/categories", label: "Categories", icon: FolderTree },
+    { href: "/admin/orders", label: "Orders & Fulfillment", icon: ShoppingBag },
+    { href: "/admin/reviews", label: "Customer Reviews", icon: Star },
+    { href: "/admin/customers", label: "Patrons & Clients", icon: Users },
+    { href: "/admin/coupons", label: "Coupons & Discounts", icon: Tag },
+    { href: "/admin/staff", label: "Staff & Privileges", icon: UserCheck },
   ];
+
+  // If on login page, render children directly without dashboard shell
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
 
   if (isCheckingAuth) {
     return (
@@ -165,155 +85,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  // If not authorized, render dedicated Admin Authentication Screen
+  // If not authorized, show security redirect skeleton
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen bg-[#141312] flex items-center justify-center p-4">
-        <div className="bg-[#1C1B19] w-full max-w-md p-8 sm:p-10 border border-[#3E3A34] text-white space-y-6 shadow-2xl rounded-xs">
-          {/* Header */}
-          <div className="text-center space-y-2">
-            <div className="w-14 h-14 bg-[#B79B63]/15 text-[#B79B63] mx-auto rounded-full flex items-center justify-center border border-[#B79B63]/30 shadow-inner">
-              <KeyRound className="w-7 h-7" />
-            </div>
-            <span className="text-[10px] tracking-[0.25em] text-[#B79B63] uppercase font-bold block pt-1">
-              Sreesha Elegance Atelier
-            </span>
-            <h1 className="font-serif text-2xl sm:text-3xl text-[#FAF7F2] font-normal">
-              Atelier Management Login
-            </h1>
-            <p className="text-xs text-stone-400 max-w-xs mx-auto leading-relaxed">
-              Separated from customer panel. Provide your Administrator Name, Phone, and Owner ID to
-              access orders, inventory, and staff management.
-            </p>
-          </div>
-
-          {/* Confidential Atelier Security Notice */}
-          <div className="bg-[#24221E]/60 border border-[#3E3A34] p-3.5 rounded-xs flex items-center gap-2.5 text-stone-400 text-xs">
-            <ShieldCheck className="h-4 w-4 text-[#B79B63] shrink-0" />
-            <span className="text-[11px] leading-relaxed">
-              Confidential Atelier Portal. Please authenticate with your registered Administrator
-              credentials.
-            </span>
-          </div>
-
-          {/* Error Message */}
-          {authError && (
-            <div className="p-3 bg-[#3A1818] border border-[#8C2C2C] text-xs text-[#FFAAAA] rounded-xs animate-in fade-in flex items-start gap-2">
-              <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
-              <span>{authError}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleUnlock} className="space-y-4">
-            {/* Admin Name */}
-            <div>
-              <label className="block text-xs font-semibold text-stone-300 mb-1.5 uppercase tracking-wider">
-                Admin Name <span className="text-[#B79B63]">*</span>
-              </label>
-              <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-500" />
-                <input
-                  type="text"
-                  required
-                  value={nameInput}
-                  onChange={(e) => {
-                    setNameInput(e.target.value);
-                    if (authError) setAuthError(null);
-                  }}
-                  placeholder="Administrator name"
-                  className="w-full pl-10 pr-4 py-2.5 bg-[#141312] border border-[#3E3A34] text-sm text-[#FAF7F2] font-medium outline-none focus:border-[#B79B63] rounded-xs"
-                />
-              </div>
-            </div>
-
-            {/* Admin Phone */}
-            <div>
-              <label className="block text-xs font-semibold text-stone-300 mb-1.5 uppercase tracking-wider">
-                Registered Mobile <span className="text-[#B79B63]">*</span>
-              </label>
-              <div className="relative flex items-center">
-                <span className="absolute left-3 text-xs font-semibold text-stone-400 border-r border-[#3E3A34] pr-2 pointer-events-none flex items-center gap-1">
-                  <span>🇮🇳</span>
-                  <span>+91</span>
-                </span>
-                <input
-                  type="tel"
-                  required
-                  maxLength={10}
-                  value={phoneInput}
-                  onChange={(e) => {
-                    setPhoneInput(e.target.value.replace(/\D/g, ""));
-                    if (authError) setAuthError(null);
-                  }}
-                  placeholder="10-digit registered mobile"
-                  className="w-full pl-20 pr-4 py-2.5 bg-[#141312] border border-[#3E3A34] text-sm text-[#FAF7F2] font-medium tracking-wider outline-none focus:border-[#B79B63] rounded-xs"
-                />
-              </div>
-            </div>
-
-            {/* Owner ID */}
-            <div>
-              <label className="block text-xs font-semibold text-stone-300 mb-1.5 uppercase tracking-wider">
-                Owner ID / Security Passcode <span className="text-[#B79B63]">*</span>
-              </label>
-              <div className="relative flex items-center">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-500" />
-                <input
-                  type={showOwnerId ? "text" : "password"}
-                  required
-                  maxLength={10}
-                  value={ownerIdInput}
-                  onChange={(e) => {
-                    setOwnerIdInput(e.target.value);
-                    if (authError) setAuthError(null);
-                  }}
-                  placeholder="Enter security passcode"
-                  className="w-full pl-10 pr-10 py-2.5 bg-[#141312] border border-[#3E3A34] text-sm text-[#FAF7F2] font-mono tracking-widest outline-none focus:border-[#B79B63] rounded-xs"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowOwnerId(!showOwnerId)}
-                  className="absolute right-3 text-stone-400 hover:text-white p-1"
-                >
-                  {showOwnerId ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Remember Device Checkbox */}
-            <div className="flex items-center justify-between text-xs text-stone-400 pt-1">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={rememberDevice}
-                  onChange={(e) => setRememberDevice(e.target.checked)}
-                  className="accent-[#B79B63] h-3.5 w-3.5"
-                />
-                <span>Remember this device</span>
-              </label>
-            </div>
-
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              disabled={isSubmitting || !nameInput || phoneInput.length < 10 || !ownerIdInput}
-              className="w-full bg-[#B79B63] hover:bg-[#A88C55] text-[#1C1B19] font-bold text-xs uppercase tracking-widest py-3.5 shadow-md transition-all"
-            >
-              {isSubmitting ? "Verifying..." : "Unlock Atelier Portal"}
-            </Button>
-
-            <div className="pt-4 border-t border-[#3E3A34] text-center">
-              <Link
-                href="/"
-                className="text-xs text-stone-400 hover:text-white inline-flex items-center gap-1.5 transition-colors"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Return to Public Boutique</span>
-              </Link>
-            </div>
-          </form>
-        </div>
+      <div className="min-h-screen bg-[#1C1B19] flex flex-col items-center justify-center space-y-3">
+        <h1 className="sr-only">Admin Portal Authentication</h1>
+        <div className="w-8 h-8 border-2 border-[#B79B63] border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs text-stone-400 uppercase tracking-widest">
+          Redirecting to Atelier Admin Login...
+        </p>
       </div>
     );
   }
@@ -429,7 +209,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {currentAdmin?.displayName || "Sreesha"}
             </p>
             <p className="text-[10px] text-emerald-400 font-mono">
-              Role: {currentAdmin?.role || "Owner"}
+              Role: {currentAdmin?.role || "Super Admin / Owner"}
             </p>
           </div>
 

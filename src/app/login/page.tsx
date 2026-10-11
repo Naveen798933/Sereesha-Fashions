@@ -324,6 +324,18 @@ function AuthForm() {
             <span>Instant Recognition • No OTP or Password Friction</span>
           </div>
         </div>
+
+        {/* Professional Admin Panel Gateway Option */}
+        <div className="bg-[#FAF7F2] border-t border-[#E8E2D8] px-6 py-3 flex items-center justify-between text-[11px] text-[#8C867D]">
+          <span>Atelier Management Staff?</span>
+          <Link
+            href="/admin/login"
+            className="text-[#B79B63] hover:text-[#1C1B19] font-semibold inline-flex items-center gap-1 transition-colors"
+          >
+            <span>Admin Panel Access</span>
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
       </div>
     </div>
   );
