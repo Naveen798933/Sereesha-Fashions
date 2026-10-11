@@ -12,268 +12,346 @@ import {
   Eye,
   EyeOff,
   ArrowLeft,
+  ArrowRight,
+  Clock,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { showToast } from "@/components/ui/Toast";
-import {
-  verifyAdminCredentials,
-  saveClientAdminSession,
-  getClientStaffList,
-  getClientAdminSession,
-} from "@/lib/adminAuth";
+import { saveClientAdminSession, getClientAdminSession } from "@/lib/adminAuth";
 
 export default function AdminLoginPage() {
   const router = useRouter();
 
-  const [name, setName] = React.useState("");
-  const [phone, setPhone] = React.useState("");
-  const [ownerId, setOwnerId] = React.useState("");
-  const [showOwnerId, setShowOwnerId] = React.useState(false);
-  const [rememberDevice, setRememberDevice] = React.useState(true);
+  const [adminId, setAdminId] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [securityCode, setSecurityCode] = React.useState("");
+
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showSecurityCode, setShowSecurityCode] = React.useState(false);
+
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [isLocked, setIsLocked] = React.useState(false);
+  const [lockoutRemaining, setLockoutRemaining] = React.useState<number | null>(null);
 
-  // If already authenticated, redirect immediately to /admin
+  // If already authenticated via active session, redirect to /admin
   React.useEffect(() => {
-    const existing = getClientAdminSession();
-    if (existing) {
-      router.replace("/admin");
-    }
-  }, [router]);
+    async function checkExisting() {
+      try {
+        const res = await fetch("/api/admin/auth/verify");
+        const data = await res.json();
+        if (data.authenticated) {
+          router.replace("/admin");
+          return;
+        }
+      } catch {}
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value.replace(/\D/g, "").slice(0, 10);
-    setPhone(val);
-    if (errorMessage) setErrorMessage(null);
-  };
+      const clientSession = getClientAdminSession();
+      if (clientSession) {
+        router.replace("/admin");
+      }
+    }
+    checkExisting();
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
-    const cleanName = name.trim();
-    const cleanPhone = phone.replace(/\D/g, "");
-    const cleanOwnerId = ownerId.trim();
+    const cleanAdminId = adminId.trim();
+    const cleanPassword = password;
+    const cleanSecurityCode = securityCode.trim();
 
-    if (!cleanName) {
-      setErrorMessage("Please enter your registered Administrator Name");
+    // Client-side validations
+    if (!cleanAdminId) {
+      setErrorMessage("Please enter your Admin ID or username.");
       return;
     }
-    if (cleanPhone.length !== 10) {
-      setErrorMessage("Please enter your 10-digit registered mobile number");
+
+    if (!cleanPassword) {
+      setErrorMessage("Please enter your password.");
       return;
     }
-    if (!cleanOwnerId) {
-      setErrorMessage("Please enter your Owner ID / Security Passcode");
+
+    if (!cleanSecurityCode) {
+      setErrorMessage("Please enter your security code.");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // 1. Server-side API verification first
-      const res = await fetch("/api/admin/staff", {
+      const res = await fetch("/api/admin/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "verify_login",
-          name: cleanName,
-          phone: cleanPhone,
-          ownerId: cleanOwnerId,
+          adminId: cleanAdminId,
+          password: cleanPassword,
+          securityCode: cleanSecurityCode,
         }),
       });
 
       const data = await res.json();
 
-      if (res.ok && data.success && data.admin) {
-        saveClientAdminSession(data.admin, rememberDevice);
-        showToast.success(`Welcome, ${data.admin.displayName}! Entering Atelier Admin Portal...`);
+      if (res.ok && data.success) {
+        // Save client session fallback
+        saveClientAdminSession({
+          id: data.admin?.id || cleanAdminId,
+          name: cleanAdminId.toLowerCase(),
+          displayName: data.admin?.displayName || "Sreesha",
+          phone: "6281344628",
+          ownerId: cleanSecurityCode,
+          role: data.admin?.role || "Super Admin / Owner",
+          status: "Active",
+          isOwner: true,
+          createdAt: new Date().toISOString(),
+        });
+
+        showToast.success("Three-Level Verification Passed! Welcome, Administrator.");
         router.push("/admin");
         return;
       }
 
-      // 2. Client-side local verification fallback (for offline or local seed)
-      const staffList = getClientStaffList();
-      const localResult = verifyAdminCredentials(cleanName, cleanPhone, cleanOwnerId, staffList);
-
-      if (localResult.success && localResult.admin) {
-        saveClientAdminSession(localResult.admin, rememberDevice);
-        showToast.success(
-          `Welcome, ${localResult.admin.displayName}! Entering Atelier Admin Portal...`
-        );
-        router.push("/admin");
-        return;
-      }
-
-      setErrorMessage(
-        data.error ||
-          localResult.error ||
-          "Invalid administrator credentials. Verify your Name, Mobile, and Owner ID."
-      );
-    } catch {
-      // Offline fallback verification
-      const staffList = getClientStaffList();
-      const fallbackResult = verifyAdminCredentials(cleanName, cleanPhone, cleanOwnerId, staffList);
-
-      if (fallbackResult.success && fallbackResult.admin) {
-        saveClientAdminSession(fallbackResult.admin, rememberDevice);
-        showToast.success(`Welcome, ${fallbackResult.admin.displayName}!`);
-        router.push("/admin");
-      } else {
+      if (res.status === 429) {
+        setIsLocked(true);
+        setLockoutRemaining(data.remainingSeconds || 900);
         setErrorMessage(
-          fallbackResult.error || "Verification failed. Check your admin credentials."
+          data.error ||
+            "Too many failed login attempts. Account temporarily locked for security. Please try again later."
         );
+      } else {
+        setErrorMessage(data.error || "Invalid credentials. Please try again.");
       }
+    } catch {
+      setErrorMessage("Network error during verification. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#141312] flex items-center justify-center p-4 sm:p-6 selection:bg-[#B79B63] selection:text-[#1C1B19]">
-      <div className="bg-[#1C1B19] w-full max-w-md p-8 sm:p-10 border border-[#3E3A34] text-white space-y-6 shadow-2xl rounded-xs">
-        {/* Header Branding */}
+    <main className="min-h-screen bg-[#141312] text-[#FAF7F2] flex flex-col justify-center items-center px-4 py-12 relative overflow-hidden">
+      {/* Decorative Atelier Background Aura */}
+      <div className="absolute inset-0 pointer-events-none opacity-20">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#B79B63] rounded-full blur-[140px] opacity-25" />
+      </div>
+
+      <div className="w-full max-w-md relative z-10 space-y-6">
+        {/* Brand Card Header */}
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 bg-[#B79B63]/15 text-[#B79B63] mx-auto rounded-full flex items-center justify-center border border-[#B79B63]/30 shadow-inner">
-            <KeyRound className="w-7 h-7" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#1C1B19] border border-[#B79B63]/40 rounded-full text-[10px] uppercase tracking-[0.2em] text-[#B79B63] font-semibold mb-2 shadow-xs">
+            <ShieldCheck className="h-3 w-3 text-[#B79B63]" />
+            Three-Level Security Clearance
           </div>
-          <span className="text-[10px] tracking-[0.25em] text-[#B79B63] uppercase font-bold block pt-1">
-            Sreesha Elegance Atelier
-          </span>
-          <h1 className="font-serif text-2xl sm:text-3xl text-[#FAF7F2] font-normal">
-            Atelier Management Login
+          <h1 className="font-serif text-3xl sm:text-4xl text-[#FAF7F2] font-normal tracking-wide">
+            Sreesha Elegance
           </h1>
-          <p className="text-xs text-stone-400 max-w-xs mx-auto leading-relaxed">
-            Dedicated administrator portal. Authenticate with your registered Administrator Name,
-            Phone, and Owner ID.
+          <p className="text-xs text-[#A69E92] uppercase tracking-[0.18em]">
+            Atelier Administration Portal
           </p>
         </div>
 
-        {/* Security Notice */}
-        <div className="bg-[#24221E]/80 border border-[#3E3A34] p-3.5 rounded-xs flex items-center gap-2.5 text-stone-300 text-xs">
-          <ShieldCheck className="h-4 w-4 text-[#B79B63] shrink-0" />
-          <span className="text-[11px] leading-relaxed">
-            Confidential Portal. Privileged access granted only to verified boutique management.
-          </span>
+        {/* Security Form Card */}
+        <div className="bg-[#1C1B19]/90 border border-[#B79B63]/30 p-6 sm:p-8 rounded-xs shadow-2xl backdrop-blur-md space-y-6">
+          <div className="border-b border-[#2E2C28] pb-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-[#FAF7F2]">
+              Administrator Authentication
+            </h2>
+            <p className="text-[11px] text-[#A69E92] mt-0.5">
+              Requires valid Admin ID, master password, and authorized security code.
+            </p>
+          </div>
+
+          {/* Error Banner */}
+          {errorMessage && (
+            <div
+              role="alert"
+              className="p-3.5 bg-[#2A1616] border border-[#7D2929] rounded-2xs text-[#F2B8B8] text-xs flex items-start gap-2.5 animate-in fade-in duration-200"
+            >
+              {isLocked ? (
+                <Clock className="h-4 w-4 text-[#F28B82] shrink-0 mt-0.5" />
+              ) : (
+                <ShieldAlert className="h-4 w-4 text-[#F28B82] shrink-0 mt-0.5" />
+              )}
+              <div className="space-y-0.5">
+                <span className="font-semibold block">Authentication Denied</span>
+                <p className="text-[11px] leading-relaxed text-[#F2B8B8]/90">
+                  {errorMessage}
+                  {isLocked && lockoutRemaining
+                    ? ` (${Math.ceil(lockoutRemaining / 60)} min cooldown)`
+                    : ""}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4.5" noValidate>
+            {/* LEVEL 1: Admin ID / Username */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="admin-id"
+                className="block text-xs uppercase tracking-wider text-[#D8C7A5] font-medium"
+              >
+                1. Admin ID / Username *
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#8C867D]">
+                  <User className="h-4 w-4" />
+                </div>
+                <input
+                  id="admin-id"
+                  name="adminId"
+                  type="text"
+                  autoComplete="username"
+                  required
+                  disabled={isSubmitting || isLocked}
+                  value={adminId}
+                  onChange={(e) => {
+                    setAdminId(e.target.value);
+                    if (errorMessage) setErrorMessage(null);
+                  }}
+                  placeholder="Enter administrator ID"
+                  className="w-full h-11 pl-9 pr-3 bg-[#141312] border border-[#2E2C28] text-xs text-[#FAF7F2] placeholder-[#5C564E] rounded-2xs focus:border-[#B79B63] focus:ring-1 focus:ring-[#B79B63] focus:outline-hidden transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* LEVEL 2: Password with Show/Hide Toggle */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="admin-password"
+                className="block text-xs uppercase tracking-wider text-[#D8C7A5] font-medium"
+              >
+                2. Password *
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#8C867D]">
+                  <Lock className="h-4 w-4" />
+                </div>
+                <input
+                  id="admin-password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  disabled={isSubmitting || isLocked}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errorMessage) setErrorMessage(null);
+                  }}
+                  placeholder="Enter master password"
+                  className="w-full h-11 pl-9 pr-10 bg-[#141312] border border-[#2E2C28] text-xs text-[#FAF7F2] placeholder-[#5C564E] rounded-2xs focus:border-[#B79B63] focus:ring-1 focus:ring-[#B79B63] focus:outline-hidden transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#8C867D] hover:text-[#FAF7F2] transition-colors cursor-pointer"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* LEVEL 3: Security Code */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="admin-security-code"
+                  className="block text-xs uppercase tracking-wider text-[#D8C7A5] font-medium"
+                >
+                  3. Security Code *
+                </label>
+                <span className="text-[10px] text-[#8C867D]">Secret Passcode</span>
+              </div>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#8C867D]">
+                  <KeyRound className="h-4 w-4" />
+                </div>
+                <input
+                  id="admin-security-code"
+                  name="securityCode"
+                  type={showSecurityCode ? "text" : "password"}
+                  autoComplete="off"
+                  required
+                  disabled={isSubmitting || isLocked}
+                  value={securityCode}
+                  onChange={(e) => {
+                    setSecurityCode(e.target.value);
+                    if (errorMessage) setErrorMessage(null);
+                  }}
+                  placeholder="Enter security passcode"
+                  className="w-full h-11 pl-9 pr-10 bg-[#141312] border border-[#2E2C28] text-xs text-[#FAF7F2] placeholder-[#5C564E] rounded-2xs focus:border-[#B79B63] focus:ring-1 focus:ring-[#B79B63] focus:outline-hidden transition-colors tracking-widest font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSecurityCode(!showSecurityCode)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#8C867D] hover:text-[#FAF7F2] transition-colors cursor-pointer"
+                  aria-label={showSecurityCode ? "Hide security code" : "Show security code"}
+                >
+                  {showSecurityCode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <p className="text-[10px] text-[#7A746B] italic">
+                Confidential server-verified secret known strictly to authorized administrators.
+              </p>
+            </div>
+
+            {/* Submit Button */}
+            <div className="pt-2">
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                disabled={isSubmitting || isLocked}
+                className="w-full h-11 text-xs font-semibold uppercase tracking-[0.16em] bg-[#B79B63] hover:bg-[#A3864F] text-[#1C1B19] flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-[#1C1B19] border-t-transparent rounded-full animate-spin" />
+                    <span>Verifying All 3 Levels...</span>
+                  </>
+                ) : isLocked ? (
+                  <>
+                    <Clock className="w-4 h-4" />
+                    <span>Temporarily Locked</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Authenticate &amp; Enter Dashboard</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+
+          {/* Security Assurance Badge */}
+          <div className="pt-4 border-t border-[#2E2C28] text-center space-y-1">
+            <div className="flex items-center justify-center gap-1.5 text-[10px] text-[#8C867D]">
+              <Sparkles className="h-3 w-3 text-[#B79B63]" />
+              <span>Protected by Rate-Limiting &amp; Encrypted Sessions</span>
+            </div>
+            <p className="text-[9px] text-[#5C564E]">
+              All unauthorized access attempts are logged and reported to the Atelier Security
+              Council.
+            </p>
+          </div>
         </div>
 
-        {/* Error Banner */}
-        {errorMessage && (
-          <div className="p-3 bg-[#3A1818] border border-[#8C2C2C] text-xs text-[#FFAAAA] rounded-xs animate-in fade-in flex items-start gap-2">
-            <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
-            <span>{errorMessage}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Admin Name */}
-          <div>
-            <label className="block text-xs font-semibold text-stone-300 mb-1.5 uppercase tracking-wider">
-              Administrator Name <span className="text-[#B79B63]">*</span>
-            </label>
-            <div className="relative">
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-500" />
-              <input
-                type="text"
-                required
-                autoFocus
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  if (errorMessage) setErrorMessage(null);
-                }}
-                placeholder="e.g. Sreesha"
-                className="w-full pl-10 pr-4 py-2.5 bg-[#141312] border border-[#3E3A34] text-sm text-[#FAF7F2] font-medium outline-none focus:border-[#B79B63] transition-colors rounded-xs"
-              />
-            </div>
-          </div>
-
-          {/* Registered Mobile */}
-          <div>
-            <label className="block text-xs font-semibold text-stone-300 mb-1.5 uppercase tracking-wider">
-              Registered Mobile <span className="text-[#B79B63]">*</span>
-            </label>
-            <div className="relative flex items-center">
-              <span className="absolute left-3 text-xs font-semibold text-stone-400 border-r border-[#3E3A34] pr-2 pointer-events-none flex items-center gap-1">
-                <span>🇮🇳</span>
-                <span>+91</span>
-              </span>
-              <input
-                type="tel"
-                required
-                maxLength={10}
-                value={phone}
-                onChange={handlePhoneChange}
-                placeholder="6281344628"
-                className="w-full pl-20 pr-4 py-2.5 bg-[#141312] border border-[#3E3A34] text-sm text-[#FAF7F2] font-medium tracking-wider outline-none focus:border-[#B79B63] transition-colors rounded-xs"
-              />
-            </div>
-          </div>
-
-          {/* Owner ID / Security Passcode */}
-          <div>
-            <label className="block text-xs font-semibold text-stone-300 mb-1.5 uppercase tracking-wider">
-              Owner ID / Security Passcode <span className="text-[#B79B63]">*</span>
-            </label>
-            <div className="relative flex items-center">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-500" />
-              <input
-                type={showOwnerId ? "text" : "password"}
-                required
-                maxLength={10}
-                value={ownerId}
-                onChange={(e) => {
-                  setOwnerId(e.target.value);
-                  if (errorMessage) setErrorMessage(null);
-                }}
-                placeholder="Enter security passcode (e.g. 8899)"
-                className="w-full pl-10 pr-10 py-2.5 bg-[#141312] border border-[#3E3A34] text-sm text-[#FAF7F2] font-mono tracking-widest outline-none focus:border-[#B79B63] transition-colors rounded-xs"
-              />
-              <button
-                type="button"
-                onClick={() => setShowOwnerId(!showOwnerId)}
-                className="absolute right-3 text-stone-400 hover:text-white p-1 cursor-pointer"
-                title={showOwnerId ? "Hide Passcode" : "Show Passcode"}
-              >
-                {showOwnerId ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Remember Device Option */}
-          <div className="flex items-center justify-between text-xs pt-1">
-            <label className="flex items-center gap-2 text-stone-400 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={rememberDevice}
-                onChange={(e) => setRememberDevice(e.target.checked)}
-                className="accent-[#B79B63] cursor-pointer"
-              />
-              <span>Keep Atelier session active</span>
-            </label>
-          </div>
-
-          {/* Submit Button */}
-          <Button
-            type="submit"
-            disabled={isSubmitting || !name.trim() || phone.length < 10 || !ownerId.trim()}
-            className="w-full py-3 bg-[#B79B63] hover:bg-[#a3874f] text-[#1C1B19] font-bold text-xs uppercase tracking-widest transition-all duration-300 mt-2"
+        {/* Back to Storefront Link */}
+        <div className="text-center pt-2">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-xs text-[#A69E92] hover:text-[#B79B63] transition-colors group cursor-pointer"
           >
-            {isSubmitting ? "Authenticating Authority..." : "Unlock Atelier Management Suite"}
-          </Button>
-
-          {/* Return to Customer Boutique Link */}
-          <div className="pt-3 border-t border-[#3E3A34] text-center">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs text-stone-400 hover:text-[#B79B63] transition-colors"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              <span>Return to Sreesha Elegance Store</span>
-            </Link>
-          </div>
-        </form>
+            <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-1 transition-transform" />
+            <span>Return to Customer Storefront</span>
+          </Link>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

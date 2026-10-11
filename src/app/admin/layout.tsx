@@ -40,19 +40,50 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return;
     }
 
-    const session = getClientAdminSession();
-    if (session) {
-      setCurrentAdmin(session);
-      setIsAuthorized(true);
-      setIsCheckingAuth(false);
-    } else {
-      setIsAuthorized(false);
-      setIsCheckingAuth(false);
-      router.replace("/admin/login");
+    async function checkAuth() {
+      try {
+        const res = await fetch("/api/admin/auth/verify");
+        const data = await res.json();
+        if (data.authenticated) {
+          const clientSession = getClientAdminSession() || {
+            id: data.admin?.id || "sreesha",
+            name: "sreesha",
+            displayName: "Sreesha",
+            phone: "6281344628",
+            ownerId: "8899",
+            role: data.admin?.role || "Super Admin / Owner",
+            status: "Active" as const,
+            isOwner: true,
+            createdAt: new Date().toISOString(),
+          };
+          setCurrentAdmin(clientSession);
+          setIsAuthorized(true);
+        } else {
+          clearClientAdminSession();
+          setIsAuthorized(false);
+          router.replace("/admin/login");
+        }
+      } catch {
+        const session = getClientAdminSession();
+        if (session) {
+          setCurrentAdmin(session);
+          setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
+          router.replace("/admin/login");
+        }
+      } finally {
+        setIsCheckingAuth(false);
+      }
     }
+
+    checkAuth();
   }, [pathname, isLoginPage, router]);
 
-  const handleSignOutAdmin = () => {
+  const handleSignOutAdmin = async () => {
+    try {
+      await fetch("/api/admin/auth/logout", { method: "POST" });
+    } catch {}
     clearClientAdminSession();
     setIsAuthorized(false);
     setCurrentAdmin(null);

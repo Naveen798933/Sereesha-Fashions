@@ -1,7 +1,29 @@
-import { type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // 1. Protect Admin UI Routes (excluding /admin/login)
+  if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
+    const adminToken = request.cookies.get("sreesha_admin_token")?.value;
+    if (!adminToken) {
+      const loginUrl = new URL("/admin/login", request.url);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // 2. Protect Privileged Admin API Endpoints (excluding /api/admin/auth/*)
+  if (pathname.startsWith("/api/admin") && !pathname.startsWith("/api/admin/auth")) {
+    const adminToken = request.cookies.get("sreesha_admin_token")?.value;
+    if (!adminToken) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Administrator authentication required." },
+        { status: 401 }
+      );
+    }
+  }
+
   return await updateSession(request);
 }
 
