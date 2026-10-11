@@ -273,16 +273,6 @@ export default function AccountPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="border-[#B79B63]/40 text-[#B79B63] hover:bg-[#B79B63]/10"
-          >
-            <Link href="/admin">
-              <ShieldCheck className="mr-1.5 h-3.5 w-3.5" /> Admin Portal
-            </Link>
-          </Button>
           <Button asChild variant="outline" size="sm">
             <Link href="/wishlist">
               <Heart className="mr-1.5 h-3.5 w-3.5" /> Wishlist
@@ -549,7 +539,7 @@ export default function AccountPage() {
                   Book a Complimentary 1-on-1 Video Consultation
                 </p>
                 <p className="text-[#5A5650] leading-relaxed">
-                  Our resident master stylists in Kukatpally will present weaves under studio
+                  Our resident master stylists in Jubilee Hills will present weaves under studio
                   lighting, guide you on blouse embroidery, and confirm exact body measurements
                   before stitching.
                 </p>
