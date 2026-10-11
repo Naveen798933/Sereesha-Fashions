@@ -222,6 +222,7 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
                   alt="Sreesha Elegance — Hyderabad Boutique"
                   width={160}
                   height={64}
+                  style={{ width: "auto" }}
                   className="h-14 w-auto object-contain transition-opacity duration-200 group-hover:opacity-85"
                   priority
                 />
@@ -337,6 +338,7 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
                   alt="Sreesha Elegance"
                   width={130}
                   height={52}
+                  style={{ width: "auto" }}
                   className="h-11 w-auto object-contain"
                 />
               </Link>

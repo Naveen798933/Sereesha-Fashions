@@ -107,6 +107,7 @@ export const Footer: React.FC = () => {
                 alt="Sreesha Elegance"
                 width={140}
                 height={56}
+                style={{ width: "auto" }}
                 className="h-14 w-auto object-contain brightness-0 invert"
               />
             </Link>

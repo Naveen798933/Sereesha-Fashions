@@ -15,16 +15,20 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { Order, DbOrder, DbOrderItem, getStoredOrders } from "@/lib/orders";
 import { formatINR } from "@/lib/utils";
-import { getAdminProducts, getCategories } from "@/lib/catalog";
+import { Product } from "@/data/products";
+import { getAdminProducts, getCategories, CategoryItem } from "@/lib/catalog";
 
 export default function AdminOverviewPage() {
   const [orders, setOrders] = React.useState<Order[]>([]);
   const [customerCount, setCustomerCount] = React.useState<number>(0);
   const [loading, setLoading] = React.useState(true);
-  const [products] = React.useState(() => getAdminProducts());
-  const [categories] = React.useState(() => getCategories());
+  const [products, setProducts] = React.useState<Product[]>([]);
+  const [categories, setCategories] = React.useState<CategoryItem[]>([]);
 
   React.useEffect(() => {
+    setProducts(getAdminProducts());
+    setCategories(getCategories());
+
     // Load registered patrons count
     fetch("/api/admin/customers")
       .then((r) => r.json())

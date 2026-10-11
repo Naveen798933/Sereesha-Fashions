@@ -37,18 +37,19 @@ export default function CheckoutPage() {
   const [couponLoading, setCouponLoading] = React.useState(false);
 
   // Form State
-  const [formData, setFormData] = React.useState(() => {
-    const defaultData = {
-      fullName: "",
-      phone: "",
-      email: "",
-      address: "",
-      city: "",
-      state: "Telangana",
-      pinCode: "",
-      notes: "",
-    };
-    if (typeof window === "undefined") return defaultData;
+  const [formData, setFormData] = React.useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    address: "",
+    city: "",
+    state: "Telangana",
+    pinCode: "",
+    notes: "",
+  });
+
+  // Load saved address on client mount
+  React.useEffect(() => {
     try {
       const stored = localStorage.getItem("sreesha_saved_addresses");
       if (stored) {
@@ -65,23 +66,20 @@ export default function CheckoutPage() {
         if (Array.isArray(parsed) && parsed.length > 0) {
           const defaultAddr = parsed.find((a) => a.isDefault) || parsed[0];
           if (defaultAddr) {
-            return {
-              ...defaultData,
-              fullName: defaultAddr.name || defaultData.fullName,
-              phone: defaultAddr.phone?.replace(/[^0-9]/g, "") || defaultData.phone,
-              address: defaultAddr.street || defaultData.address,
-              city: defaultAddr.city || defaultData.city,
-              state: defaultAddr.state || defaultData.state,
-              pinCode: defaultAddr.pinCode || defaultData.pinCode,
-            };
+            setFormData((prev) => ({
+              ...prev,
+              fullName: defaultAddr.name || prev.fullName,
+              phone: defaultAddr.phone?.replace(/[^0-9]/g, "") || prev.phone,
+              address: defaultAddr.street || prev.address,
+              city: defaultAddr.city || prev.city,
+              state: defaultAddr.state || prev.state,
+              pinCode: defaultAddr.pinCode || prev.pinCode,
+            }));
           }
         }
       }
-    } catch {
-      // ignore
-    }
-    return defaultData;
-  });
+    } catch {}
+  }, []);
 
   // Autofill if logged-in user profile is available
   React.useEffect(() => {

@@ -7,6 +7,7 @@ export const STORAGE_CUSTOM_PRODUCTS_KEY = "sreesha_admin_custom_products";
 export const STORAGE_STOCK_MAP_KEY = "sreesha_admin_stock_map";
 export const STORAGE_CATEGORIES_KEY = "sreesha_admin_categories";
 export const STORAGE_REVIEWS_KEY = "sreesha_admin_reviews";
+export const STORAGE_DELETED_PRODUCTS_KEY = "sreesha_admin_deleted_products";
 
 export interface CategoryItem {
   id: string;
@@ -168,13 +169,30 @@ export function getCustomerProducts(): Product[] {
     }
   } catch {}
 
+  let deletedIds: string[] = [];
+  try {
+    const storedDel = localStorage.getItem(STORAGE_DELETED_PRODUCTS_KEY);
+    if (storedDel) {
+      const parsed = JSON.parse(storedDel);
+      if (Array.isArray(parsed)) deletedIds = parsed;
+    }
+  } catch {}
+
   let stockMap: Record<string, boolean> = {};
   try {
     const storedStock = localStorage.getItem(STORAGE_STOCK_MAP_KEY);
     if (storedStock) stockMap = JSON.parse(storedStock);
   } catch {}
 
-  const merged = [...customProducts, ...PRODUCTS].filter(
+  const productMap = new Map<string, Product>();
+  PRODUCTS.forEach((p) => {
+    if (!deletedIds.includes(p.id)) productMap.set(p.id, p);
+  });
+  customProducts.forEach((p) => {
+    if (!deletedIds.includes(p.id)) productMap.set(p.id, p);
+  });
+
+  const merged = Array.from(productMap.values()).filter(
     (p) => p.status !== "archived" && p.status !== "draft"
   );
 
@@ -199,13 +217,30 @@ export function getAdminProducts(): Product[] {
     }
   } catch {}
 
+  let deletedIds: string[] = [];
+  try {
+    const storedDel = localStorage.getItem(STORAGE_DELETED_PRODUCTS_KEY);
+    if (storedDel) {
+      const parsed = JSON.parse(storedDel);
+      if (Array.isArray(parsed)) deletedIds = parsed;
+    }
+  } catch {}
+
   let stockMap: Record<string, boolean> = {};
   try {
     const storedStock = localStorage.getItem(STORAGE_STOCK_MAP_KEY);
     if (storedStock) stockMap = JSON.parse(storedStock);
   } catch {}
 
-  const all = [...customProducts, ...PRODUCTS];
+  const productMap = new Map<string, Product>();
+  PRODUCTS.forEach((p) => {
+    if (!deletedIds.includes(p.id)) productMap.set(p.id, p);
+  });
+  customProducts.forEach((p) => {
+    if (!deletedIds.includes(p.id)) productMap.set(p.id, p);
+  });
+
+  const all = Array.from(productMap.values());
   return all.map((p) => ({
     ...p,
     status: p.status || "active",
@@ -221,6 +256,14 @@ export async function saveProduct(product: Product): Promise<void> {
   if (typeof window === "undefined") return;
 
   try {
+    // If product was previously marked deleted, unmark it
+    const storedDel = localStorage.getItem(STORAGE_DELETED_PRODUCTS_KEY);
+    if (storedDel) {
+      const deletedIds: string[] = JSON.parse(storedDel);
+      const filteredDel = deletedIds.filter((id) => id !== product.id);
+      localStorage.setItem(STORAGE_DELETED_PRODUCTS_KEY, JSON.stringify(filteredDel));
+    }
+
     const stored = localStorage.getItem(STORAGE_CUSTOM_PRODUCTS_KEY);
     const existing: Product[] = stored ? JSON.parse(stored) : [];
 
@@ -294,6 +337,13 @@ export async function deleteProduct(productId: string): Promise<void> {
       const filtered = existing.filter((p) => p.id !== productId);
       localStorage.setItem(STORAGE_CUSTOM_PRODUCTS_KEY, JSON.stringify(filtered));
     }
+
+    const storedDel = localStorage.getItem(STORAGE_DELETED_PRODUCTS_KEY);
+    const deletedIds: string[] = storedDel ? JSON.parse(storedDel) : [];
+    if (!deletedIds.includes(productId)) {
+      deletedIds.push(productId);
+      localStorage.setItem(STORAGE_DELETED_PRODUCTS_KEY, JSON.stringify(deletedIds));
+    }
   } catch {}
 
   try {
@@ -330,9 +380,9 @@ export function getCategories(): CategoryItem[] {
 
   try {
     const stored = localStorage.getItem(STORAGE_CATEGORIES_KEY);
-    if (stored) {
+    if (stored !== null) {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) return parsed;
     }
   } catch {}
 
@@ -391,9 +441,9 @@ export function getAdminReviews(): AdminReviewItem[] {
 
   try {
     const stored = localStorage.getItem(STORAGE_REVIEWS_KEY);
-    if (stored) {
+    if (stored !== null) {
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) return parsed;
     }
   } catch {}
 

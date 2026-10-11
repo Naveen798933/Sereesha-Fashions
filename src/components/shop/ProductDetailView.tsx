@@ -146,7 +146,16 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
 
   React.useEffect(() => {
     trackRecentlyViewed(product);
+    setActiveImage(product.primaryImage);
+    setIsVideoActive(false);
   }, [product]);
+
+  const galleryList = React.useMemo(() => {
+    if (Array.isArray(product.galleryImages) && product.galleryImages.length > 0) {
+      return product.galleryImages;
+    }
+    return product.primaryImage ? [product.primaryImage] : [];
+  }, [product.galleryImages, product.primaryImage]);
 
   // Load real reviews from Supabase & stream live patron feedback
   React.useEffect(() => {
@@ -562,84 +571,90 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
           )}
 
           {/* Mobile Dot Indicators */}
-          <div className="flex sm:hidden items-center justify-center gap-1.5 pt-1">
-            {product.galleryImages.map((img, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => {
-                  setIsVideoActive(false);
-                  setActiveImage(img);
-                }}
-                className={cn(
-                  "h-1.5 rounded-full transition-all cursor-pointer",
-                  !isVideoActive && activeImage === img ? "w-6 bg-[#B79B63]" : "w-1.5 bg-[#D8C7A5]"
-                )}
-                aria-label={`View photo ${idx + 1}`}
-              />
-            ))}
-            {product.videoUrl && (
-              <button
-                type="button"
-                onClick={() => setIsVideoActive(true)}
-                className={cn(
-                  "h-1.5 rounded-full transition-all cursor-pointer",
-                  isVideoActive ? "w-6 bg-[#B79B63]" : "w-1.5 bg-[#D8C7A5]"
-                )}
-                aria-label="View product video"
-              />
-            )}
-          </div>
+          {(galleryList.length > 1 || Boolean(product.videoUrl)) && (
+            <div className="flex sm:hidden items-center justify-center gap-1.5 pt-1">
+              {galleryList.map((img, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setIsVideoActive(false);
+                    setActiveImage(img);
+                  }}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all cursor-pointer",
+                    !isVideoActive && activeImage === img
+                      ? "w-6 bg-[#B79B63]"
+                      : "w-1.5 bg-[#D8C7A5]"
+                  )}
+                  aria-label={`View photo ${idx + 1}`}
+                />
+              ))}
+              {product.videoUrl && (
+                <button
+                  type="button"
+                  onClick={() => setIsVideoActive(true)}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all cursor-pointer",
+                    isVideoActive ? "w-6 bg-[#B79B63]" : "w-1.5 bg-[#D8C7A5]"
+                  )}
+                  aria-label="View product video"
+                />
+              )}
+            </div>
+          )}
 
           {/* Thumbnail Strip */}
-          <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar pb-1">
-            {/* Optional Video Thumbnail */}
-            {product.videoUrl && (
-              <button
-                type="button"
-                onClick={() => setIsVideoActive(true)}
-                className={cn(
-                  "relative h-16 w-14 sm:h-20 sm:w-16 shrink-0 overflow-hidden border cursor-pointer transition-all bg-[#141312] text-white flex flex-col items-center justify-center gap-1",
-                  isVideoActive
-                    ? "border-[#B79B63] ring-1 ring-[#B79B63]"
-                    : "border-[#E8E2D8] opacity-80 hover:opacity-100"
-                )}
-                title="Watch Video Spotlight"
-              >
-                <div className="w-6 h-6 rounded-full bg-[#B79B63]/20 flex items-center justify-center">
-                  <Play className="w-3.5 h-3.5 text-[#B79B63] fill-current" />
-                </div>
-                <span className="text-[9px] uppercase tracking-wider font-bold text-[#B79B63]">
-                  Video
-                </span>
-              </button>
-            )}
+          {(galleryList.length > 1 || Boolean(product.videoUrl)) && (
+            <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar pb-1">
+              {/* Optional Video Thumbnail */}
+              {product.videoUrl && (
+                <button
+                  type="button"
+                  onClick={() => setIsVideoActive(true)}
+                  className={cn(
+                    "relative h-16 w-14 sm:h-20 sm:w-16 shrink-0 overflow-hidden border cursor-pointer transition-all bg-[#141312] text-white flex flex-col items-center justify-center gap-1",
+                    isVideoActive
+                      ? "border-[#B79B63] ring-1 ring-[#B79B63]"
+                      : "border-[#E8E2D8] opacity-80 hover:opacity-100"
+                  )}
+                  title="Watch Video Spotlight"
+                >
+                  <div className="w-6 h-6 rounded-full bg-[#B79B63]/20 flex items-center justify-center">
+                    <Play className="w-3.5 h-3.5 text-[#B79B63] fill-current" />
+                  </div>
+                  <span className="text-[9px] uppercase tracking-wider font-bold text-[#B79B63]">
+                    Video
+                  </span>
+                </button>
+              )}
 
-            {product.galleryImages.map((img, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => {
-                  setIsVideoActive(false);
-                  setActiveImage(img);
-                }}
-                className={cn(
-                  "relative h-16 w-14 sm:h-20 sm:w-16 shrink-0 overflow-hidden border cursor-pointer transition-all",
-                  !isVideoActive && activeImage === img
-                    ? "border-[#B79B63] ring-1 ring-[#B79B63]"
-                    : "border-[#E8E2D8] opacity-70 hover:opacity-100"
-                )}
-              >
-                <Image
-                  src={img}
-                  alt={`${product.title} angle ${idx + 1}`}
-                  fill
-                  sizes="64px"
-                  className="object-cover object-center"
-                />
-              </button>
-            ))}
-          </div>
+              {galleryList.map((img, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setIsVideoActive(false);
+                    setActiveImage(img);
+                  }}
+                  className={cn(
+                    "relative h-16 w-14 sm:h-20 sm:w-16 shrink-0 overflow-hidden border cursor-pointer transition-all",
+                    !isVideoActive && activeImage === img
+                      ? "border-[#B79B63] ring-1 ring-[#B79B63]"
+                      : "border-[#E8E2D8] opacity-70 hover:opacity-100"
+                  )}
+                >
+                  <Image
+                    src={img}
+                    alt={`${product.title} angle ${idx + 1}`}
+                    fill
+                    sizes="64px"
+                    className="object-cover object-center"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Assurance strip under gallery */}
           <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-4 border-t border-[#E8E2D8] text-center text-xs text-[#5A5650]">
