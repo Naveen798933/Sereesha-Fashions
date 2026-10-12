@@ -408,3 +408,96 @@ export async function updateOrderTracking(
     return false;
   }
 }
+
+export interface OrderStatusHistoryEntry {
+  id: string;
+  orderId: string;
+  fromStatus?: string | null;
+  toStatus: OrderStatus;
+  carrier?: string | null;
+  trackingNumber?: string | null;
+  notes?: string | null;
+  changedBy: string;
+  createdAt: string;
+}
+
+export async function fetchOrderTimeline(orderId: string): Promise<OrderStatusHistoryEntry[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("order_status_history")
+      .select("*")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: true });
+
+    if (error || !data) return [];
+    return data.map((d: Record<string, unknown>) => ({
+      id: String(d.id),
+      orderId: String(d.order_id),
+      fromStatus: (d.from_status as string) || null,
+      toStatus: d.to_status as OrderStatus,
+      carrier: (d.carrier as string) || null,
+      trackingNumber: (d.tracking_number as string) || null,
+      notes: (d.notes as string) || null,
+      changedBy: (d.changed_by as string) || "System",
+      createdAt: String(d.created_at),
+    }));
+  } catch (e) {
+    console.warn("Failed to fetch order workflow timeline:", e);
+    return [];
+  }
+}
+
+export async function advanceOrderWorkflowRpc(
+  orderId: string,
+  newStatus: OrderStatus,
+  adminName: string = "Atelier Admin",
+  notes?: string,
+  carrier?: string,
+  trackingNumber?: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc("advance_order_workflow", {
+      p_order_id: orderId,
+      p_new_status: newStatus,
+      p_admin_name: adminName,
+      p_notes: notes || null,
+      p_carrier: carrier || null,
+      p_tracking_number: trackingNumber || null,
+    });
+
+    if (error) {
+      // Fallback to direct client update if RPC is not yet registered in remote project
+      const updated = await updateOrderStatus(orderId, newStatus);
+      if (trackingNumber) {
+        await updateOrderTracking(orderId, trackingNumber, carrier);
+      }
+      return { success: updated };
+    }
+
+    if (typeof window !== "undefined") {
+      try {
+        const current = getStoredOrders();
+        const updated = current.map((o) =>
+          o.id === orderId
+            ? {
+                ...o,
+                status: newStatus,
+                ...(trackingNumber ? { trackingNumber } : {}),
+                ...(carrier ? { carrier } : {}),
+              }
+            : o
+        );
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      } catch {
+        // no-op
+      }
+    }
+
+    return (data as { success: boolean; error?: string }) || { success: true };
+  } catch {
+    const updated = await updateOrderStatus(orderId, newStatus);
+    return { success: updated };
+  }
+}
