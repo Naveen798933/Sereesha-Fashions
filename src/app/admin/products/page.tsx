@@ -15,6 +15,8 @@ import {
   Play,
   Star,
   Video,
+  FileVideo,
+  Loader2,
   ChevronUp,
   ChevronDown,
 } from "lucide-react";
@@ -22,6 +24,7 @@ import { Product } from "@/data/products";
 import { formatINR } from "@/lib/utils";
 import { showToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
+import { createClient } from "@/lib/supabase/client";
 import {
   getAdminProducts,
   saveProduct,
@@ -80,6 +83,9 @@ export default function AdminProductsPage() {
   const [primaryImageIndex, setPrimaryImageIndex] = React.useState<number>(0);
   const [imageUrlInput, setImageUrlInput] = React.useState("");
   const [formVideoUrl, setFormVideoUrl] = React.useState("");
+  const [isVideoUploading, setIsVideoUploading] = React.useState(false);
+  const [uploadedVideoName, setUploadedVideoName] = React.useState<string | null>(null);
+  const videoFileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   // Fashion Attributes State
   const [formFabric, setFormFabric] = React.useState("100% Pure Mulberry Silk");
@@ -134,6 +140,9 @@ export default function AdminProductsPage() {
     setPrimaryImageIndex(0);
     setImageUrlInput("");
     setFormVideoUrl("");
+    setUploadedVideoName(null);
+    setIsVideoUploading(false);
+    if (videoFileInputRef.current) videoFileInputRef.current.value = "";
     setFormFabric("100% Pure Mulberry Silk");
     setFormWeave("Korvai Handloom Weave with Contrast Pallu");
     setFormZariType("Pure Gold & Silver Zari");
@@ -173,6 +182,9 @@ export default function AdminProductsPage() {
 
     setImageUrlInput("");
     setFormVideoUrl(p.videoUrl || "");
+    setUploadedVideoName(null);
+    setIsVideoUploading(false);
+    if (videoFileInputRef.current) videoFileInputRef.current.value = "";
     setFormFabric(p.fabric);
     setFormWeave(p.weave);
     setFormZariType(p.details?.zariType || "Gold Zari");
@@ -250,6 +262,78 @@ export default function AdminProductsPage() {
     } else if (primaryImageIndex > index) {
       setPrimaryImageIndex(primaryImageIndex - 1);
     }
+  };
+
+  const handleVideoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const MAX_SIZE_MB = 100;
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      showToast.error(`Video file "${file.name}" exceeds ${MAX_SIZE_MB}MB size limit.`);
+      return;
+    }
+
+    setIsVideoUploading(true);
+    setUploadedVideoName(file.name);
+    showToast.info(`Reading and preparing video "${file.name}"...`);
+
+    try {
+      // 1. Try uploading to Supabase Storage if bucket is reachable
+      let cloudUrl: string | null = null;
+      try {
+        const supabase = createClient();
+        const ext = file.name.split(".").pop() || "mp4";
+        const cleanName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
+        const filePath = `product-videos/${cleanName}`;
+
+        const { data, error } = await supabase.storage
+          .from("product-videos")
+          .upload(filePath, file, { cacheControl: "3600", upsert: true });
+
+        if (!error && data?.path) {
+          const { data: pubData } = supabase.storage.from("product-videos").getPublicUrl(data.path);
+          if (pubData?.publicUrl) {
+            cloudUrl = pubData.publicUrl;
+          }
+        }
+      } catch {
+        // Fallback to local Data URL
+      }
+
+      if (cloudUrl) {
+        setFormVideoUrl(cloudUrl);
+        showToast.success(`Video "${file.name}" uploaded to cloud storage successfully!`);
+        setIsVideoUploading(false);
+        return;
+      }
+
+      // 2. Fallback: FileReader readAsDataURL for local / offline support
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setFormVideoUrl(event.target.result as string);
+          showToast.success(`Video "${file.name}" uploaded from device!`);
+        }
+        setIsVideoUploading(false);
+      };
+      reader.onerror = () => {
+        showToast.error("Failed to read video file from device.");
+        setIsVideoUploading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error uploading video";
+      showToast.error(msg);
+      setIsVideoUploading(false);
+    }
+  };
+
+  const handleRemoveVideo = () => {
+    setFormVideoUrl("");
+    setUploadedVideoName(null);
+    if (videoFileInputRef.current) videoFileInputRef.current.value = "";
+    showToast.info("Product demonstration video removed");
   };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
@@ -1069,23 +1153,100 @@ export default function AdminProductsPage() {
                 </div>
 
                 {/* Product Video Field */}
-                <div className="pt-2">
-                  <label className="block text-xs font-semibold text-[#1C1B19] mb-1 uppercase tracking-wider">
-                    Demonstration Video URL (MP4 / WebM / Cloudflare Stream)
-                  </label>
-                  <div className="relative">
-                    <Video className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-                    <input
-                      type="url"
-                      value={formVideoUrl}
-                      onChange={(e) => setFormVideoUrl(e.target.value)}
-                      placeholder="https://.../video.mp4"
-                      className="w-full pl-9 pr-3 py-2 bg-[#FAF7F2] border border-[#E8E2D8] text-xs outline-none focus:border-[#B79B63] rounded-xs"
-                    />
+                <div className="pt-3 border-t border-[#E8E2D8]/60 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="block text-xs font-semibold text-[#1C1B19] uppercase tracking-wider">
+                        Product Demonstration Video
+                      </label>
+                      <p className="text-[11px] text-stone-500">
+                        Upload MP4 / WebM / MOV videos directly from your device or paste an
+                        external hosted URL.
+                      </p>
+                    </div>
+                    {formVideoUrl && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveVideo}
+                        className="text-[11px] text-rose-600 hover:text-rose-800 flex items-center gap-1 font-medium cursor-pointer"
+                        title="Remove current video"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Remove Video
+                      </button>
+                    )}
                   </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2.5">
+                    {/* Option 1: Upload from Device */}
+                    <label
+                      className={`inline-flex items-center justify-center gap-2 px-4 py-2 border text-xs font-semibold rounded-xs transition-colors cursor-pointer select-none ${
+                        isVideoUploading
+                          ? "bg-stone-100 text-stone-400 border-stone-200 cursor-not-allowed"
+                          : "bg-[#FAF7F2] hover:bg-[#EFE8DD] border-[#E8E2D8] text-[#1C1B19]"
+                      }`}
+                    >
+                      {isVideoUploading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-[#B79B63]" />
+                          <span>Processing Video...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4 text-[#B79B63]" />
+                          <span>Upload Video From Device</span>
+                        </>
+                      )}
+                      <input
+                        ref={videoFileInputRef}
+                        type="file"
+                        disabled={isVideoUploading}
+                        accept="video/mp4,video/webm,video/ogg,video/quicktime,.mp4,.webm,.mov"
+                        onChange={handleVideoFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+
+                    {/* Option 2: Paste Hosted URL */}
+                    <div className="flex-1 relative">
+                      <Video className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                      <input
+                        type="url"
+                        value={formVideoUrl.startsWith("data:") ? "" : formVideoUrl}
+                        onChange={(e) => {
+                          setFormVideoUrl(e.target.value);
+                          setUploadedVideoName(null);
+                        }}
+                        placeholder={
+                          formVideoUrl.startsWith("data:")
+                            ? `✓ Uploaded from device (${uploadedVideoName || "Local video"})`
+                            : "Or enter Video URL (https://.../video.mp4)"
+                        }
+                        className="w-full pl-9 pr-3 py-2 bg-[#FAF7F2] border border-[#E8E2D8] text-xs outline-none focus:border-[#B79B63] rounded-xs"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Video Preview Player */}
                   {formVideoUrl && (
-                    <div className="mt-2 aspect-video w-full max-w-sm bg-black rounded-xs overflow-hidden">
-                      <video src={formVideoUrl} controls className="w-full h-full object-contain" />
+                    <div className="mt-2.5 p-3 bg-[#FAF7F2] border border-[#E8E2D8] rounded-xs space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-[#1C1B19] flex items-center gap-1.5">
+                          <FileVideo className="w-4 h-4 text-[#B79B63]" />
+                          {uploadedVideoName ? uploadedVideoName : "Demonstration Video Preview"}
+                        </span>
+                        <span className="text-[10px] uppercase font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-2xs border border-emerald-200">
+                          Ready for Spotlight
+                        </span>
+                      </div>
+                      <div className="aspect-video w-full max-w-md bg-black rounded-xs overflow-hidden shadow-xs">
+                        <video
+                          key={formVideoUrl.slice(0, 50)}
+                          src={formVideoUrl}
+                          controls
+                          playsInline
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
