@@ -36,10 +36,12 @@ export async function GET() {
         .order("created_at", { ascending: false });
 
       if (!error && dbCustomers && dbCustomers.length > 0) {
-        // Merge and deduplicate by phone
+        // Merge and deduplicate by normalized phone
         const map = new Map<string, CustomerRecord>();
-        customers.forEach((c) => map.set(c.phone, c));
-        (dbCustomers as CustomerRecord[]).forEach((c) => map.set(c.phone, c));
+        customers.forEach((c) => map.set(c.phone ? c.phone.replace(/\D/g, "") : c.id, c));
+        (dbCustomers as CustomerRecord[]).forEach((c) =>
+          map.set(c.phone ? c.phone.replace(/\D/g, "") : c.id, c)
+        );
         customers = Array.from(map.values());
       }
     } catch {}

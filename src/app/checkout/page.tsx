@@ -13,6 +13,7 @@ import {
   ShoppingBag,
   MapPin,
   Tag,
+  Gift,
 } from "lucide-react";
 import { useCartWishlist } from "@/context/CartWishlistContext";
 import { useAuth } from "@/context/AuthContext";
@@ -35,6 +36,39 @@ export default function CheckoutPage() {
     discount: number;
   } | null>(null);
   const [couponLoading, setCouponLoading] = React.useState(false);
+
+  // Royal Gift Packaging Option (synced from cart)
+  const [includeGiftPackaging, setIncludeGiftPackaging] = React.useState(false);
+  const [giftMessage, setGiftMessage] = React.useState("");
+
+  // Load preferences and coupon from cart session storage
+  React.useEffect(() => {
+    try {
+      const storedPref = sessionStorage.getItem("sreesha_cart_preferences");
+      if (storedPref) {
+        const pref = JSON.parse(storedPref);
+        if (pref.includeGiftPackaging) {
+          setIncludeGiftPackaging(true);
+        }
+        if (pref.giftMessage) {
+          setGiftMessage(pref.giftMessage);
+        }
+      }
+
+      const storedCoupon = sessionStorage.getItem("sreesha_applied_coupon");
+      if (storedCoupon) {
+        const c = JSON.parse(storedCoupon);
+        if (c.code) {
+          const disc =
+            c.discountType === "percentage"
+              ? Math.round((cartTotal * (c.discountValue || 10)) / 100)
+              : c.discount || 0;
+          setAppliedCoupon({ code: c.code, discount: disc });
+          setCouponCode(c.code);
+        }
+      }
+    } catch {}
+  }, [cartTotal]);
 
   // Form State
   const [formData, setFormData] = React.useState({
@@ -99,9 +133,10 @@ export default function CheckoutPage() {
   const [orderCompleted, setOrderCompleted] = React.useState(false);
   const [orderId, setOrderId] = React.useState("");
 
+  const giftPackagingFee = includeGiftPackaging ? 250 : 0;
   const shippingFee = cartTotal >= 2999 ? 0 : 150;
   const discountAmount = appliedCoupon ? appliedCoupon.discount : 0;
-  const finalTotal = Math.max(0, cartTotal + shippingFee - discountAmount);
+  const finalTotal = Math.max(0, cartTotal + shippingFee + giftPackagingFee - discountAmount);
 
   const handleApplyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
@@ -126,16 +161,47 @@ export default function CheckoutPage() {
       }
     } catch {
       // Client-side fallback coupons
-      if (code === "WELCOME10") {
-        const disc = Math.round(cartTotal * 0.1);
-        setAppliedCoupon({ code, discount: disc });
-        showToast.success(`Welcome coupon applied! Saved ${formatINR(disc)}`);
-      } else if (code === "ROYAL15" && cartTotal >= 10000) {
-        const disc = Math.round(cartTotal * 0.15);
-        setAppliedCoupon({ code, discount: disc });
-        showToast.success(`Royal tier coupon applied! Saved ${formatINR(disc)}`);
-      } else {
-        showToast.error("Invalid coupon code");
+      let localMatched = false;
+      try {
+        const stored = localStorage.getItem("sreesha_admin_coupons");
+        if (stored) {
+          interface StoredCoupon {
+            code: string;
+            discount_type: "percentage" | "fixed";
+            discount_value: number;
+            min_order: number;
+            active: boolean;
+          }
+          const parsed = JSON.parse(stored) as StoredCoupon[];
+          const found = parsed.find((c) => c.code === code && c.active);
+          if (found) {
+            if (cartTotal < (found.min_order || 0)) {
+              showToast.error(`Requires minimum order of ${formatINR(found.min_order)}`);
+              return;
+            }
+            const disc =
+              found.discount_type === "percentage"
+                ? Math.round((cartTotal * found.discount_value) / 100)
+                : Math.min(cartTotal, found.discount_value);
+            setAppliedCoupon({ code, discount: disc });
+            showToast.success(`Coupon ${code} applied! Saved ${formatINR(disc)}`);
+            localMatched = true;
+          }
+        }
+      } catch {}
+
+      if (!localMatched) {
+        if (code === "WELCOME10") {
+          const disc = Math.round(cartTotal * 0.1);
+          setAppliedCoupon({ code, discount: disc });
+          showToast.success(`Welcome coupon applied! Saved ${formatINR(disc)}`);
+        } else if (code === "ROYAL15" && cartTotal >= 10000) {
+          const disc = Math.round(cartTotal * 0.15);
+          setAppliedCoupon({ code, discount: disc });
+          showToast.success(`Royal tier coupon applied! Saved ${formatINR(disc)}`);
+        } else {
+          showToast.error("Invalid coupon code");
+        }
       }
     } finally {
       setCouponLoading(false);
@@ -178,7 +244,12 @@ export default function CheckoutPage() {
         city: formData.city,
         state: formData.state,
         pinCode: formData.pinCode,
-        notes: formData.notes,
+        notes: [
+          formData.notes,
+          includeGiftPackaging ? `[Royal Gift Box (+₹250)] Calligraphy Note: "${giftMessage}"` : "",
+        ]
+          .filter(Boolean)
+          .join(" | "),
       },
       items: cart.map((item) => ({
         id: item.id,
@@ -224,6 +295,10 @@ export default function CheckoutPage() {
 
     setIsProcessing(false);
     setOrderCompleted(true);
+    try {
+      sessionStorage.removeItem("sreesha_applied_coupon");
+      sessionStorage.removeItem("sreesha_cart_preferences");
+    } catch {}
     clearCart();
     showToast.success("Payment verified! Order placed & synced successfully.");
     router.push(`/order-confirmation?orderId=${generatedId}`);
@@ -896,6 +971,14 @@ export default function CheckoutPage() {
                 <span>Items Subtotal</span>
                 <span className="text-[#1C1B19] font-medium">{formatINR(cartTotal)}</span>
               </div>
+              {includeGiftPackaging && (
+                <div className="flex justify-between text-[#1C1B19]">
+                  <span className="flex items-center gap-1.5 text-xs text-[#5A5650]">
+                    <Gift className="h-3.5 w-3.5 text-[#B79B63]" /> Royal Gift Packaging
+                  </span>
+                  <span className="text-xs font-semibold text-[#1C1B19]">{formatINR(250)}</span>
+                </div>
+              )}
               {discountAmount > 0 && (
                 <div className="flex justify-between text-[#2D6A4F]">
                   <span>Atelier Privilege Discount</span>

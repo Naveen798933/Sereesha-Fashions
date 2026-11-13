@@ -16,7 +16,8 @@ import {
   ShieldCheck,
   Award,
 } from "lucide-react";
-import { PRODUCTS } from "@/data/products";
+import { Product } from "@/data/products";
+import { getCustomerProducts } from "@/lib/catalog";
 import { useCartWishlist } from "@/context/CartWishlistContext";
 import { formatINR, cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
@@ -43,6 +44,14 @@ export const ProductListingView: React.FC<ProductListingViewProps> = ({
 }) => {
   const { addToCart, toggleWishlist, isInWishlist } = useCartWishlist();
 
+  const [catalogProducts, setCatalogProducts] = React.useState<Product[]>(() =>
+    getCustomerProducts()
+  );
+
+  React.useEffect(() => {
+    setCatalogProducts(getCustomerProducts());
+  }, []);
+
   const [sortBy, setSortBy] = React.useState<SortOption>("featured");
   const [selectedFabric, setSelectedFabric] = React.useState<string>("all");
   const [quickFilter, setQuickFilter] = React.useState<QuickFilter>("all");
@@ -51,13 +60,13 @@ export const ProductListingView: React.FC<ProductListingViewProps> = ({
 
   // Filter base list
   const baseProducts = React.useMemo(() => {
-    return PRODUCTS.filter((p) => {
+    return catalogProducts.filter((p) => {
       if (categoryFilter !== "all" && p.category !== categoryFilter) return false;
       if (collectionFilter && p.collection !== collectionFilter) return false;
       if (badgeFilter && p.badge !== badgeFilter) return false;
       if (
         selectedFabric !== "all" &&
-        !p.fabric.toLowerCase().includes(selectedFabric.toLowerCase())
+        !(p.fabric || "").toLowerCase().includes(selectedFabric.toLowerCase())
       ) {
         return false;
       }
@@ -67,21 +76,21 @@ export const ProductListingView: React.FC<ProductListingViewProps> = ({
       if (quickFilter === "new" && p.badge !== "NEW") return false;
       if (
         quickFilter === "kanchipuram" &&
-        !p.title.toLowerCase().includes("kanchipuram") &&
-        !p.fabric.toLowerCase().includes("kanchipuram")
+        !(p.title || "").toLowerCase().includes("kanchipuram") &&
+        !(p.fabric || "").toLowerCase().includes("kanchipuram")
       ) {
         return false;
       }
       if (
         quickFilter === "banarasi" &&
-        !p.title.toLowerCase().includes("banarasi") &&
-        !p.fabric.toLowerCase().includes("banarasi")
+        !(p.title || "").toLowerCase().includes("banarasi") &&
+        !(p.fabric || "").toLowerCase().includes("banarasi")
       ) {
         return false;
       }
       return true;
     });
-  }, [categoryFilter, collectionFilter, badgeFilter, selectedFabric, quickFilter]);
+  }, [catalogProducts, categoryFilter, collectionFilter, badgeFilter, selectedFabric, quickFilter]);
 
   // Sort
   const sortedProducts = React.useMemo(() => {
@@ -95,11 +104,11 @@ export const ProductListingView: React.FC<ProductListingViewProps> = ({
   // Unique fabrics in current category
   const availableFabrics = React.useMemo(() => {
     const fabrics = new Set<string>();
-    PRODUCTS.filter((p) => categoryFilter === "all" || p.category === categoryFilter).forEach((p) =>
-      fabrics.add(p.fabric.split(" ")[0])
-    );
+    catalogProducts
+      .filter((p) => categoryFilter === "all" || p.category === categoryFilter)
+      .forEach((p) => fabrics.add((p.fabric || "Pure Silk").split(" ")[0]));
     return Array.from(fabrics);
-  }, [categoryFilter]);
+  }, [catalogProducts, categoryFilter]);
 
   // Lock body scroll when mobile filter drawer is open
   React.useEffect(() => {

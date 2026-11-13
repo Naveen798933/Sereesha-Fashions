@@ -47,13 +47,11 @@ function saveLocalCustomer(customer: CustomerRecord): void {
   memoryCustomerCache = list;
 
   try {
-    if (process.env.NODE_ENV !== "production") {
-      const dir = path.dirname(CUSTOMERS_FILE_PATH);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-      fs.writeFileSync(CUSTOMERS_FILE_PATH, JSON.stringify(list, null, 2), "utf-8");
+    const dir = path.dirname(CUSTOMERS_FILE_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
     }
+    fs.writeFileSync(CUSTOMERS_FILE_PATH, JSON.stringify(list, null, 2), "utf-8");
   } catch (err) {
     console.warn("Local customer disk persistence bypassed in serverless environment:", err);
   }

@@ -38,6 +38,47 @@ export default function CartPage() {
   // Royal Gift Packaging Option
   const [includeGiftPackaging, setIncludeGiftPackaging] = React.useState(false);
   const [giftMessage, setGiftMessage] = React.useState("");
+  const [isApplyingCoupon, setIsApplyingCoupon] = React.useState(false);
+
+  // Sync gift packaging preferences to sessionStorage
+  React.useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        "sreesha_cart_preferences",
+        JSON.stringify({ includeGiftPackaging, giftMessage })
+      );
+    } catch {}
+  }, [includeGiftPackaging, giftMessage]);
+
+  // Load saved coupon & gift packaging preferences on mount
+  React.useEffect(() => {
+    try {
+      const storedPref = sessionStorage.getItem("sreesha_cart_preferences");
+      if (storedPref) {
+        const pref = JSON.parse(storedPref);
+        if (typeof pref.includeGiftPackaging === "boolean") {
+          setIncludeGiftPackaging(pref.includeGiftPackaging);
+        }
+        if (typeof pref.giftMessage === "string") {
+          setGiftMessage(pref.giftMessage);
+        }
+      }
+
+      const storedCoupon = sessionStorage.getItem("sreesha_applied_coupon");
+      if (storedCoupon) {
+        const c = JSON.parse(storedCoupon);
+        if (c.code) {
+          setAppliedCouponCode(c.code);
+          const disc =
+            c.discountType === "percentage"
+              ? Math.round((cartTotal * (c.discountValue || 10)) / 100)
+              : c.discount || 0;
+          setAppliedDiscount(disc);
+          setCouponMessage(c.message || `Code ${c.code} applied`);
+        }
+      }
+    } catch {}
+  }, [cartTotal]);
 
   const giftPackagingFee = includeGiftPackaging ? 250 : 0;
   const freeShippingThreshold = 2999;
@@ -47,19 +88,131 @@ export default function CartPage() {
   const progressPercent = Math.min(100, Math.round((cartTotal / freeShippingThreshold) * 100));
   const remainingForFreeShipping = Math.max(0, freeShippingThreshold - cartTotal);
 
-  const applyPromo = (code: string) => {
+  const applyPromo = async (code: string) => {
     const cleanCode = code.trim().toUpperCase();
+    if (!cleanCode) return;
+    setIsApplyingCoupon(true);
+
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: cleanCode, cartTotal }),
+      });
+      const data = await res.json();
+
+      if (data.valid) {
+        setAppliedDiscount(data.discountAmount);
+        setAppliedCouponCode(data.code);
+        setCouponMessage(
+          data.message || `Privilege code applied! Saved ${formatINR(data.discountAmount)}`
+        );
+        try {
+          sessionStorage.setItem(
+            "sreesha_applied_coupon",
+            JSON.stringify({
+              code: data.code,
+              discount: data.discountAmount,
+              discountType: data.discountType,
+              discountValue: data.discountValue,
+              message: data.message,
+            })
+          );
+        } catch {}
+        showToast.success(
+          data.message || `Code ${data.code} applied (-${formatINR(data.discountAmount)})`
+        );
+        setIsApplyingCoupon(false);
+        return;
+      } else if (data.error) {
+        setCouponMessage(data.error);
+        showToast.error(data.error);
+        setIsApplyingCoupon(false);
+        return;
+      }
+    } catch {
+      // Local fallback
+    }
+
+    // Check locally created admin coupons if offline
+    try {
+      const stored = localStorage.getItem("sreesha_admin_coupons");
+      if (stored) {
+        interface StoredCoupon {
+          code: string;
+          discount_type: "percentage" | "fixed";
+          discount_value: number;
+          min_order: number;
+          active: boolean;
+        }
+        const parsed = JSON.parse(stored) as StoredCoupon[];
+        const found = parsed.find((c) => c.code === cleanCode && c.active);
+        if (found) {
+          if (cartTotal < (found.min_order || 0)) {
+            setCouponMessage(`Requires minimum order value of ${formatINR(found.min_order)}`);
+            showToast.error(`Requires minimum order of ${formatINR(found.min_order)}`);
+            setIsApplyingCoupon(false);
+            return;
+          }
+          const disc =
+            found.discount_type === "percentage"
+              ? Math.round((cartTotal * found.discount_value) / 100)
+              : Math.min(cartTotal, found.discount_value);
+          setAppliedDiscount(disc);
+          setAppliedCouponCode(cleanCode);
+          setCouponMessage(`Privilege code ${cleanCode} applied!`);
+          try {
+            sessionStorage.setItem(
+              "sreesha_applied_coupon",
+              JSON.stringify({
+                code: cleanCode,
+                discount: disc,
+                discountType: found.discount_type,
+                discountValue: found.discount_value,
+              })
+            );
+          } catch {}
+          showToast.success(`Code ${cleanCode} applied (-${formatINR(disc)})`);
+          setIsApplyingCoupon(false);
+          return;
+        }
+      }
+    } catch {}
+
+    // Client-side fallback coupons
     if (cleanCode === "BRIDE15") {
       const disc = Math.round(cartTotal * 0.15);
       setAppliedDiscount(disc);
       setAppliedCouponCode("BRIDE15");
       setCouponMessage("Festive 15% discount applied successfully!");
+      try {
+        sessionStorage.setItem(
+          "sreesha_applied_coupon",
+          JSON.stringify({
+            code: "BRIDE15",
+            discount: disc,
+            discountType: "percentage",
+            discountValue: 15,
+          })
+        );
+      } catch {}
       showToast.success("Promo code BRIDE15 applied (-15%)");
     } else if (cleanCode === "ELEGANCE10" || cleanCode === "WELCOME10") {
       const disc = Math.round(cartTotal * 0.1);
       setAppliedDiscount(disc);
       setAppliedCouponCode(cleanCode);
       setCouponMessage("Boutique 10% welcome privilege applied!");
+      try {
+        sessionStorage.setItem(
+          "sreesha_applied_coupon",
+          JSON.stringify({
+            code: cleanCode,
+            discount: disc,
+            discountType: "percentage",
+            discountValue: 10,
+          })
+        );
+      } catch {}
       showToast.success(`Privilege code ${cleanCode} applied (-10%)`);
     } else if (cleanCode === "ROYAL20") {
       if (cartTotal >= 40000) {
@@ -67,6 +220,17 @@ export default function CartPage() {
         setAppliedDiscount(disc);
         setAppliedCouponCode("ROYAL20");
         setCouponMessage("Royal Tier 20% privilege applied!");
+        try {
+          sessionStorage.setItem(
+            "sreesha_applied_coupon",
+            JSON.stringify({
+              code: "ROYAL20",
+              discount: disc,
+              discountType: "percentage",
+              discountValue: 20,
+            })
+          );
+        } catch {}
         showToast.success("Privilege code ROYAL20 applied (-20%)");
       } else {
         setCouponMessage("ROYAL20 requires a minimum bag value of ₹40,000.");
@@ -76,6 +240,7 @@ export default function CartPage() {
       setCouponMessage("Invalid coupon code. Try WELCOME10 or BRIDE15");
       showToast.error("Invalid coupon code");
     }
+    setIsApplyingCoupon(false);
   };
 
   const handleApplyCoupon = (e: React.FormEvent) => {
@@ -88,6 +253,9 @@ export default function CartPage() {
     setAppliedCouponCode(null);
     setCouponCode("");
     setCouponMessage(null);
+    try {
+      sessionStorage.removeItem("sreesha_applied_coupon");
+    } catch {}
     showToast.info("Coupon removed");
   };
 
@@ -545,9 +713,10 @@ export default function CartPage() {
                     />
                     <button
                       type="submit"
-                      className="px-5 bg-[#1C1B19] text-[#FAF7F2] text-xs uppercase tracking-wider hover:bg-[#B79B63] transition-colors font-medium shrink-0 cursor-pointer"
+                      disabled={isApplyingCoupon || !couponCode.trim()}
+                      className="px-5 bg-[#1C1B19] text-[#FAF7F2] text-xs uppercase tracking-wider hover:bg-[#B79B63] transition-colors font-medium shrink-0 cursor-pointer disabled:opacity-50"
                     >
-                      Apply
+                      {isApplyingCoupon ? "..." : "Apply"}
                     </button>
                   </div>
                   {couponMessage && (

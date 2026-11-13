@@ -154,8 +154,13 @@ export default function AdminOrdersPage() {
   };
 
   const handleOpenWhatsApp = (order: Order) => {
-    const cleanPhone = order.customer.phone.replace(/\D/g, "");
-    const formattedPhone = cleanPhone.startsWith("91") ? cleanPhone : `91${cleanPhone}`;
+    const rawPhone = order.customer.phone || "";
+    const cleanDigits = rawPhone.replace(/\D/g, "");
+    if (cleanDigits.length < 10) {
+      showToast.error("Customer does not have a valid 10-digit mobile number for WhatsApp");
+      return;
+    }
+    const formattedPhone = cleanDigits.length === 10 ? `91${cleanDigits}` : cleanDigits;
     const text = encodeURIComponent(
       `Namaste ${order.customer.fullName}! 🙏\n\nGreetings from Sreesha Elegance Atelier, Hyderabad.\n\nYour order #${order.id} is currently: *${order.status}*.\nTotal: ${formatINR(order.total)}\n${
         order.trackingNumber

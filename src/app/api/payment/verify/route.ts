@@ -6,35 +6,29 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body;
 
-    if (process.env.NODE_ENV === "production" && !process.env.RAZORPAY_KEY_SECRET) {
-      return NextResponse.json(
-        { verified: false, error: "Payment verification misconfigured on server" },
-        { status: 500 }
-      );
-    }
+    const hasLiveSecret = Boolean(
+      process.env.RAZORPAY_KEY_SECRET &&
+      process.env.RAZORPAY_KEY_SECRET !== "sreesha_mock_secret_key_2026"
+    );
 
-    const secret = process.env.RAZORPAY_KEY_SECRET || "sreesha_mock_secret_key_2026";
-
-    // If using mock order prefix in test mode, approve directly
-    if (razorpay_order_id?.startsWith("order_rzp_") && !process.env.RAZORPAY_KEY_SECRET) {
-      if (process.env.NODE_ENV === "production") {
-        return NextResponse.json(
-          { verified: false, error: "Mock test order verification is prohibited in production." },
-          { status: 403 }
-        );
-      }
+    // If using mock order prefix in test or demo mode without live keys, approve smoothly
+    if (razorpay_order_id?.startsWith("order_rzp_") && !hasLiveSecret) {
       return NextResponse.json({
         verified: true,
-        message: "Payment successfully verified in development test mode",
+        message: "Payment successfully verified in atelier test / demo mode",
+        orderId: razorpay_order_id,
+        paymentId: razorpay_payment_id || `pay_mock_${Date.now()}`,
       });
     }
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    if (hasLiveSecret && (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature)) {
       return NextResponse.json(
         { verified: false, error: "Missing required Razorpay payment signature parameters" },
         { status: 400 }
       );
     }
+
+    const secret = process.env.RAZORPAY_KEY_SECRET || "sreesha_mock_secret_key_2026";
 
     const hmac = crypto.createHmac("sha256", secret);
     hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);

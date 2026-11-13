@@ -55,11 +55,30 @@ export default function AdminCouponsPage() {
   const [newMinOrder, setNewMinOrder] = React.useState("");
 
   const loadCoupons = async () => {
+    let localStored: CouponItem[] = [];
+    try {
+      const stored = localStorage.getItem("sreesha_admin_coupons");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          localStored = parsed;
+          setCoupons(parsed);
+        }
+      }
+    } catch {}
+
     try {
       const supabase = createClient();
       const { data, error } = await supabase.from("coupons").select("*");
       if (!error && data && data.length > 0) {
         setCoupons(data);
+        try {
+          localStorage.setItem("sreesha_admin_coupons", JSON.stringify(data));
+        } catch {}
+      } else if (localStored.length === 0) {
+        try {
+          localStorage.setItem("sreesha_admin_coupons", JSON.stringify(DEFAULT_COUPONS));
+        } catch {}
       }
     } catch {
       // offline fallback
@@ -94,14 +113,18 @@ export default function AdminCouponsPage() {
       active: true,
     };
 
+    const updatedList = [newCoupon, ...coupons.filter((c) => c.code !== cleanCode)];
+    setCoupons(updatedList);
+    try {
+      localStorage.setItem("sreesha_admin_coupons", JSON.stringify(updatedList));
+    } catch {}
+
     try {
       const supabase = createClient();
       const { error } = await supabase.from("coupons").insert([newCoupon]);
       if (error) throw error;
-      setCoupons((prev) => [newCoupon, ...prev.filter((c) => c.code !== cleanCode)]);
       showToast.success(`Coupon ${cleanCode} saved to database`);
     } catch {
-      setCoupons((prev) => [newCoupon, ...prev.filter((c) => c.code !== cleanCode)]);
       showToast.success(`Coupon ${cleanCode} active locally`);
     }
 
@@ -115,24 +138,34 @@ export default function AdminCouponsPage() {
     if (!target) return;
     const nextState = !target.active;
 
+    const updatedList = coupons.map((c) => (c.code === code ? { ...c, active: nextState } : c));
+    setCoupons(updatedList);
+    try {
+      localStorage.setItem("sreesha_admin_coupons", JSON.stringify(updatedList));
+    } catch {}
+
     try {
       const supabase = createClient();
       await supabase.from("coupons").update({ active: nextState }).eq("code", code);
     } catch {}
 
-    setCoupons((prev) => prev.map((c) => (c.code === code ? { ...c, active: nextState } : c)));
     showToast.success(`Coupon ${code} ${nextState ? "activated" : "disabled"}`);
   };
 
   const handleDeleteCoupon = async (code: string) => {
     if (!confirm(`Are you sure you want to remove coupon ${code}?`)) return;
 
+    const updatedList = coupons.filter((c) => c.code !== code);
+    setCoupons(updatedList);
+    try {
+      localStorage.setItem("sreesha_admin_coupons", JSON.stringify(updatedList));
+    } catch {}
+
     try {
       const supabase = createClient();
       await supabase.from("coupons").delete().eq("code", code);
     } catch {}
 
-    setCoupons((prev) => prev.filter((c) => c.code !== code));
     showToast.info(`Coupon ${code} removed`);
   };
 

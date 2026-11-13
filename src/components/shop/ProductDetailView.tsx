@@ -105,7 +105,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
 
   const [activeImage, setActiveImage] = React.useState(product.primaryImage);
   const [isVideoActive, setIsVideoActive] = React.useState(false);
-  const [selectedSize, setSelectedSize] = React.useState(product.sizes[0] || "Standard");
+  const [selectedSize, setSelectedSize] = React.useState(product.sizes?.[0] || "Standard");
   const [selectedBlouse, setSelectedBlouse] = React.useState(
     "Unstitched Matching Blouse (Included)"
   );
@@ -737,7 +737,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
             <p className="text-xs text-[#5A5650] leading-relaxed">{product.shortDescription}</p>
 
             {/* Size / Option Selector */}
-            {product.sizes.length > 0 && (
+            {Array.isArray(product.sizes) && product.sizes.length > 0 && (
               <div className="space-y-2 pt-1 sm:pt-2">
                 <div className="flex justify-between items-center text-xs">
                   <span className="uppercase tracking-wider font-medium text-[#1C1B19]">

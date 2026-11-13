@@ -13,7 +13,8 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useCartWishlist } from "@/context/CartWishlistContext";
-import { PRODUCTS } from "@/data/products";
+import { PRODUCTS, Product } from "@/data/products";
+import { getCustomerProducts } from "@/lib/catalog";
 import { formatINR } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { showToast } from "@/components/ui/Toast";
@@ -22,14 +23,22 @@ export default function WishlistPage() {
   const { wishlist, toggleWishlist, addToCart, setIsCartDrawerOpen, isHydrated } =
     useCartWishlist();
 
+  const [catalogProducts, setCatalogProducts] = React.useState<Product[]>(() =>
+    getCustomerProducts()
+  );
+
+  React.useEffect(() => {
+    setCatalogProducts(getCustomerProducts());
+  }, []);
+
   const wishlistedProducts = React.useMemo(() => {
-    return PRODUCTS.filter((p) => wishlist.includes(p.id));
-  }, [wishlist]);
+    return catalogProducts.filter((p) => wishlist.includes(p.id));
+  }, [catalogProducts, wishlist]);
 
   const handleMoveAllToBag = () => {
     if (wishlistedProducts.length === 0) return;
     wishlistedProducts.forEach((product) => {
-      addToCart(product, product.sizes[0] || "Standard");
+      addToCart(product, product.sizes?.[0] || "Standard");
     });
     showToast.success(`Moved ${wishlistedProducts.length} heirloom pieces to your shopping bag!`);
     setIsCartDrawerOpen(true);

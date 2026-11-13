@@ -14,16 +14,27 @@ function TrackOrderContent() {
   const searchParams = useSearchParams();
   const urlOrderId = searchParams.get("orderId");
 
-  const [orderQuery, setOrderQuery] = React.useState(urlOrderId || "SE-84920");
-  const [searchedId, setSearchedId] = React.useState(urlOrderId || "SE-84920");
+  const [orderQuery, setOrderQuery] = React.useState(() => {
+    if (urlOrderId) return urlOrderId;
+    const stored = getStoredOrders();
+    return stored.length > 0 ? stored[0].id : "SE-84920";
+  });
+  const [searchedId, setSearchedId] = React.useState(() => {
+    if (urlOrderId) return urlOrderId.toUpperCase();
+    const stored = getStoredOrders();
+    return (stored.length > 0 ? stored[0].id : "SE-84920").toUpperCase();
+  });
   const [matchedOrder, setMatchedOrder] = React.useState<Order | null>(() => {
-    return getOrderById(urlOrderId || "SE-84920") || null;
+    if (urlOrderId) return getOrderById(urlOrderId) || null;
+    const stored = getStoredOrders();
+    return stored.length > 0 ? stored[0] : getOrderById("SE-84920") || null;
   });
   const [isLiveActive, setIsLiveActive] = React.useState(false);
 
   // Sync state whenever URL search param changes
   React.useEffect(() => {
-    const idToUse = urlOrderId || "SE-84920";
+    const idToUse =
+      urlOrderId || (getStoredOrders().length > 0 ? getStoredOrders()[0].id : "SE-84920");
     setOrderQuery(idToUse);
     setSearchedId(idToUse.toUpperCase());
 

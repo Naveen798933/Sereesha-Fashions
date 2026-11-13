@@ -4,7 +4,8 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Heart, ShoppingBag, Check } from "lucide-react";
-import { PRODUCTS, Product } from "@/data/products";
+import { Product } from "@/data/products";
+import { getCustomerProducts } from "@/lib/catalog";
 import { useCartWishlist } from "@/context/CartWishlistContext";
 import { formatINR, cn } from "@/lib/utils";
 
@@ -21,18 +22,26 @@ export const FeaturedCollectionTabs: React.FC = () => {
   const { addToCart, toggleWishlist, isInWishlist } = useCartWishlist();
   const [addedId, setAddedId] = React.useState<string | null>(null);
 
+  const [catalogProducts, setCatalogProducts] = React.useState<Product[]>(() =>
+    getCustomerProducts()
+  );
+
+  React.useEffect(() => {
+    setCatalogProducts(getCustomerProducts());
+  }, []);
+
   const filteredProducts = React.useMemo(() => {
     if (activeTab === "all") {
       // Pick top handpicked pieces from each category
-      return PRODUCTS.slice(0, 8);
+      return catalogProducts.slice(0, 8);
     }
-    return PRODUCTS.filter((p) => p.category === activeTab).slice(0, 8);
-  }, [activeTab]);
+    return catalogProducts.filter((p) => p.category === activeTab).slice(0, 8);
+  }, [catalogProducts, activeTab]);
 
   const handleQuickAdd = (product: Product, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart(product, product.sizes[0] || "Standard", undefined, 1);
+    addToCart(product, product.sizes?.[0] || "Standard", undefined, 1);
     setAddedId(product.id);
     setTimeout(() => setAddedId(null), 1800);
   };
