@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { AdminRecord, DEFAULT_OWNER_ADMIN, normalizePhone, normalizeString } from "@/lib/adminAuth";
+import {
+  createSessionToken,
+  ADMIN_COOKIE_NAME,
+  SESSION_MAX_AGE_SECONDS,
+} from "@/lib/serverAdminAuth";
 
 const adminsFilePath = path.join(process.cwd(), "src", "data", "admins.json");
 
@@ -93,11 +98,26 @@ export async function POST(request: NextRequest) {
             { status: 403 }
           );
         }
-        return NextResponse.json({
+
+        const response = NextResponse.json({
           success: true,
           admin: sanitizeAdmin(matched),
           message: `Authenticated as ${matched.displayName} (${matched.role})`,
         });
+
+        // Set HTTP-only secure session cookie for unified server-side auth
+        const token = createSessionToken(matched.id);
+        response.cookies.set({
+          name: ADMIN_COOKIE_NAME,
+          value: token,
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: SESSION_MAX_AGE_SECONDS,
+          path: "/",
+        });
+
+        return response;
       }
 
       return NextResponse.json(

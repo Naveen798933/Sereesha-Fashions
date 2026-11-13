@@ -306,6 +306,14 @@ export const Footer: React.FC = () => {
             <Link href="/terms" className="hover:text-white transition-colors">
               Terms &amp; Conditions
             </Link>
+            <Link
+              href="/login?tab=admin"
+              className="hover:text-[#B79B63] transition-colors inline-flex items-center gap-1 text-[11px]"
+              title="Atelier Staff & Management Portal"
+            >
+              <Lock className="h-3 w-3 text-[#B79B63]" />
+              <span>Atelier Portal</span>
+            </Link>
           </div>
 
           {/* Payment & Security Indicators */}

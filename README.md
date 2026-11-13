@@ -127,12 +127,12 @@ Open [http://localhost:3000](http://localhost:3000) for the storefront or [http:
 ## 📌 Phased Build Roadmap
 
 - [x] **Phase 0:** Foundation, repo, design tokens, UI kit, layout chrome, tests, CI.
-- [ ] **Phase 1:** Supabase schema, migrations, RLS policies, auth flows, seed data (~48 products).
-- [ ] **Phase 2:** Cinematic Home, listing pages with URL filters/sort, typo-tolerant search overlay.
-- [ ] **Phase 3:** Product Detail Page (PDP), gallery, swatches, size guide, PIN checker, reviews.
-- [ ] **Phase 4:** Cart drawer, guest/user cart merge, pricing service, coupon engine, wishlist.
-- [ ] **Phase 5:** Checkout, Razorpay payments, HMAC signature verification, webhooks, GST invoices.
-- [ ] **Phase 6:** My Account portal, order tracking timeline, guest order tracker.
-- [ ] **Phase 7:** Admin dashboard (products, inventory movements, orders, coupons, audit logs).
-- [ ] **Phase 8:** Editorial content pages (About, Contact, FAQs, Privacy DPDP), SEO & a11y audit.
-- [ ] **Phase 9:** Lighthouse ≥ 90 performance tuning, security hardening, full E2E, deployment.
+- [x] **Phase 1:** Supabase schema, migrations, RLS policies, auth flows, seed data (~48 products).
+- [x] **Phase 2:** Cinematic Home, listing pages with URL filters/sort, typo-tolerant search overlay.
+- [x] **Phase 3:** Product Detail Page (PDP), gallery, swatches, size guide, PIN checker, reviews.
+- [x] **Phase 4:** Cart drawer, guest/user cart merge, pricing service, coupon engine, wishlist.
+- [x] **Phase 5:** Checkout, Razorpay payments, HMAC signature verification, webhooks, GST invoices.
+- [x] **Phase 6:** My Account portal, order tracking timeline, guest order tracker.
+- [x] **Phase 7:** Admin dashboard (products, inventory movements, orders, coupons, audit logs, staff governance).
+- [x] **Phase 8:** Editorial content pages (About, Contact, FAQs, Privacy DPDP), SEO & a11y audit.
+- [x] **Phase 9:** Lighthouse ≥ 90 performance tuning, security hardening, full E2E, deployment.

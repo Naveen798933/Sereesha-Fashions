@@ -11,8 +11,6 @@ interface PageProps {
   }>;
 }
 
-export const dynamicParams = true;
-
 export async function generateStaticParams() {
   return PRODUCTS.map((product) => ({
     category: product.category,
