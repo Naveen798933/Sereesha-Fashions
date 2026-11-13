@@ -168,11 +168,10 @@ function AuthForm() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("/api/admin/staff", {
+      const res = await fetch("/api/admin/auth/staff-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "verify_login",
           name: cleanName,
           phone: cleanPhone,
           ownerId: cleanPin,
