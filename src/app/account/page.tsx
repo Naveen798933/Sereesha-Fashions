@@ -134,11 +134,24 @@ export default function AccountPage() {
     name: "",
     phone: "",
     street: "",
-    city: "",
+    city: "Hyderabad",
     state: "Telangana",
     pinCode: "",
     type: "Home" as "Home" | "Work" | "Atelier",
   });
+
+  const handleOpenAddressModal = () => {
+    setNewAddr({
+      name: profile?.full_name || user?.user_metadata?.full_name || "",
+      phone: profile?.phone || user?.phone || "",
+      street: "",
+      city: "Hyderabad",
+      state: "Telangana",
+      pinCode: "",
+      type: "Home",
+    });
+    setIsAddressModalOpen(true);
+  };
 
   // Ensure default addresses persisted to localStorage once on client
   React.useEffect(() => {
@@ -162,7 +175,7 @@ export default function AccountPage() {
     const created: SavedAddress = {
       id: `addr-${Date.now()}`,
       name: newAddr.name.trim(),
-      phone: newAddr.phone.trim() || "+91 98490 12345",
+      phone: newAddr.phone.trim() || profile?.phone || user?.phone || "+91 98490 12345",
       street: newAddr.street.trim(),
       city: newAddr.city.trim() || "Hyderabad",
       state: newAddr.state.trim() || "Telangana",
@@ -459,65 +472,84 @@ export default function AccountPage() {
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={() => setIsAddressModalOpen(true)}
+                  onClick={handleOpenAddressModal}
                   className="cursor-pointer"
                 >
                   <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Address
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {addresses.map((addr) => (
-                  <div
-                    key={addr.id}
-                    className={cn(
-                      "p-4 border transition-colors space-y-2.5 text-xs rounded-xs relative",
-                      addr.isDefault
-                        ? "border-[#B79B63] bg-[#F7F3EB]/30"
-                        : "border-[#E8E2D8] bg-white hover:border-[#D8C7A5]"
-                    )}
+              {addresses.length === 0 ? (
+                <div className="py-12 text-center border border-dashed border-[#D8C7A5] p-8 space-y-3 bg-[#FAF7F2] rounded-xs">
+                  <MapPin className="h-8 w-8 text-[#B79B63] mx-auto" />
+                  <p className="font-serif text-lg text-[#1C1B19]">No Saved Addresses Yet</p>
+                  <p className="text-xs text-[#5A5650] max-w-sm mx-auto">
+                    Add your delivery destination for seamless 1-click checkout and bespoke atelier
+                    dispatch.
+                  </p>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleOpenAddressModal}
+                    className="mt-2 cursor-pointer"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-[#1C1B19]">{addr.name}</span>
-                        <span className="px-1.5 py-0.2 bg-white border border-[#E8E2D8] text-[9px] uppercase font-bold text-[#8C867D]">
-                          {addr.type}
-                        </span>
+                    <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Delivery Address
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {addresses.map((addr) => (
+                    <div
+                      key={addr.id}
+                      className={cn(
+                        "p-4 border transition-colors space-y-2.5 text-xs rounded-xs relative",
+                        addr.isDefault
+                          ? "border-[#B79B63] bg-[#F7F3EB]/30"
+                          : "border-[#E8E2D8] bg-white hover:border-[#D8C7A5]"
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-[#1C1B19]">{addr.name}</span>
+                          <span className="px-1.5 py-0.2 bg-white border border-[#E8E2D8] text-[9px] uppercase font-bold text-[#8C867D]">
+                            {addr.type}
+                          </span>
+                        </div>
+                        {addr.isDefault ? (
+                          <span className="px-2 py-0.5 bg-[#B79B63] text-white text-[9px] uppercase font-bold">
+                            Primary
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleSetDefaultAddress(addr.id)}
+                            className="text-[10px] text-[#B79B63] hover:underline font-medium cursor-pointer"
+                          >
+                            Set Default
+                          </button>
+                        )}
                       </div>
-                      {addr.isDefault ? (
-                        <span className="px-2 py-0.5 bg-[#B79B63] text-white text-[9px] uppercase font-bold">
-                          Primary
-                        </span>
-                      ) : (
+
+                      <p className="text-[#5A5650] leading-relaxed">{addr.street}</p>
+                      <p className="text-[#5A5650]">
+                        {addr.city}, {addr.state} — {addr.pinCode}
+                      </p>
+                      <p className="text-[#5A5650]">Phone: {addr.phone}</p>
+
+                      <div className="pt-2 border-t border-[#E8E2D8] flex justify-end">
                         <button
                           type="button"
-                          onClick={() => handleSetDefaultAddress(addr.id)}
-                          className="text-[10px] text-[#B79B63] hover:underline font-medium cursor-pointer"
+                          onClick={() => handleDeleteAddress(addr.id)}
+                          className="text-[#9A3434] hover:text-[#7A2828] text-xs flex items-center gap-1 cursor-pointer"
+                          aria-label="Delete Address"
                         >
-                          Set Default
+                          <Trash2 className="h-3.5 w-3.5" /> Remove
                         </button>
-                      )}
+                      </div>
                     </div>
-
-                    <p className="text-[#5A5650] leading-relaxed">{addr.street}</p>
-                    <p className="text-[#5A5650]">
-                      {addr.city}, {addr.state} — {addr.pinCode}
-                    </p>
-                    <p className="text-[#5A5650]">Phone: {addr.phone}</p>
-
-                    <div className="pt-2 border-t border-[#E8E2D8] flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteAddress(addr.id)}
-                        className="text-[#9A3434] hover:text-[#7A2828] text-xs flex items-center gap-1 cursor-pointer"
-                        aria-label="Delete Address"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" /> Remove
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

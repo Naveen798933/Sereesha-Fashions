@@ -4,7 +4,8 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Search, X, ArrowRight, Sparkles } from "lucide-react";
-import { PRODUCTS, Product } from "@/data/products";
+import { Product } from "@/data/products";
+import { getCustomerProducts } from "@/lib/catalog";
 import { formatINR } from "@/lib/utils";
 
 interface SearchModalProps {
@@ -38,22 +39,27 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, handleClose]);
 
+  const allProducts = React.useMemo(() => {
+    if (!isOpen) return [];
+    return getCustomerProducts();
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const results: Product[] = query.trim()
-    ? PRODUCTS.filter((p) => {
+    ? allProducts.filter((p) => {
         const q = query.toLowerCase();
         return (
-          p.title.toLowerCase().includes(q) ||
-          p.category.toLowerCase().includes(q) ||
-          p.categoryLabel.toLowerCase().includes(q) ||
-          p.fabric.toLowerCase().includes(q) ||
-          p.weave.toLowerCase().includes(q) ||
-          p.color.toLowerCase().includes(q) ||
-          p.occasion.toLowerCase().includes(q) ||
-          p.shortDescription.toLowerCase().includes(q) ||
-          p.details.zariType.toLowerCase().includes(q) ||
-          p.details.origin.toLowerCase().includes(q)
+          p.title?.toLowerCase().includes(q) ||
+          p.category?.toLowerCase().includes(q) ||
+          p.categoryLabel?.toLowerCase().includes(q) ||
+          p.fabric?.toLowerCase().includes(q) ||
+          p.weave?.toLowerCase().includes(q) ||
+          p.color?.toLowerCase().includes(q) ||
+          p.occasion?.toLowerCase().includes(q) ||
+          p.shortDescription?.toLowerCase().includes(q) ||
+          p.details?.zariType?.toLowerCase().includes(q) ||
+          p.details?.origin?.toLowerCase().includes(q)
         );
       })
     : [];
