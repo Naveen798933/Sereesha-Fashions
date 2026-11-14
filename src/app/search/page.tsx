@@ -6,8 +6,8 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Search, Sparkles, Heart, ArrowRight } from "lucide-react";
-import { PRODUCTS } from "@/data/products";
 import { useCartWishlist } from "@/context/CartWishlistContext";
+import { getCustomerProducts } from "@/lib/catalog";
 import { formatINR, cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -17,11 +17,13 @@ function SearchResultsContent() {
   const initialQuery = searchParams.get("q") || "";
   const [searchTerm, setSearchTerm] = React.useState(initialQuery);
 
+  const allProducts = React.useMemo(() => getCustomerProducts(), []);
+
   const filteredProducts = React.useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
-    if (!q) return PRODUCTS;
+    if (!q) return allProducts;
 
-    return PRODUCTS.filter((p) => {
+    return allProducts.filter((p) => {
       return (
         p.title.toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q) ||
@@ -31,11 +33,11 @@ function SearchResultsContent() {
         p.color.toLowerCase().includes(q) ||
         p.occasion.toLowerCase().includes(q) ||
         p.shortDescription.toLowerCase().includes(q) ||
-        p.details.zariType.toLowerCase().includes(q) ||
-        p.details.origin.toLowerCase().includes(q)
+        p.details?.zariType?.toLowerCase().includes(q) ||
+        p.details?.origin?.toLowerCase().includes(q)
       );
     });
-  }, [searchTerm]);
+  }, [searchTerm, allProducts]);
 
   const { isInWishlist, toggleWishlist, addToCart } = useCartWishlist();
 
@@ -144,7 +146,7 @@ function SearchResultsContent() {
                   <div className="hidden sm:block absolute inset-x-3 bottom-3 opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-10">
                     <button
                       type="button"
-                      onClick={() => addToCart(product, product.sizes[0])}
+                      onClick={() => addToCart(product, product.sizes?.[0] ?? "Free Size")}
                       className="w-full h-9 bg-[#1C1B19] text-[#FAF7F2] text-[10px] uppercase tracking-[0.16em] font-medium hover:bg-[#B79B63] transition-colors flex items-center justify-center"
                     >
                       Quick Add to Bag
