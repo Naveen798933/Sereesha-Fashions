@@ -215,7 +215,7 @@ export default function CheckoutPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const finalizeOrder = async (trackingId?: string) => {
+  const finalizeOrder = async (trackingId?: string, verifiedPaymentId?: string) => {
     const generatedId = `SE-${Math.floor(10000 + Math.random() * 90000)}`;
     setOrderId(generatedId);
 
@@ -271,9 +271,12 @@ export default function CheckoutPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          action: "order_confirmation",
           orderId: generatedId,
           customerName: formData.fullName,
           customerEmail: formData.email,
+          customerPhone: formData.phone,
+          paymentMethod,
           total: finalTotal,
           items: newOrder.items.map((it) => ({
             title: it.title,
@@ -291,6 +294,23 @@ export default function CheckoutPage() {
           trackingNumber: newOrder.trackingNumber,
         }),
       }).catch((err) => console.warn("Email dispatch notice:", err));
+
+      // If verified online payment, dispatch verified payment receipt
+      if (verifiedPaymentId) {
+        fetch("/api/order/email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "payment_receipt",
+            orderId: generatedId,
+            customerName: formData.fullName,
+            customerEmail: formData.email,
+            paymentId: verifiedPaymentId,
+            paymentMethod,
+            total: finalTotal,
+          }),
+        }).catch((err) => console.warn("Payment receipt notice:", err));
+      }
     }
 
     setIsProcessing(false);
@@ -428,7 +448,7 @@ export default function CheckoutPage() {
             });
             const verifyData = await verifyRes.json();
             if (verifyData.verified) {
-              await finalizeOrder();
+              await finalizeOrder(undefined, response.razorpay_payment_id);
             } else {
               showToast.error("Payment signature verification failed. Please contact concierge.");
               setIsProcessing(false);

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { sendWelcomeEmail } from "@/lib/email";
 import fs from "fs";
 import path from "path";
 
@@ -149,6 +150,15 @@ export async function POST(req: Request) {
 
       saveLocalCustomer(newCustomer);
 
+      // Dispatch luxury welcome email if email provided
+      if (body.email && typeof body.email === "string" && body.email.includes("@")) {
+        sendWelcomeEmail({
+          customerName: cleanName,
+          customerEmail: body.email.trim(),
+          phone: cleanPhone,
+        }).catch((err) => console.warn("[Auth API] Welcome email notice:", err));
+      }
+
       // Attempt to save to Supabase
       try {
         const supabase = await createClient();
@@ -200,6 +210,15 @@ export async function POST(req: Request) {
       };
 
       saveLocalCustomer(newCustomer);
+
+      // Dispatch luxury welcome email if email provided
+      if (body.email && typeof body.email === "string" && body.email.includes("@")) {
+        sendWelcomeEmail({
+          customerName: cleanName,
+          customerEmail: body.email.trim(),
+          phone: cleanPhone,
+        }).catch((err) => console.warn("[Auth API] Welcome email notice:", err));
+      }
 
       try {
         const supabase = await createClient();

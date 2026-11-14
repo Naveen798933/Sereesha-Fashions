@@ -88,7 +88,7 @@ test.describe("Sreesha Elegance — Mobile Experience", () => {
     await expect(page.getByRole("heading", { name: /kanchipuram pure silk saree/i })).toBeVisible();
 
     // Sticky Bottom Action Bar should be visible
-    const stickyBar = page.locator('[data-testid="pdp-sticky-bar"]');
+    const stickyBar = page.locator('[data-testid="pdp-sticky-bar"]').first();
     await expect(stickyBar).toBeVisible();
 
     // Should display price inside sticky bar

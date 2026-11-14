@@ -126,9 +126,64 @@ export default function AdminOrdersPage() {
     }
   }, []);
 
+  const sendStatusUpdateEmail = async (order: Order, newStatus: string) => {
+    if (!order.customer?.email || !order.customer.email.includes("@")) return;
+
+    try {
+      if (newStatus.toLowerCase().includes("dispatch")) {
+        await fetch("/api/order/email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "shipping",
+            orderId: order.id,
+            customerName: order.customer.fullName,
+            customerEmail: order.customer.email,
+            carrier: order.carrier || "BlueDart Air Express",
+            trackingNumber: order.trackingNumber || "BD893201948IN",
+            items: order.items.map((it) => ({
+              title: it.title,
+              size: it.size,
+              quantity: it.quantity,
+              price: it.price,
+            })),
+            shippingAddress: {
+              street: order.customer.address,
+              city: order.customer.city,
+              state: order.customer.state,
+              pinCode: order.customer.pinCode,
+            },
+          }),
+        });
+        showToast.info(`Dispatch notification emailed to ${order.customer.email}`);
+      } else if (newStatus.toLowerCase().includes("cancel")) {
+        await fetch("/api/order/email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "cancellation",
+            orderId: order.id,
+            customerName: order.customer.fullName,
+            customerEmail: order.customer.email,
+            refundAmount: order.total,
+            reason: "Atelier administrative update",
+          }),
+        });
+        showToast.info(`Cancellation notice emailed to ${order.customer.email}`);
+      }
+    } catch (err) {
+      console.warn("Status update email notice:", err);
+    }
+  };
+
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
     const status = newStatus as OrderStatus;
     await updateOrderStatus(orderId, status);
+
+    const target = orders.find((o) => o.id === orderId);
+    if (target) {
+      sendStatusUpdateEmail(target, newStatus);
+    }
 
     setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status } : o)));
     if (selectedOrder && selectedOrder.id === orderId) {
@@ -142,6 +197,14 @@ export default function AdminOrdersPage() {
     const carrier = carrierInput.trim() || "BlueDart Express";
 
     await updateOrderTracking(orderId, tracking, carrier);
+
+    const target = orders.find((o) => o.id === orderId);
+    if (target) {
+      sendStatusUpdateEmail(
+        { ...target, trackingNumber: tracking, carrier },
+        "Dispatched via BlueDart Express"
+      );
+    }
 
     setOrders((prev) =>
       prev.map((o) => (o.id === orderId ? { ...o, trackingNumber: tracking, carrier } : o))
