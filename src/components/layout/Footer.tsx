@@ -54,19 +54,22 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Top Feature Badges (Luxury assurances) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-14 border-b border-[#2E2C28] text-center md:text-left">
-          <div className="flex items-center justify-center md:justify-start gap-4">
-            <div className="h-10 w-10 border border-[#B79B63] flex items-center justify-center text-[#B79B63] shrink-0">
+          <Link
+            href="/authenticity"
+            className="flex items-center justify-center md:justify-start gap-4 group cursor-pointer"
+          >
+            <div className="h-10 w-10 border border-[#B79B63] flex items-center justify-center text-[#B79B63] group-hover:bg-[#B79B63] group-hover:text-[#1C1B19] transition-colors shrink-0">
               <Award className="h-5 w-5" />
             </div>
             <div>
-              <h4 className="text-xs uppercase tracking-[0.16em] font-medium text-white">
+              <h4 className="text-xs uppercase tracking-[0.16em] font-medium text-white group-hover:text-[#B79B63] transition-colors">
                 Authentic Craftsmanship
               </h4>
               <p className="text-[11px] text-[#A69E92] mt-0.5">
-                Handpicked pure weaves & certified silk marks
+                Handpicked pure weaves &amp; certified silk marks →
               </p>
             </div>
-          </div>
+          </Link>
 
           <div className="flex items-center justify-center md:justify-start gap-4">
             <div className="h-10 w-10 border border-[#B79B63] flex items-center justify-center text-[#B79B63] shrink-0">
@@ -183,6 +186,19 @@ export const Footer: React.FC = () => {
               Client Concierge
             </h4>
             <ul className="space-y-2.5 text-xs text-[#A69E92]">
+              <li>
+                <Link
+                  href="/authenticity"
+                  className="text-[#B79B63] hover:text-white transition-colors flex items-center gap-1"
+                >
+                  <span>Silk Mark &amp; Handloom Registry</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/appointments" className="hover:text-white transition-colors">
+                  Book Salon Appointment
+                </Link>
+              </li>
               <li>
                 <Link href="/track-order" className="hover:text-white transition-colors">
                   Track Your Order

@@ -659,13 +659,19 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
 
           {/* Assurance strip under gallery */}
           <div className="grid grid-cols-3 gap-2 sm:gap-3 pt-4 border-t border-[#E8E2D8] text-center text-xs text-[#5A5650]">
-            <div className="p-2.5 sm:p-3 bg-[#FAF7F2] border border-[#E8E2D8] space-y-1">
-              <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-[#B79B63] mx-auto" />
-              <p className="font-medium text-[#1C1B19] text-[11px] sm:text-xs">
+            <Link
+              href={`/authenticity?slug=${product.slug}`}
+              className="p-2.5 sm:p-3 bg-[#FAF7F2] border border-[#E8E2D8] hover:border-[#B79B63] space-y-1 block transition-colors group cursor-pointer"
+              title="Click to view & verify official Silk Mark certificate"
+            >
+              <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-[#B79B63] mx-auto group-hover:scale-110 transition-transform" />
+              <p className="font-medium text-[#1C1B19] text-[11px] sm:text-xs group-hover:text-[#B79B63]">
                 Silk Mark Certified
               </p>
-              <p className="text-[9px] sm:text-[10px]">Pure Mulberry Silk</p>
-            </div>
+              <p className="text-[9px] sm:text-[10px] text-[#2D6A4F] font-medium">
+                Verify Provenance →
+              </p>
+            </Link>
             <div className="p-2.5 sm:p-3 bg-[#FAF7F2] border border-[#E8E2D8] space-y-1">
               <Scissors className="h-4 w-4 sm:h-5 sm:w-5 text-[#B79B63] mx-auto" />
               <p className="font-medium text-[#1C1B19] text-[11px] sm:text-xs">
@@ -1080,6 +1086,15 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
                       {product.details.sareeLength} saree + {product.details.blouseLength}
                     </p>
                   )}
+                  <div className="pt-2">
+                    <Link
+                      href={`/authenticity?slug=${product.slug}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FAF7F2] border border-[#B79B63] text-[#1C1B19] hover:bg-[#B79B63] hover:text-[#FAF7F2] transition-colors text-xs font-medium"
+                    >
+                      <ShieldCheck className="h-3.5 w-3.5 text-[#B79B63]" />
+                      <span>Verify Silk Mark &amp; Handloom Certificate →</span>
+                    </Link>
+                  </div>
                 </AccordionContent>
               </AccordionItem>
 

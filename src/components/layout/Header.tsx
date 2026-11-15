@@ -39,6 +39,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Kurtis & Sets", href: "/women/kurtis" },
   { label: "Contemporary", href: "/contemporary" },
   { label: "Collections", href: "/collections" },
+  { label: "Authenticity", href: "/authenticity" },
   { label: "Our Story", href: "/about" },
 ];
 
@@ -71,6 +72,7 @@ const MOBILE_MENU_ITEMS: MobileMenuItem[] = [
       { label: "Banarasi Kadhwa Weaves", href: "/women/sarees" },
       { label: "Paithani Handloom Silk", href: "/women/sarees" },
       { label: "Pure Organza & Tissue Zari", href: "/women/sarees" },
+      { label: "Silk Mark & Handloom Registry", href: "/authenticity" },
     ],
   },
   {
