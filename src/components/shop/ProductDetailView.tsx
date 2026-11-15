@@ -750,13 +750,23 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
                   <span className="uppercase tracking-wider font-medium text-[#1C1B19]">
                     Select Size / Option:
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsSizeGuideOpen(true)}
-                    className="text-[#B79B63] hover:underline text-[11px] cursor-pointer flex items-center gap-1"
-                  >
-                    <Ruler className="h-3 w-3" /> Size Guide
-                  </button>
+                  <div className="flex items-center gap-3">
+                    {product.category === "sarees" && (
+                      <Link
+                        href="/drape-guide"
+                        className="text-[#2D6A4F] hover:underline text-[11px] cursor-pointer flex items-center gap-1 font-medium"
+                      >
+                        <Sparkles className="h-3 w-3" /> Drape Guide &amp; Calculator
+                      </Link>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setIsSizeGuideOpen(true)}
+                      className="text-[#B79B63] hover:underline text-[11px] cursor-pointer flex items-center gap-1"
+                    >
+                      <Ruler className="h-3 w-3" /> Size Guide
+                    </button>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {product.sizes.map((sz) => (
@@ -1086,7 +1096,7 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
                       {product.details.sareeLength} saree + {product.details.blouseLength}
                     </p>
                   )}
-                  <div className="pt-2">
+                  <div className="pt-2 flex flex-wrap gap-2">
                     <Link
                       href={`/authenticity?slug=${product.slug}`}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FAF7F2] border border-[#B79B63] text-[#1C1B19] hover:bg-[#B79B63] hover:text-[#FAF7F2] transition-colors text-xs font-medium"
@@ -1094,6 +1104,15 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
                       <ShieldCheck className="h-3.5 w-3.5 text-[#B79B63]" />
                       <span>Verify Silk Mark &amp; Handloom Certificate →</span>
                     </Link>
+                    {product.category === "sarees" && (
+                      <Link
+                        href="/drape-guide"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FAF7F2] border border-[#2D6A4F] text-[#2D6A4F] hover:bg-[#2D6A4F] hover:text-[#FAF7F2] transition-colors text-xs font-medium"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" />
+                        <span>Saree Drape Guide &amp; Pleat Calculator →</span>
+                      </Link>
+                    )}
                   </div>
                 </AccordionContent>
               </AccordionItem>
