@@ -19,6 +19,7 @@ import {
   CancellationNotificationPayload,
   WelcomeEmailPayload,
   AdminOrderAlertPayload,
+  AppointmentEmailPayload,
 } from "./types";
 import { renderOrderConfirmedEmail } from "./templates/orderConfirmed";
 import { renderPaymentReceiptEmail } from "./templates/paymentReceipt";
@@ -27,6 +28,7 @@ import { renderDeliveryNotificationEmail } from "./templates/delivery";
 import { renderCancellationEmail } from "./templates/cancellation";
 import { renderWelcomeEmail } from "./templates/welcome";
 import { renderAdminOrderAlertEmail } from "./templates/adminAlert";
+import { renderAppointmentConfirmationEmail } from "./templates/appointment";
 
 export * from "./types";
 export * from "./client";
@@ -232,5 +234,52 @@ export async function sendAdminOrderAlert(payload: AdminOrderAlertPayload): Prom
     html,
     idempotencyKey,
     eventType: "Admin Order Alert",
+  });
+}
+
+/**
+ * 8. Send VIP Atelier Appointment Confirmation
+ */
+export async function sendAppointmentConfirmationEmail(
+  payload: AppointmentEmailPayload
+): Promise<EmailResult> {
+  const html = renderAppointmentConfirmationEmail(payload);
+  const idempotencyKey = `appointment:${payload.appointmentId}:${payload.customerEmail}`;
+
+  return dispatchEmail({
+    to: payload.customerEmail,
+    subject: `✨ Reserved: Your Private Atelier Session #${payload.appointmentId} (${payload.date}) — Sreesha Elegance`,
+    html,
+    idempotencyKey,
+    eventType: "Appointment Confirmation",
+  });
+}
+
+/**
+ * 9. Send High-Priority Atelier Admin Appointment Alert
+ */
+export async function sendAdminAppointmentAlert(
+  payload: AppointmentEmailPayload
+): Promise<EmailResult> {
+  const adminEmail = getAdminNotificationEmail();
+  const idempotencyKey = `admin_appointment_alert:${payload.appointmentId}`;
+  const html = `
+    <div style="font-family: -apple-system, sans-serif; padding: 20px; color: #1C1B19;">
+      <h2 style="color: #B79B63; margin-top: 0;">📅 New Atelier Appointment Booked</h2>
+      <p><strong>Appointment ID:</strong> #${payload.appointmentId}</p>
+      <p><strong>Patron:</strong> ${payload.customerName} (${payload.customerPhone}, ${payload.customerEmail})</p>
+      <p><strong>Experience:</strong> ${payload.serviceLabel} (${payload.mode === "virtual_video" ? "Video Consultation" : "In-Store Visit"})</p>
+      <p><strong>Date & Time:</strong> ${payload.date} at ${payload.timeSlot} IST</p>
+      ${payload.occasionDate ? `<p><strong>Occasion Date:</strong> ${payload.occasionDate}</p>` : ""}
+      ${payload.notes ? `<p><strong>Notes:</strong> ${payload.notes}</p>` : ""}
+    </div>
+  `;
+
+  return dispatchEmail({
+    to: adminEmail,
+    subject: `📅 [NEW APPOINTMENT] #${payload.appointmentId} — ${payload.serviceLabel} (${payload.customerName})`,
+    html,
+    idempotencyKey,
+    eventType: "Admin Appointment Alert",
   });
 }

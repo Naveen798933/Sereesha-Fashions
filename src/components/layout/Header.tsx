@@ -116,6 +116,11 @@ const MOBILE_MENU_ITEMS: MobileMenuItem[] = [
     label: "Our Atelier Heritage",
     href: "/about",
   },
+  {
+    label: "Book Salon Appointment",
+    href: "/appointments",
+    badge: "VIP",
+  },
 ];
 
 export interface HeaderProps {

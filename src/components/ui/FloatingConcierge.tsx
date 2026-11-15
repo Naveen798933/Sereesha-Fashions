@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   MessageCircle,
@@ -11,6 +12,7 @@ import {
   Truck,
   ShieldCheck,
   ChevronRight,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -141,8 +143,19 @@ export const FloatingConcierge: React.FC = () => {
               ))}
             </div>
 
-            {/* Direct WhatsApp Call-to-Action */}
-            <div className="p-3 bg-white border-t border-[#E8E2D8]">
+            {/* Direct Booking & WhatsApp Call-to-Action */}
+            <div className="p-3 bg-white border-t border-[#E8E2D8] space-y-2">
+              <Link
+                href="/appointments"
+                onClick={() => setIsOpen(false)}
+                className="w-full py-2 px-3 bg-[#FAF7F2] hover:bg-[#F7F3EB] border border-[#D8C7A5] text-[#1C1B19] text-[11px] font-semibold uppercase tracking-wider flex items-center justify-between transition-colors rounded-xs shadow-2xs"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-[#B79B63]" />
+                  <span>Reserve Atelier Appointment</span>
+                </span>
+                <span className="text-[10px] text-[#B79B63] font-bold">Book Slot →</span>
+              </Link>
               <button
                 type="button"
                 onClick={() => handleOpenWhatsApp()}
@@ -151,7 +164,7 @@ export const FloatingConcierge: React.FC = () => {
                 <MessageCircle className="h-4 w-4" />
                 <span>Chat on WhatsApp Now</span>
               </button>
-              <div className="mt-2 flex items-center justify-center gap-1.5 text-[10px] text-stone-500">
+              <div className="mt-1 flex items-center justify-center gap-1.5 text-[10px] text-stone-500">
                 <ShieldCheck className="h-3 w-3 text-[#2D6A4F]" />
                 <span>Typical response: Under 5 minutes</span>
               </div>

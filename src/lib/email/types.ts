@@ -90,6 +90,22 @@ export interface AdminOrderAlertPayload {
   shippingAddress: ShippingAddressPayload;
 }
 
+export interface AppointmentEmailPayload {
+  appointmentId: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  serviceType: string;
+  serviceLabel: string;
+  date: string;
+  timeSlot: string;
+  mode: "in_store" | "virtual_video";
+  city?: string;
+  occasionDate?: string;
+  notes?: string;
+  calendarLink?: string;
+}
+
 export interface EmailResult {
   success: boolean;
   id?: string;

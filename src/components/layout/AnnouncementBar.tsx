@@ -17,6 +17,10 @@ const ANNOUNCEMENTS = [
     text: "New Kanchipuram & Banarasi Silk Arrivals — Shop the Royal Nizam Edit Now",
   },
   {
+    icon: <Sparkles className="h-3 w-3 shrink-0" />,
+    text: "Private Atelier Appointments & Bridal Styling — Reserve Online",
+  },
+  {
     icon: <PhoneCall className="h-3 w-3 shrink-0" />,
     text: "Book a Free Virtual Styling Consultation — WhatsApp Us at +91 62813 44628",
   },

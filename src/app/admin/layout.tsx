@@ -17,6 +17,7 @@ import {
   FolderTree,
   Star,
   UserCheck,
+  Calendar,
 } from "lucide-react";
 import { showToast } from "@/components/ui/Toast";
 import { AdminRecord, getClientAdminSession, clearClientAdminSession } from "@/lib/adminAuth";
@@ -96,6 +97,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/products", label: "Products & Catalog", icon: Package },
     { href: "/admin/categories", label: "Categories", icon: FolderTree },
     { href: "/admin/orders", label: "Orders & Fulfillment", icon: ShoppingBag },
+    { href: "/admin/appointments", label: "Bridal Appointments", icon: Calendar },
     { href: "/admin/reviews", label: "Customer Reviews", icon: Star },
     { href: "/admin/customers", label: "Patrons & Clients", icon: Users },
     { href: "/admin/coupons", label: "Coupons & Discounts", icon: Tag },
