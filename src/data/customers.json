@@ -30,5 +30,13 @@
     "role": "customer",
     "created_at": "2026-10-08T08:14:47.851Z",
     "updated_at": "2026-10-08T08:14:47.851Z"
+  },
+  {
+    "id": "cust_9876543210",
+    "name": "Sreeja Varma",
+    "phone": "9876543210",
+    "role": "customer",
+    "created_at": "2026-11-15T06:57:28.087Z",
+    "updated_at": "2026-11-15T06:57:51.789Z"
   }
 ]

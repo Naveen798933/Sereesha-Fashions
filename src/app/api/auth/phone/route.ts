@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendWelcomeEmail } from "@/lib/email";
 import fs from "fs";
@@ -16,6 +16,31 @@ interface CustomerRecord {
 }
 
 let memoryCustomerCache: CustomerRecord[] | null = null;
+
+// Rate limiting state for abuse and brute-force prevention
+const authRateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(key: string, limit: number, windowMs: number): boolean {
+  const now = Date.now();
+  const record = authRateLimitMap.get(key);
+  if (!record || now > record.resetAt) {
+    authRateLimitMap.set(key, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  if (record.count >= limit) {
+    return false;
+  }
+  record.count += 1;
+  return true;
+}
+
+function getClientIdentifier(req: NextRequest): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) {
+    return forwarded.split(",")[0].trim();
+  }
+  return req.headers.get("x-real-ip") || "client-local";
+}
 
 function readLocalCustomers(): CustomerRecord[] {
   if (memoryCustomerCache) {
@@ -58,8 +83,23 @@ function saveLocalCustomer(customer: CustomerRecord): void {
   }
 }
 
-export async function POST(req: Request) {
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export async function POST(req: NextRequest) {
   try {
+    const clientKey = getClientIdentifier(req);
+
+    // Rate-limit check: 20 attempts per minute per IP
+    if (!checkRateLimit(`auth:${clientKey}`, 20, 60000)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Too many authentication requests. Please wait a moment before trying again.",
+        },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { phone, name, action } = body;
 
@@ -70,8 +110,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const cleanPhone = String(phone).replace(/\D/g, "");
-    if (cleanPhone.length < 10) {
+    const cleanPhone = String(phone).replace(/\D/g, "").slice(-10);
+    if (cleanPhone.length !== 10) {
       return NextResponse.json(
         { success: false, error: "Please enter a valid 10-digit Indian mobile number" },
         { status: 400 }
@@ -150,8 +190,8 @@ export async function POST(req: Request) {
 
       saveLocalCustomer(newCustomer);
 
-      // Dispatch luxury welcome email if email provided
-      if (body.email && typeof body.email === "string" && body.email.includes("@")) {
+      // Dispatch luxury welcome email if valid email provided
+      if (body.email && typeof body.email === "string" && EMAIL_REGEX.test(body.email.trim())) {
         sendWelcomeEmail({
           customerName: cleanName,
           customerEmail: body.email.trim(),
@@ -211,8 +251,8 @@ export async function POST(req: Request) {
 
       saveLocalCustomer(newCustomer);
 
-      // Dispatch luxury welcome email if email provided
-      if (body.email && typeof body.email === "string" && body.email.includes("@")) {
+      // Dispatch luxury welcome email if valid email provided
+      if (body.email && typeof body.email === "string" && EMAIL_REGEX.test(body.email.trim())) {
         sendWelcomeEmail({
           customerName: cleanName,
           customerEmail: body.email.trim(),

@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { ADMIN_COOKIE_NAME, verifySessionToken } from "@/lib/serverAdminAuth";
 import fs from "fs";
 import path from "path";
 
@@ -13,8 +14,17 @@ interface CustomerRecord {
   created_at: string;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    // Verify administrative privileges
+    const token = req.cookies.get(ADMIN_COOKIE_NAME)?.value;
+    if (!token || !verifySessionToken(token)) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Administrative privileges required" },
+        { status: 401 }
+      );
+    }
+
     let customers: CustomerRecord[] = [];
 
     // 1. Read from local JSON file

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { AdminRecord, DEFAULT_OWNER_ADMIN, normalizePhone } from "@/lib/adminAuth";
+import { ADMIN_COOKIE_NAME, verifySessionToken } from "@/lib/serverAdminAuth";
 
 const adminsFilePath = path.join(process.cwd(), "src", "data", "admins.json");
 
@@ -50,7 +51,15 @@ function sanitizeAdmin(
 }
 
 // GET: Retrieve all active admin records (Sanitized, secrets never returned)
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const token = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
+  if (!token || !verifySessionToken(token)) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized: Administrative privileges required" },
+      { status: 401 }
+    );
+  }
+
   const admins = loadAdmins();
   return NextResponse.json({
     success: true,
@@ -62,6 +71,14 @@ export async function GET() {
 // POST: Add new staff admin member
 export async function POST(request: NextRequest) {
   try {
+    const token = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
+    if (!token || !verifySessionToken(token)) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Administrative privileges required" },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { action } = body;
 
@@ -147,6 +164,14 @@ export async function POST(request: NextRequest) {
 // DELETE: Revoke staff access
 export async function DELETE(request: NextRequest) {
   try {
+    const token = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
+    if (!token || !verifySessionToken(token)) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Administrative privileges required" },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 
