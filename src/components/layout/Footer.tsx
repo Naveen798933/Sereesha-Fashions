@@ -200,6 +200,11 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
+                <Link href="/video-shopping" className="hover:text-white transition-colors">
+                  NRI Video Shopping (USA/UK/UAE)
+                </Link>
+              </li>
+              <li>
                 <Link href="/track-order" className="hover:text-white transition-colors">
                   Track Your Order
                 </Link>

@@ -1,28 +1,34 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Sparkles, PhoneCall, Truck, Gift } from "lucide-react";
 
 const ANNOUNCEMENTS = [
   {
     icon: <Truck className="h-3 w-3 shrink-0" />,
     text: "Complimentary Express Shipping Across India on Orders Above ₹2,999",
+    href: "/shipping-returns",
   },
   {
     icon: <Gift className="h-3 w-3 shrink-0" />,
     text: "Festive Season Special: Flat 15% Off on Bridal Lehengas — Code BRIDE15",
+    href: "/women/lehengas",
   },
   {
     icon: <Sparkles className="h-3 w-3 shrink-0" />,
     text: "New Kanchipuram & Banarasi Silk Arrivals — Shop the Royal Nizam Edit Now",
+    href: "/collections",
   },
   {
     icon: <Sparkles className="h-3 w-3 shrink-0" />,
     text: "Private Atelier Appointments & Bridal Styling — Reserve Online",
+    href: "/appointments",
   },
   {
     icon: <PhoneCall className="h-3 w-3 shrink-0" />,
-    text: "Book a Free Virtual Styling Consultation — WhatsApp Us at +91 62813 44628",
+    text: "Global NRI 1-on-1 Virtual Video Shopping — Book Private Salon",
+    href: "/video-shopping",
   },
 ];
 
@@ -58,8 +64,9 @@ export const AnnouncementBar: React.FC = () => {
         </div>
 
         {/* Center: Rotating announcement */}
-        <div
-          className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 font-medium transition-all duration-400 text-center"
+        <Link
+          href={current.href || "/"}
+          className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 font-medium transition-all duration-400 text-center hover:text-[#B79B63]"
           style={{
             opacity: isVisible ? 1 : 0,
             transform: isVisible ? "translateY(0)" : "translateY(-6px)",
@@ -68,7 +75,7 @@ export const AnnouncementBar: React.FC = () => {
         >
           <span className="text-[#B79B63] shrink-0">{current.icon}</span>
           <span className="truncate sm:overflow-visible">{current.text}</span>
-        </div>
+        </Link>
 
         {/* Right: Phone */}
         <div className="hidden md:flex items-center gap-2 shrink-0">

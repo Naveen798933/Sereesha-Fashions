@@ -20,6 +20,7 @@ import {
   RotateCcw,
   HelpCircle,
   Sparkles,
+  Video,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartWishlist } from "@/context/CartWishlistContext";
@@ -73,6 +74,7 @@ const MOBILE_MENU_ITEMS: MobileMenuItem[] = [
       { label: "Paithani Handloom Silk", href: "/women/sarees" },
       { label: "Pure Organza & Tissue Zari", href: "/women/sarees" },
       { label: "Silk Mark & Handloom Registry", href: "/authenticity" },
+      { label: "NRI Video Shopping (HD)", href: "/video-shopping" },
     ],
   },
   {
@@ -505,6 +507,16 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
                   Client Concierge &amp; Care
                 </p>
                 <div className="grid grid-cols-2 gap-2 text-xs">
+                  <Link
+                    href="/video-shopping"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-2.5 bg-[#FAF7F2] border border-[#B79B63] text-[#1C1B19] hover:bg-[#B79B63] hover:text-white transition-colors flex items-center justify-center text-center gap-2 rounded-xs shadow-xs col-span-2 font-medium"
+                  >
+                    <Video className="h-4 w-4 text-[#B79B63]" />
+                    <span className="text-[11px] font-semibold">
+                      NRI 1-on-1 Video Shopping (USA/UK/UAE) →
+                    </span>
+                  </Link>
                   <Link
                     href="/track-order"
                     onClick={() => setIsMobileMenuOpen(false)}
