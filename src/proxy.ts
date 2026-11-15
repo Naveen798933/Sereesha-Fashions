@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { verifySessionToken } from "@/lib/serverAdminAuth";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -7,7 +8,7 @@ export async function proxy(request: NextRequest) {
   // 1. Protect Admin UI Routes (excluding /admin/login)
   if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
     const adminToken = request.cookies.get("sreesha_admin_token")?.value;
-    if (!adminToken) {
+    if (!adminToken || !verifySessionToken(adminToken)) {
       const loginUrl = new URL("/admin/login", request.url);
       return NextResponse.redirect(loginUrl);
     }
@@ -16,7 +17,7 @@ export async function proxy(request: NextRequest) {
   // 2. Protect Privileged Admin API Endpoints (excluding /api/admin/auth/*)
   if (pathname.startsWith("/api/admin") && !pathname.startsWith("/api/admin/auth")) {
     const adminToken = request.cookies.get("sreesha_admin_token")?.value;
-    if (!adminToken) {
+    if (!adminToken || !verifySessionToken(adminToken)) {
       return NextResponse.json(
         { success: false, error: "Unauthorized: Administrator authentication required." },
         { status: 401 }
