@@ -125,6 +125,11 @@ const MOBILE_MENU_ITEMS: MobileMenuItem[] = [
     href: "/appointments",
     badge: "VIP",
   },
+  {
+    label: "Atelier Gift Cards",
+    href: "/gift-cards",
+    badge: "GIFT",
+  },
 ];
 
 export interface HeaderProps {

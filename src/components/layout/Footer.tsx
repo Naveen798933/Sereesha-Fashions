@@ -210,6 +210,11 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
+                <Link href="/gift-cards" className="hover:text-white transition-colors">
+                  Atelier Gift Cards &amp; Privé Vouchers
+                </Link>
+              </li>
+              <li>
                 <Link href="/track-order" className="hover:text-white transition-colors">
                   Track Your Order
                 </Link>
