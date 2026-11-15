@@ -24,6 +24,13 @@ const DEFAULT_COUPONS: CouponItem[] = [
     active: true,
   },
   {
+    code: "ELEGANCE10",
+    discount_type: "percentage",
+    discount_value: 10,
+    min_order: 0,
+    active: true,
+  },
+  {
     code: "ROYAL15",
     discount_type: "percentage",
     discount_value: 15,
@@ -35,6 +42,13 @@ const DEFAULT_COUPONS: CouponItem[] = [
     discount_type: "percentage",
     discount_value: 15,
     min_order: 25000,
+    active: true,
+  },
+  {
+    code: "ROYAL20",
+    discount_type: "percentage",
+    discount_value: 20,
+    min_order: 40000,
     active: true,
   },
   {

@@ -4,11 +4,36 @@ import * as React from "react";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { Search, Truck, CheckCircle2, Clock, MapPin } from "lucide-react";
+import {
+  Search,
+  Truck,
+  CheckCircle2,
+  Clock,
+  MapPin,
+  ExternalLink,
+  Printer,
+  MessageCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { getOrderById, fetchOrderById, getStoredOrders, Order } from "@/lib/orders";
 import { formatINR } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+
+function getCarrierTrackingUrl(carrier?: string, trackingNumber?: string): string {
+  if (!trackingNumber) return "https://www.bluedart.com";
+  const c = (carrier || "").toLowerCase();
+  const cleanAwb = encodeURIComponent(trackingNumber.trim());
+  if (c.includes("delhivery")) {
+    return `https://www.delhivery.com/track/package/${cleanAwb}`;
+  }
+  if (c.includes("dtdc")) {
+    return `https://www.dtdc.in/tracking/shipment-tracking.asp?strCnno=${cleanAwb}`;
+  }
+  if (c.includes("speed post") || c.includes("india post")) {
+    return `https://www.indiapost.gov.in/_layouts/15/dpt.ptc.trackandtrace/tracking.aspx`;
+  }
+  return `https://www.bluedart.com/tracking?trackNumber=${cleanAwb}`;
+}
 
 function TrackOrderContent() {
   const searchParams = useSearchParams();
@@ -284,25 +309,62 @@ function TrackOrderContent() {
           </div>
         </div>
 
-        {/* Courier Details */}
-        <div className="p-4 bg-[#FAF7F2] border border-[#E8E2D8] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs">
-          <div className="flex items-center gap-3">
-            <Truck className="h-5 w-5 text-[#B79B63]" />
-            <div>
-              <p className="font-semibold text-[#1C1B19]">
-                {matchedOrder?.carrier || "BlueDart Air Cargo Priority"}
-              </p>
-              <p className="text-[11px] text-[#5A5650]">
-                AWB Airway Bill:{" "}
-                <span className="font-mono font-medium">
-                  {matchedOrder?.trackingNumber || "BD893201948IN"}
-                </span>
-              </p>
+        {/* Courier Details & Deep Tracking */}
+        <div className="p-5 bg-[#FAF7F2] border border-[#E8E2D8] space-y-4 rounded-xs text-xs">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <Truck className="h-5 w-5 text-[#B79B63]" />
+              <div>
+                <p className="font-semibold text-[#1C1B19]">
+                  {matchedOrder?.carrier || "BlueDart Air Cargo Priority"}
+                </p>
+                <p className="text-[11px] text-[#5A5650]">
+                  AWB Airway Bill:{" "}
+                  <span className="font-mono font-medium">
+                    {matchedOrder?.trackingNumber || "BD893201948IN"}
+                  </span>
+                </p>
+              </div>
             </div>
+            <span className="text-[10px] uppercase px-3 py-1 bg-[#2D6A4F]/10 text-[#2D6A4F] font-semibold border border-[#2D6A4F]/30">
+              {matchedOrder?.status === "Delivered" ? "Delivered" : "On Schedule"}
+            </span>
           </div>
-          <span className="text-[10px] uppercase px-3 py-1 bg-[#2D6A4F]/10 text-[#2D6A4F] font-semibold border border-[#2D6A4F]/30">
-            {matchedOrder?.status === "Delivered" ? "Delivered" : "On Schedule"}
-          </span>
+
+          {/* Action Link Bar */}
+          <div className="pt-3 border-t border-[#E8E2D8] flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <a
+                href={getCarrierTrackingUrl(matchedOrder?.carrier, matchedOrder?.trackingNumber)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1C1B19] text-[#FAF7F2] text-[11px] font-medium uppercase tracking-wider hover:bg-[#B79B63] hover:text-[#1C1B19] transition-colors rounded-xs shadow-xs"
+              >
+                <span>Track on {matchedOrder?.carrier?.split(" ")[0] || "BlueDart"} Portal</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+              <a
+                href={`https://wa.me/916281344628?text=${encodeURIComponent(
+                  `Namaste Sreesha Elegance Concierge, please share live status for order #${searchedId}.`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#25D366]/10 text-[#128C7E] border border-[#25D366]/30 hover:bg-[#25D366]/20 text-[11px] font-semibold transition-colors rounded-xs"
+              >
+                <MessageCircle className="w-3.5 h-3.5 text-[#25D366]" />
+                <span>WhatsApp Concierge</span>
+              </a>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#E8E2D8] bg-white text-stone-700 hover:bg-stone-50 text-[11px] font-medium transition-colors rounded-xs cursor-pointer print:hidden"
+            >
+              <Printer className="w-3.5 h-3.5 text-[#B79B63]" />
+              <span>Print Summary</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

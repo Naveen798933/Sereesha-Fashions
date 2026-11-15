@@ -9,6 +9,7 @@ import {
   RotateCw,
   MessageSquare,
   Printer,
+  Download,
   Eye,
   X,
   Phone,
@@ -156,6 +157,31 @@ export default function AdminOrdersPage() {
           }),
         });
         showToast.info(`Dispatch notification emailed to ${order.customer.email}`);
+      } else if (newStatus.toLowerCase().includes("deliver")) {
+        await fetch("/api/order/email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "delivery",
+            orderId: order.id,
+            customerName: order.customer.fullName,
+            customerEmail: order.customer.email,
+            deliveredDate: new Date().toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            }),
+            carrier: order.carrier || "BlueDart Express",
+            trackingNumber: order.trackingNumber || "Delivered",
+            items: order.items.map((it) => ({
+              title: it.title,
+              size: it.size,
+              quantity: it.quantity,
+              price: it.price,
+            })),
+          }),
+        });
+        showToast.info(`Delivery confirmation emailed to ${order.customer.email}`);
       } else if (newStatus.toLowerCase().includes("cancel")) {
         await fetch("/api/order/email", {
           method: "POST",
@@ -263,6 +289,67 @@ export default function AdminOrdersPage() {
     window.open(`https://wa.me/${formattedPhone}?text=${text}`, "_blank");
   };
 
+  const handleExportCSV = () => {
+    if (orders.length === 0) {
+      showToast.error("No orders available to export");
+      return;
+    }
+    const headers = [
+      "Order ID",
+      "Order Date",
+      "Customer Name",
+      "Phone",
+      "Email",
+      "Address",
+      "City",
+      "State",
+      "PIN Code",
+      "Items Count",
+      "Payment Method",
+      "Subtotal (INR)",
+      "Discount (INR)",
+      "Shipping Fee (INR)",
+      "Total (INR)",
+      "Status",
+      "Carrier",
+      "AWB Tracking",
+    ];
+    const rows = orders.map((o) => [
+      `"${o.id}"`,
+      `"${o.date || ""}"`,
+      `"${(o.customer?.fullName || "").replace(/"/g, '""')}"`,
+      `"${o.customer?.phone || ""}"`,
+      `"${o.customer?.email || ""}"`,
+      `"${(o.customer?.address || "").replace(/"/g, '""')}"`,
+      `"${o.customer?.city || ""}"`,
+      `"${o.customer?.state || ""}"`,
+      `"${o.customer?.pinCode || ""}"`,
+      o.items?.length || 0,
+      `"${o.paymentMethod || "online"}"`,
+      o.subtotal || 0,
+      o.discount || 0,
+      o.shippingFee || 0,
+      o.total || 0,
+      `"${o.status}"`,
+      `"${o.carrier || "BlueDart Express"}"`,
+      `"${o.trackingNumber || ""}"`,
+    ]);
+    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `Sreesha_Elegance_Orders_${new Date().toISOString().slice(0, 10)}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast.success(`Exported ${orders.length} orders to logistics CSV`);
+  };
+
   const filtered = orders.filter((o) => {
     const matchesSearch =
       o.id.toLowerCase().includes(search.toLowerCase()) ||
@@ -290,12 +377,21 @@ export default function AdminOrdersPage() {
             Manage dispatch, update BlueDart tracking, and send WhatsApp patron notifications.
           </p>
         </div>
-        <button
-          onClick={loadOrders}
-          className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-[#E8E2D8] text-xs font-medium text-stone-700 hover:bg-stone-50 rounded-xs self-start sm:self-auto cursor-pointer shadow-xs"
-        >
-          <RotateCw className="w-3.5 h-3.5" /> Refresh Orders
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={handleExportCSV}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-[#E8E2D8] text-xs font-medium text-stone-700 hover:bg-stone-50 rounded-xs cursor-pointer shadow-xs"
+            title="Export orders manifest for BlueDart / Logistics partner"
+          >
+            <Download className="w-3.5 h-3.5 text-[#B79B63]" /> Export CSV
+          </button>
+          <button
+            onClick={loadOrders}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-[#E8E2D8] text-xs font-medium text-stone-700 hover:bg-stone-50 rounded-xs cursor-pointer shadow-xs"
+          >
+            <RotateCw className="w-3.5 h-3.5" /> Refresh Orders
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
@@ -678,7 +774,16 @@ export default function AdminOrdersPage() {
               </div>
             </div>
 
-            <div className="p-4 border-t border-[#E8E2D8] bg-stone-50 flex items-center justify-end">
+            <div className="p-4 border-t border-[#E8E2D8] bg-stone-50 flex items-center justify-between">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+                className="text-xs inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5 text-[#B79B63]" />
+                <span>Print Packing Slip</span>
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

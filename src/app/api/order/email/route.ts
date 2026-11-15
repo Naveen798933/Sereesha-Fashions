@@ -4,6 +4,7 @@ import {
   sendOrderConfirmationEmail,
   sendPaymentReceiptEmail,
   sendShippingNotificationEmail,
+  sendDeliveryNotificationEmail,
   sendCancellationNotificationEmail,
   sendAdminOrderAlert,
   OrderEmailPayload,
@@ -11,7 +12,7 @@ import {
 import { ADMIN_COOKIE_NAME, verifySessionToken } from "@/lib/serverAdminAuth";
 
 interface ExtendedOrderEmailRequest extends OrderEmailPayload {
-  action?: "order_confirmation" | "payment_receipt" | "shipping" | "cancellation";
+  action?: "order_confirmation" | "payment_receipt" | "shipping" | "delivery" | "cancellation";
   paymentId?: string;
   carrier?: string;
   deliveredDate?: string;
@@ -65,8 +66,8 @@ export async function POST(req: Request) {
 
     const action = payload.action || "order_confirmation";
 
-    // Guard administrative actions (shipping and cancellation notices)
-    if (action === "shipping" || action === "cancellation") {
+    // Guard administrative actions (shipping, delivery, and cancellation notices)
+    if (action === "shipping" || action === "delivery" || action === "cancellation") {
       const cookieStore = await cookies();
       const adminToken = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
       if (!adminToken || !verifySessionToken(adminToken)) {
@@ -100,6 +101,25 @@ export async function POST(req: Request) {
         shippingAddress: payload.shippingAddress,
       });
       return NextResponse.json(shippingRes);
+    }
+
+    if (action === "delivery") {
+      const deliveryRes = await sendDeliveryNotificationEmail({
+        orderId: payload.orderId,
+        customerName: payload.customerName,
+        customerEmail: payload.customerEmail,
+        deliveredDate:
+          payload.deliveredDate ||
+          new Date().toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          }),
+        carrier: payload.carrier || "BlueDart Express",
+        trackingNumber: payload.trackingNumber || "Delivered",
+        items: payload.items || [],
+      });
+      return NextResponse.json(deliveryRes);
     }
 
     if (action === "cancellation") {
