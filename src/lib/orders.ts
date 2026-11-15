@@ -45,6 +45,11 @@ export interface Order {
   paymentMethod: "upi" | "card" | "netbanking" | "cod";
   customer: OrderCustomer;
   items: OrderItem[];
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  paymentStatus?: "pending" | "paid" | "failed" | "refunded";
+  refundId?: string;
+  refundStatus?: string;
 }
 
 export type OrderStatus = Order["status"];
@@ -74,6 +79,11 @@ export interface DbOrder {
   total: number | string;
   payment_method: Order["paymentMethod"];
   customer: OrderCustomer;
+  razorpay_order_id?: string;
+  razorpay_payment_id?: string;
+  payment_status?: "pending" | "paid" | "failed" | "refunded";
+  refund_id?: string;
+  refund_status?: string;
   order_items?: DbOrderItem[];
 }
 
@@ -203,6 +213,11 @@ export async function fetchOrderById(id: string): Promise<Order | undefined> {
         total: Number(data.total),
         paymentMethod: data.payment_method,
         customer: data.customer,
+        razorpayOrderId: data.razorpay_order_id || undefined,
+        razorpayPaymentId: data.razorpay_payment_id || undefined,
+        paymentStatus: data.payment_status || undefined,
+        refundId: data.refund_id || undefined,
+        refundStatus: data.refund_status || undefined,
         items: ((data.order_items || []) as DbOrderItem[]).map((item) => ({
           id: item.id,
           title: item.title,
@@ -254,6 +269,11 @@ export async function fetchUserOrders(userId?: string, userPhone?: string): Prom
           total: Number(o.total),
           paymentMethod: o.payment_method,
           customer: o.customer,
+          razorpayOrderId: o.razorpay_order_id || undefined,
+          razorpayPaymentId: o.razorpay_payment_id || undefined,
+          paymentStatus: o.payment_status || undefined,
+          refundId: o.refund_id || undefined,
+          refundStatus: o.refund_status || undefined,
           items: ((o.order_items || []) as DbOrderItem[]).map((item) => ({
             id: item.id,
             title: item.title,
@@ -303,6 +323,13 @@ export async function saveOrder(order: Order, userId?: string): Promise<void> {
       total: order.total,
       payment_method: order.paymentMethod,
       customer: order.customer,
+      razorpay_order_id: order.razorpayOrderId || null,
+      razorpay_payment_id: order.razorpayPaymentId || null,
+      payment_status:
+        order.paymentStatus ||
+        (order.paymentMethod === "cod" ? "pending" : order.razorpayPaymentId ? "paid" : "pending"),
+      refund_id: order.refundId || null,
+      refund_status: order.refundStatus || "none",
     };
 
     let { error: orderError } = await supabase.from("orders").insert(payload);

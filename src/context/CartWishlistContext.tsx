@@ -45,6 +45,10 @@ export const CartWishlistProvider: React.FC<{ children: React.ReactNode }> = ({ 
     () => false
   );
 
+  React.useEffect(() => {
+    document.body.dataset.hydrated = "true";
+  }, []);
+
   const [cart, setCart] = React.useState<CartItem[]>(() => {
     if (typeof window === "undefined") return [];
     try {

@@ -313,7 +313,7 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
 
       {/* Enhanced Mobile Slide-in Drawer with Interactive Collections List (Placed outside <header> to prevent backdrop-filter containing block constraint) */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden text-[#1C1B19] isolate">
+        <div className="fixed inset-0 z-[70] lg:hidden text-[#1C1B19] isolate">
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-[#1C1B19]/75 backdrop-blur-xs transition-opacity duration-300"
@@ -323,7 +323,7 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
 
           {/* Drawer Sheet (Guaranteed 100vh full-height panel) */}
           <div
-            className="fixed inset-y-0 left-0 w-[88%] max-w-sm h-full max-h-screen bg-[#FAF7F2] text-[#1C1B19] shadow-2xl flex flex-col border-r border-[#E8E2D8] transition-transform duration-300 z-50"
+            className="fixed inset-y-0 left-0 w-[88%] max-w-sm h-full max-h-screen bg-[#FAF7F2] text-[#1C1B19] shadow-2xl flex flex-col border-r border-[#E8E2D8] transition-transform duration-300 z-[70]"
             style={{ animation: "slideInLeft 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
           >
             {/* 1. Fixed Header (Always Pinned at the Top) */}
@@ -393,7 +393,7 @@ export const Header: React.FC<HeaderProps> = ({ transparentInitially = false }) 
                 </div>
 
                 <nav
-                  aria-label="Mobile Navigation"
+                  aria-label="Mobile Drawer Navigation"
                   className="flex flex-col divide-y divide-[#EFE8DD] border border-[#E8E2D8] bg-white rounded-xs shadow-xs overflow-hidden"
                 >
                   {MOBILE_MENU_ITEMS.map((item) => {

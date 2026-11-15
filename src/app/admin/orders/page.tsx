@@ -178,10 +178,39 @@ export default function AdminOrdersPage() {
 
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
     const status = newStatus as OrderStatus;
+
+    if (newStatus === "Cancelled") {
+      const target = orders.find((o) => o.id === orderId);
+      if (target && target.paymentMethod !== "cod") {
+        try {
+          const refundRes = await fetch("/api/admin/orders/refund", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId,
+              reason: "Cancelled by boutique administrator",
+            }),
+          });
+          const refundData = await refundRes.json();
+          if (refundData.success) {
+            showToast.success(
+              refundData.message || `Refund processed successfully (${refundData.refundId})`
+            );
+          } else {
+            showToast.error(refundData.error || "Gateway refund failed");
+          }
+        } catch (err) {
+          console.warn("Refund invocation notice:", err);
+        }
+      }
+    }
+
     await updateOrderStatus(orderId, status);
 
     const target = orders.find((o) => o.id === orderId);
-    if (target) {
+    if (target && newStatus !== "Cancelled") {
+      sendStatusUpdateEmail(target, newStatus);
+    } else if (target && target.paymentMethod === "cod") {
       sendStatusUpdateEmail(target, newStatus);
     }
 

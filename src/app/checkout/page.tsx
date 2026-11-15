@@ -215,8 +215,15 @@ export default function CheckoutPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const finalizeOrder = async (trackingId?: string, verifiedPaymentId?: string) => {
-    const generatedId = `SE-${Math.floor(10000 + Math.random() * 90000)}`;
+  const finalizeOrder = async (
+    trackingId?: string,
+    verifiedPaymentId?: string,
+    razorpayOrderId?: string
+  ) => {
+    // Collision-proof timestamped order ID
+    const timestampPart = Date.now().toString().slice(-6);
+    const randomPart = Math.floor(1000 + Math.random() * 9000);
+    const generatedId = `SE-${timestampPart}-${randomPart}`;
     setOrderId(generatedId);
 
     const newOrder: Order = {
@@ -236,6 +243,9 @@ export default function CheckoutPage() {
       discount: discountAmount,
       total: finalTotal,
       paymentMethod,
+      razorpayOrderId: razorpayOrderId || undefined,
+      razorpayPaymentId: verifiedPaymentId || undefined,
+      paymentStatus: paymentMethod === "cod" ? "pending" : verifiedPaymentId ? "paid" : "pending",
       customer: {
         fullName: formData.fullName,
         phone: formData.phone,
@@ -353,11 +363,25 @@ export default function CheckoutPage() {
     }
 
     try {
-      // 1. Create Razorpay order on server
+      // 1. Create Razorpay order on server with authoritative items and pricing
       const createRes = await fetch("/api/payment/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          items: cart.map((item) => ({
+            id: item.id,
+            productId: item.id,
+            title: item.product.title,
+            price: item.product.price,
+            quantity: item.quantity,
+          })),
+          couponCode: appliedCoupon?.code,
+          giftPackaging: includeGiftPackaging,
+          customer: {
+            fullName: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+          },
           amount: finalTotal,
           receipt: `rcpt_${Date.now()}`,
           notes: {
@@ -395,10 +419,10 @@ export default function CheckoutPage() {
         typeof window === "undefined" ||
         !(window as unknown as { Razorpay?: new (opts: unknown) => { open: () => void } }).Razorpay
       ) {
-        // Fallback for offline / simulation environment
-        setTimeout(() => {
-          finalizeOrder();
-        }, 1200);
+        setIsProcessing(false);
+        showToast.error(
+          "Unable to load secure payment gateway. Please check your internet connection or disable ad blockers and try again."
+        );
         return;
       }
 
@@ -448,13 +472,23 @@ export default function CheckoutPage() {
             });
             const verifyData = await verifyRes.json();
             if (verifyData.verified) {
-              await finalizeOrder(undefined, response.razorpay_payment_id);
+              await finalizeOrder(
+                undefined,
+                response.razorpay_payment_id,
+                response.razorpay_order_id
+              );
             } else {
-              showToast.error("Payment signature verification failed. Please contact concierge.");
+              showToast.error(
+                "Payment signature verification failed. Please contact concierge if funds were debited."
+              );
               setIsProcessing(false);
             }
-          } catch {
-            await finalizeOrder();
+          } catch (err) {
+            console.error("Verification network error:", err);
+            showToast.error(
+              "Payment verification network interruption. Please contact concierge with your payment reference."
+            );
+            setIsProcessing(false);
           }
         },
         prefill: {
@@ -474,11 +508,11 @@ export default function CheckoutPage() {
       });
 
       rzp.open();
-    } catch {
-      // In development or simulation fallback
-      setTimeout(() => {
-        finalizeOrder();
-      }, 1200);
+    } catch (error: unknown) {
+      console.error("Payment initialization error:", error);
+      const msg = error instanceof Error ? error.message : "Failed to initialize payment gateway";
+      showToast.error(msg);
+      setIsProcessing(false);
     }
   };
 

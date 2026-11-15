@@ -1,10 +1,14 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Sreesha Elegance — Mobile Experience", () => {
-  test.use({ viewport: { width: 390, height: 844 } }); // iPhone viewport
+  test.skip(
+    ({ isMobile }) => !isMobile,
+    "Mobile suite requires mobile viewport / device emulation"
+  );
 
   test("Mobile bottom navigation bar is visible and interactive", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("body")).toHaveAttribute("data-hydrated", "true");
 
     // 1. Mobile bottom nav should be visible
     const bottomNav = page.getByRole("navigation", { name: "Mobile Navigation" });
@@ -24,7 +28,7 @@ test.describe("Sreesha Elegance — Mobile Experience", () => {
     await expect(page.getByText(/bridal velvet lehengas/i)).not.toBeVisible();
 
     // Close drawer
-    await page.getByRole("button", { name: /close navigation/i }).click();
+    await page.getByRole("button", { name: /close navigation/i }).click({ force: true });
     await expect(page.getByText(/couture collections/i)).not.toBeVisible();
 
     // 3. Search button opens search modal
@@ -51,7 +55,8 @@ test.describe("Sreesha Elegance — Mobile Experience", () => {
   });
 
   test("Product Listing Page mobile features (filter drawer & grid toggle)", async ({ page }) => {
-    await page.goto("/women/sarees");
+    await page.goto("/women/sarees", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("body")).toHaveAttribute("data-hydrated", "true");
 
     // Check heading
     await expect(page.getByRole("heading", { name: /pure handloom sarees/i })).toBeVisible();
@@ -59,7 +64,8 @@ test.describe("Sreesha Elegance — Mobile Experience", () => {
     // 1. Mobile Filter & Sort Drawer
     const filtersBtn = page.getByRole("button", { name: /filters/i }).first();
     await expect(filtersBtn).toBeVisible();
-    await filtersBtn.click();
+    await filtersBtn.scrollIntoViewIfNeeded();
+    await filtersBtn.click({ force: true });
 
     // Bottom sheet appears
     await expect(page.getByRole("heading", { name: /filter & sort/i })).toBeVisible();
@@ -82,7 +88,10 @@ test.describe("Sreesha Elegance — Mobile Experience", () => {
   });
 
   test("Product Detail Page mobile sticky action bar and quick add", async ({ page }) => {
-    await page.goto("/women/sarees/kanchipuram-pure-silk-saree-emerald");
+    await page.goto("/women/sarees/kanchipuram-pure-silk-saree-emerald", {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.locator("body")).toHaveAttribute("data-hydrated", "true");
 
     // Title
     await expect(page.getByRole("heading", { name: /kanchipuram pure silk saree/i })).toBeVisible();

@@ -448,7 +448,7 @@ export const ProductListingView: React.FC<ProductListingViewProps> = ({
 
       {/* Mobile Filter & Sort Drawer Bottom Sheet */}
       {isFilterDrawerOpen && (
-        <div className="fixed inset-0 z-50 sm:hidden">
+        <div className="fixed inset-0 z-[70] sm:hidden">
           {/* Backdrop */}
           <div
             className="fixed inset-0 bg-[#1C1B19]/60 backdrop-blur-xs transition-opacity duration-300"
@@ -465,7 +465,7 @@ export const ProductListingView: React.FC<ProductListingViewProps> = ({
             <div className="flex items-center justify-between border-b border-[#E8E2D8] pb-3">
               <div className="flex items-center gap-2">
                 <SlidersHorizontal className="h-4 w-4 text-[#B79B63]" />
-                <h3 className="font-serif text-lg text-[#1C1B19]">Filter &amp; Sort</h3>
+                <h3 className="font-serif text-lg text-[#1C1B19]">Filter {"&"} Sort</h3>
               </div>
               <button
                 type="button"
