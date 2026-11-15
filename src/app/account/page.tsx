@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   Copy,
   Check,
+  Printer,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { formatINR, cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ import { showToast } from "@/components/ui/Toast";
 import { useAuth } from "@/context/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { getTierProgress, ALL_LOYALTY_TIERS } from "@/lib/loyalty";
+import { AtelierInvoiceModal } from "@/components/shop/AtelierInvoiceModal";
 
 interface SavedAddress {
   id: string;
@@ -75,6 +77,10 @@ export default function AccountPage() {
   >("orders");
   const [copiedCoupon, setCopiedCoupon] = React.useState(false);
   const [orders, setOrders] = React.useState<Order[]>(() => getStoredOrders());
+
+  // Atelier Tax Invoice Modal State
+  const [invoiceModalOrder, setInvoiceModalOrder] = React.useState<Order | null>(null);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = React.useState(false);
 
   const lifetimeSpend = React.useMemo(() => {
     return orders
@@ -496,7 +502,19 @@ export default function AccountPage() {
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setInvoiceModalOrder(ord);
+                              setIsInvoiceModalOpen(true);
+                            }}
+                            className="text-xs"
+                          >
+                            <Printer className="mr-1.5 h-3.5 w-3.5 text-[#B79B63]" /> Tax Invoice
+                          </Button>
                           <Button asChild variant="outline" size="sm">
                             <Link href={`/order-confirmation?orderId=${ord.id}`}>
                               <ExternalLink className="mr-1.5 h-3.5 w-3.5" /> View Receipt
@@ -1034,6 +1052,16 @@ export default function AccountPage() {
           </div>
         </div>
       )}
+
+      {/* Official Atelier Tax Invoice Modal */}
+      <AtelierInvoiceModal
+        order={invoiceModalOrder}
+        isOpen={isInvoiceModalOpen}
+        onClose={() => {
+          setIsInvoiceModalOpen(false);
+          setInvoiceModalOrder(null);
+        }}
+      />
     </div>
   );
 }

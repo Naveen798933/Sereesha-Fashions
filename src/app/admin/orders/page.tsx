@@ -31,6 +31,7 @@ import {
 import { formatINR } from "@/lib/utils";
 import { showToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
+import { AtelierInvoiceModal } from "@/components/shop/AtelierInvoiceModal";
 
 const ORDER_STATUSES = [
   "Order Placed & Verified",
@@ -52,6 +53,10 @@ export default function AdminOrdersPage() {
   const [isEditingTracking, setIsEditingTracking] = React.useState(false);
   const [trackingInput, setTrackingInput] = React.useState("");
   const [carrierInput, setCarrierInput] = React.useState("BlueDart Express");
+
+  // Official Atelier Invoice Modal state
+  const [invoiceOrder, setInvoiceOrder] = React.useState<Order | null>(null);
+  const [isInvoiceOpen, setIsInvoiceOpen] = React.useState(false);
 
   const loadOrders = async () => {
     setLoading(true);
@@ -511,11 +516,23 @@ export default function AdminOrdersPage() {
                         <button
                           type="button"
                           onClick={() => {
+                            setInvoiceOrder(order);
+                            setIsInvoiceOpen(true);
+                          }}
+                          className="p-1.5 text-stone-600 hover:text-[#B79B63] border border-stone-200 hover:border-[#B79B63] rounded-xs bg-white transition-colors cursor-pointer"
+                          title="View & Print Official Tax Invoice"
+                        >
+                          <Printer className="w-3.5 h-3.5" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
                             setSelectedOrder(order);
                             setTrackingInput(order.trackingNumber || "");
                             setCarrierInput(order.carrier || "BlueDart Express");
                           }}
-                          className="p-1.5 text-stone-600 hover:text-[#B79B63] border border-stone-200 hover:border-[#B79B63] rounded-xs bg-white transition-colors"
+                          className="p-1.5 text-stone-600 hover:text-[#B79B63] border border-stone-200 hover:border-[#B79B63] rounded-xs bg-white transition-colors cursor-pointer"
                           title="View Full Details"
                         >
                           <Eye className="w-3.5 h-3.5" />
@@ -524,7 +541,7 @@ export default function AdminOrdersPage() {
                         <button
                           type="button"
                           onClick={() => handleOpenWhatsApp(order)}
-                          className="p-1.5 text-[#2D6A4F] hover:bg-[#2D6A4F]/10 border border-[#2D6A4F]/30 rounded-xs bg-white transition-colors"
+                          className="p-1.5 text-[#2D6A4F] hover:bg-[#2D6A4F]/10 border border-[#2D6A4F]/30 rounded-xs bg-white transition-colors cursor-pointer"
                           title="Notify Client on WhatsApp"
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
@@ -586,11 +603,14 @@ export default function AdminOrdersPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => window.print()}
-                    className="text-xs gap-1.5"
+                    onClick={() => {
+                      setInvoiceOrder(selectedOrder);
+                      setIsInvoiceOpen(true);
+                    }}
+                    className="text-xs gap-1.5 cursor-pointer"
                   >
-                    <Printer className="w-3.5 h-3.5" />
-                    <span>Print Slip</span>
+                    <Printer className="w-3.5 h-3.5 text-[#B79B63]" />
+                    <span>Tax Invoice</span>
                   </Button>
                 </div>
               </div>
@@ -778,11 +798,14 @@ export default function AdminOrdersPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.print()}
+                onClick={() => {
+                  setInvoiceOrder(selectedOrder);
+                  setIsInvoiceOpen(true);
+                }}
                 className="text-xs inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5 text-[#B79B63]" />
-                <span>Print Packing Slip</span>
+                <span>Print Official Tax Invoice</span>
               </Button>
               <Button
                 variant="outline"
@@ -796,6 +819,16 @@ export default function AdminOrdersPage() {
           </div>
         </div>
       )}
+
+      {/* Official Luxury Tax Invoice & Packing Slip Modal */}
+      <AtelierInvoiceModal
+        order={invoiceOrder}
+        isOpen={isInvoiceOpen}
+        onClose={() => {
+          setIsInvoiceOpen(false);
+          setInvoiceOrder(null);
+        }}
+      />
     </div>
   );
 }

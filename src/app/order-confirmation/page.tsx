@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { formatINR } from "@/lib/utils";
 import { getOrderById, Order, getStoredOrders } from "@/lib/orders";
+import { AtelierInvoiceModal } from "@/components/shop/AtelierInvoiceModal";
 
 const emptySubscribe = () => () => {};
 
@@ -39,6 +40,8 @@ function OrderConfirmationContent() {
     const all = getStoredOrders();
     return all[0] || null;
   }, [orderId, isHydrated]);
+
+  const [isInvoiceOpen, setIsInvoiceOpen] = React.useState(false);
 
   if (!isHydrated) {
     return (
@@ -70,9 +73,7 @@ function OrderConfirmationContent() {
   }
 
   const handlePrint = () => {
-    if (typeof window !== "undefined") {
-      window.print();
-    }
+    setIsInvoiceOpen(true);
   };
 
   const whatsAppUpdateUrl = `https://wa.me/916281344628?text=Hello%20Sreesha%20Elegance%2C%20I%20would%20like%20to%20receive%20WhatsApp%20dispatch%20updates%20for%20order%20%23${order.id}.`;
@@ -269,6 +270,13 @@ function OrderConfirmationContent() {
           </Link>
         </Button>
       </div>
+
+      {/* Official Atelier Tax Invoice & Packing Slip Modal */}
+      <AtelierInvoiceModal
+        order={order}
+        isOpen={isInvoiceOpen}
+        onClose={() => setIsInvoiceOpen(false)}
+      />
     </div>
   );
 }
