@@ -1120,12 +1120,20 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
 
               <AccordionItem value="care">
                 <AccordionTrigger className="text-xs uppercase tracking-wider font-medium text-[#1C1B19]">
-                  Care Instructions
+                  Care Instructions &amp; Preservation
                 </AccordionTrigger>
-                <AccordionContent className="text-xs text-[#5A5650] space-y-1.5">
+                <AccordionContent className="text-xs text-[#5A5650] space-y-2">
                   <p>{product.details.washCare}</p>
-                  <p>Never spray perfumes directly on pure zari borders.</p>
-                  <p>Change folds every 4-6 months to preserve handloom crease integrity.</p>
+                  <p>Never spray perfumes or alcohol directly on pure silver/gold zari.</p>
+                  <p>Wrap in pure unbleached muslin mulmul cloth; avoid airtight plastic covers.</p>
+                  <div className="pt-1.5">
+                    <Link
+                      href="/silk-care"
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#B79B63] hover:text-[#1C1B19] underline transition-colors"
+                    >
+                      <span>Explore 90-Day Fold Schedule &amp; Archival Care Guide →</span>
+                    </Link>
+                  </div>
                 </AccordionContent>
               </AccordionItem>
 

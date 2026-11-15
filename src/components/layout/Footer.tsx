@@ -215,6 +215,14 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
+                <Link
+                  href="/silk-care"
+                  className="hover:text-white transition-colors flex items-center gap-1 text-[#B79B63]"
+                >
+                  <span>Silk Care &amp; Heirloom Restoration</span>
+                </Link>
+              </li>
+              <li>
                 <Link href="/track-order" className="hover:text-white transition-colors">
                   Track Your Order
                 </Link>
