@@ -101,7 +101,7 @@ interface ProductDetailViewProps {
 
 export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product }) => {
   const router = useRouter();
-  const { addToCart, toggleWishlist, isInWishlist } = useCartWishlist();
+  const { addToCart, toggleWishlist, isInWishlist, setIsCartDrawerOpen } = useCartWishlist();
 
   const [activeImage, setActiveImage] = React.useState(product.primaryImage);
   const [isVideoActive, setIsVideoActive] = React.useState(false);
@@ -445,7 +445,8 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
       selectedBlouse === "Bespoke Custom Tailored"
         ? `${selectedBlouse} (${neckline}, ${sleeveStyle}, ${backStyle})`
         : selectedBlouse;
-    addToCart(product, selectedSize, customSummary, quantity);
+    addToCart(product, selectedSize, customSummary, quantity, { openDrawer: false });
+    setIsCartDrawerOpen(false);
     router.push("/checkout");
   };
 

@@ -55,14 +55,40 @@ export default function CheckoutPage() {
         }
       }
 
+      if (cartTotal === 0) {
+        setAppliedCoupon(null);
+        setCouponCode("");
+        sessionStorage.removeItem("sreesha_applied_coupon");
+        return;
+      }
+
       const storedCoupon = sessionStorage.getItem("sreesha_applied_coupon");
       if (storedCoupon) {
         const c = JSON.parse(storedCoupon);
         if (c.code) {
+          if (c.code === "ROYAL20" && cartTotal < 40000) {
+            setAppliedCoupon(null);
+            setCouponCode("");
+            sessionStorage.removeItem("sreesha_applied_coupon");
+            return;
+          }
+          if (c.code === "ROYAL15" && cartTotal < 15000) {
+            setAppliedCoupon(null);
+            setCouponCode("");
+            sessionStorage.removeItem("sreesha_applied_coupon");
+            return;
+          }
+          if (c.code === "FESTIVE2500" && cartTotal < 25000) {
+            setAppliedCoupon(null);
+            setCouponCode("");
+            sessionStorage.removeItem("sreesha_applied_coupon");
+            return;
+          }
+
           const disc =
             c.discountType === "percentage"
               ? Math.round((cartTotal * (c.discountValue || 10)) / 100)
-              : c.discount || 0;
+              : Math.min(cartTotal, c.discount || 0);
           setAppliedCoupon({ code: c.code, discount: disc });
           setCouponCode(c.code);
         }
@@ -370,7 +396,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           items: cart.map((item) => ({
             id: item.id,
-            productId: item.id,
+            productId: item.product.id,
             title: item.product.title,
             price: item.product.price,
             quantity: item.quantity,

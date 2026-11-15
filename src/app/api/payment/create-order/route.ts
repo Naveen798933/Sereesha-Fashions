@@ -61,8 +61,14 @@ export async function POST(req: Request) {
 
       // Calculate authoritative subtotal
       for (const it of items as OrderItemInput[]) {
-        const id = it.id || it.productId || "";
-        const catalogItem = productMap.get(id);
+        const id = it.productId || it.id || "";
+        let catalogItem = productMap.get(id);
+        if (!catalogItem && it.id) {
+          const parts = it.id.split("-");
+          if (parts.length >= 2) {
+            catalogItem = productMap.get(parts.slice(0, 2).join("-"));
+          }
+        }
         const quantity = Math.max(1, Number(it.quantity) || 1);
         const price = catalogItem ? catalogItem.price : Number(it.price) || 0;
         computedSubtotal += price * quantity;
@@ -71,7 +77,7 @@ export async function POST(req: Request) {
       // Validate promotional coupon code authoritatively
       if (couponCode && typeof couponCode === "string") {
         const cleanCode = couponCode.trim().toUpperCase();
-        if (cleanCode === "WELCOME10") {
+        if (cleanCode === "WELCOME10" || cleanCode === "ELEGANCE10") {
           computedDiscount = Math.round(computedSubtotal * 0.1);
         } else if (cleanCode === "ROYAL15") {
           if (computedSubtotal >= 15000) {
@@ -79,6 +85,10 @@ export async function POST(req: Request) {
           }
         } else if (cleanCode === "BRIDE15") {
           computedDiscount = Math.round(computedSubtotal * 0.15);
+        } else if (cleanCode === "ROYAL20") {
+          if (computedSubtotal >= 40000) {
+            computedDiscount = Math.round(computedSubtotal * 0.2);
+          }
         } else if (cleanCode === "FESTIVE2500") {
           if (computedSubtotal >= 25000) {
             computedDiscount = 2500;
@@ -112,7 +122,7 @@ export async function POST(req: Request) {
         }
       }
 
-      const shippingFee = computedSubtotal >= 5000 ? 0 : 250;
+      const shippingFee = computedSubtotal >= 2999 || computedSubtotal === 0 ? 0 : 150;
       const packagingFee = giftPackaging ? 250 : 0;
       finalAmount = Math.max(0, computedSubtotal - computedDiscount + shippingFee + packagingFee);
     } else if (clientAmount && Number(clientAmount) > 0) {

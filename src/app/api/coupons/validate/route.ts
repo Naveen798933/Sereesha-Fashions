@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     const total = Number(cartTotal) || 0;
 
     // First check hardcoded boutique coupons as fallback
-    if (cleanCode === "WELCOME10") {
+    if (cleanCode === "WELCOME10" || cleanCode === "ELEGANCE10") {
       const discount = Math.round(total * 0.1);
       return NextResponse.json({
         valid: true,
@@ -55,6 +55,24 @@ export async function POST(req: Request) {
         discountValue: 15,
         discountAmount: discount,
         message: "Bridal Season Privileges Applied (15% Savings)",
+      });
+    }
+
+    if (cleanCode === "ROYAL20") {
+      if (total < 40000) {
+        return NextResponse.json({
+          valid: false,
+          error: "ROYAL20 requires a minimum order value of ₹40,000",
+        });
+      }
+      const discount = Math.round(total * 0.2);
+      return NextResponse.json({
+        valid: true,
+        code: cleanCode,
+        discountType: "percentage",
+        discountValue: 20,
+        discountAmount: discount,
+        message: "Royal Nizam Tier Privileges Applied (20% Savings)",
       });
     }
 

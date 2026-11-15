@@ -64,15 +64,45 @@ export default function CartPage() {
         }
       }
 
+      if (cartTotal === 0) {
+        setAppliedDiscount(0);
+        setAppliedCouponCode(null);
+        setCouponMessage(null);
+        sessionStorage.removeItem("sreesha_applied_coupon");
+        return;
+      }
+
       const storedCoupon = sessionStorage.getItem("sreesha_applied_coupon");
       if (storedCoupon) {
         const c = JSON.parse(storedCoupon);
         if (c.code) {
+          if (c.code === "ROYAL20" && cartTotal < 40000) {
+            setAppliedDiscount(0);
+            setAppliedCouponCode(null);
+            setCouponMessage("ROYAL20 removed: requires minimum order of ₹40,000");
+            sessionStorage.removeItem("sreesha_applied_coupon");
+            return;
+          }
+          if (c.code === "ROYAL15" && cartTotal < 15000) {
+            setAppliedDiscount(0);
+            setAppliedCouponCode(null);
+            setCouponMessage("ROYAL15 removed: requires minimum order of ₹15,000");
+            sessionStorage.removeItem("sreesha_applied_coupon");
+            return;
+          }
+          if (c.code === "FESTIVE2500" && cartTotal < 25000) {
+            setAppliedDiscount(0);
+            setAppliedCouponCode(null);
+            setCouponMessage("FESTIVE2500 removed: requires minimum order of ₹25,000");
+            sessionStorage.removeItem("sreesha_applied_coupon");
+            return;
+          }
+
           setAppliedCouponCode(c.code);
           const disc =
             c.discountType === "percentage"
               ? Math.round((cartTotal * (c.discountValue || 10)) / 100)
-              : c.discount || 0;
+              : Math.min(cartTotal, c.discount || 0);
           setAppliedDiscount(disc);
           setCouponMessage(c.message || `Code ${c.code} applied`);
         }
@@ -214,6 +244,28 @@ export default function CartPage() {
         );
       } catch {}
       showToast.success(`Privilege code ${cleanCode} applied (-10%)`);
+    } else if (cleanCode === "ROYAL15") {
+      if (cartTotal >= 15000) {
+        const disc = Math.round(cartTotal * 0.15);
+        setAppliedDiscount(disc);
+        setAppliedCouponCode("ROYAL15");
+        setCouponMessage("Royal Nizam 15% privilege applied!");
+        try {
+          sessionStorage.setItem(
+            "sreesha_applied_coupon",
+            JSON.stringify({
+              code: "ROYAL15",
+              discount: disc,
+              discountType: "percentage",
+              discountValue: 15,
+            })
+          );
+        } catch {}
+        showToast.success("Privilege code ROYAL15 applied (-15%)");
+      } else {
+        setCouponMessage("ROYAL15 requires a minimum bag value of ₹15,000.");
+        showToast.error("Requires minimum order of ₹15,000");
+      }
     } else if (cleanCode === "ROYAL20") {
       if (cartTotal >= 40000) {
         const disc = Math.round(cartTotal * 0.2);
@@ -236,8 +288,30 @@ export default function CartPage() {
         setCouponMessage("ROYAL20 requires a minimum bag value of ₹40,000.");
         showToast.error("Requires minimum order of ₹40,000");
       }
+    } else if (cleanCode === "FESTIVE2500") {
+      if (cartTotal >= 25000) {
+        const disc = 2500;
+        setAppliedDiscount(disc);
+        setAppliedCouponCode("FESTIVE2500");
+        setCouponMessage("Festive Celebration ₹2,500 privilege applied!");
+        try {
+          sessionStorage.setItem(
+            "sreesha_applied_coupon",
+            JSON.stringify({
+              code: "FESTIVE2500",
+              discount: disc,
+              discountType: "fixed",
+              discountValue: 2500,
+            })
+          );
+        } catch {}
+        showToast.success("Privilege code FESTIVE2500 applied (-₹2,500)");
+      } else {
+        setCouponMessage("FESTIVE2500 requires a minimum bag value of ₹25,000.");
+        showToast.error("Requires minimum order of ₹25,000");
+      }
     } else {
-      setCouponMessage("Invalid coupon code. Try WELCOME10 or BRIDE15");
+      setCouponMessage("Invalid coupon code. Try WELCOME10, BRIDE15, or ROYAL15");
       showToast.error("Invalid coupon code");
     }
     setIsApplyingCoupon(false);
@@ -369,8 +443,7 @@ export default function CartPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    addToCart(prod, prod.sizes[0]);
-                    showToast.success(`Added ${prod.title} to bag`);
+                    addToCart(prod, prod.sizes?.[0] || "Standard");
                   }}
                   className="mt-3 w-full text-[10px] uppercase tracking-wider cursor-pointer"
                 >
@@ -485,10 +558,7 @@ export default function CartPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => {
-                        removeFromCart(item.id);
-                        showToast.info(`Removed ${item.product.title}`);
-                      }}
+                      onClick={() => removeFromCart(item.id)}
                       className="p-1.5 text-[#8C867D] hover:text-[#9A3434] transition-colors cursor-pointer"
                       aria-label="Remove item"
                       title="Remove from bag"
@@ -654,10 +724,7 @@ export default function CartPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => {
-                        addToCart(item, item.sizes[0]);
-                        showToast.success(`Added ${item.title}`);
-                      }}
+                      onClick={() => addToCart(item, item.sizes?.[0] || "Standard")}
                       className="px-2.5 py-1.5 bg-[#1C1B19] text-[#FAF7F2] text-[10px] uppercase tracking-wider font-semibold hover:bg-[#B79B63] transition-colors shrink-0 cursor-pointer"
                     >
                       + Add

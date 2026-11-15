@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { X, Trash2, ArrowRight, ShoppingBag, ShieldCheck } from "lucide-react";
 import { useCartWishlist } from "@/context/CartWishlistContext";
 import { PRODUCTS } from "@/data/products";
@@ -20,6 +21,24 @@ export const CartDrawer: React.FC = () => {
     updateQuantity,
     addToCart,
   } = useCartWishlist();
+
+  const pathname = usePathname();
+
+  // Close cart drawer automatically upon route changes
+  React.useEffect(() => {
+    setIsCartDrawerOpen(false);
+  }, [pathname, setIsCartDrawerOpen]);
+
+  // Lock body scroll when cart drawer is active
+  React.useEffect(() => {
+    if (isCartDrawerOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isCartDrawerOpen]);
 
   const freeShippingThreshold = 2999;
   const progressPercent = Math.min(100, (cartTotal / freeShippingThreshold) * 100);
@@ -204,7 +223,9 @@ export const CartDrawer: React.FC = () => {
                         </div>
                         <button
                           type="button"
-                          onClick={() => addToCart(recommendation, recommendation.sizes[0])}
+                          onClick={() =>
+                            addToCart(recommendation, recommendation.sizes?.[0] || "Standard")
+                          }
                           className="px-2.5 py-1.5 bg-[#1C1B19] text-[#FAF7F2] text-[10px] uppercase tracking-wider font-semibold hover:bg-[#B79B63] transition-colors shrink-0 rounded-2xs"
                         >
                           + Add

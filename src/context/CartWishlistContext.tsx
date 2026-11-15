@@ -25,7 +25,13 @@ interface CartWishlistContextType {
   setIsSearchOpen: (open: boolean) => void;
   isMobileMenuOpen: boolean;
   setIsMobileMenuOpen: (open: boolean) => void;
-  addToCart: (product: Product, size?: string, blouseOption?: string, quantity?: number) => void;
+  addToCart: (
+    product: Product,
+    size?: string,
+    blouseOption?: string,
+    quantity?: number,
+    options?: { silent?: boolean; openDrawer?: boolean }
+  ) => void;
   removeFromCart: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
@@ -135,9 +141,10 @@ export const CartWishlistProvider: React.FC<{ children: React.ReactNode }> = ({ 
     product: Product,
     size?: string,
     blouseOption?: string,
-    quantity: number = 1
+    quantity: number = 1,
+    options?: { silent?: boolean; openDrawer?: boolean }
   ) => {
-    const selectedSize = size || product.sizes[0] || "Standard";
+    const selectedSize = size || product.sizes?.[0] || "Standard";
     const itemId = `${product.id}-${selectedSize}-${blouseOption || "none"}`;
 
     setCart((prev) => {
@@ -150,8 +157,12 @@ export const CartWishlistProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return [...prev, { id: itemId, product, size: selectedSize, quantity, blouseOption }];
     });
 
-    showToast.success(`Added ${product.title} to your bag`);
-    setIsCartDrawerOpen(true);
+    if (!options?.silent) {
+      showToast.success(`Added ${product.title} to your bag`);
+    }
+    if (options?.openDrawer !== false) {
+      setIsCartDrawerOpen(true);
+    }
   };
 
   const removeFromCart = (itemId: string) => {

@@ -38,7 +38,10 @@ export default function WishlistPage() {
   const handleMoveAllToBag = () => {
     if (wishlistedProducts.length === 0) return;
     wishlistedProducts.forEach((product) => {
-      addToCart(product, product.sizes?.[0] || "Standard");
+      addToCart(product, product.sizes?.[0] || "Standard", undefined, 1, {
+        silent: true,
+        openDrawer: false,
+      });
     });
     showToast.success(`Moved ${wishlistedProducts.length} heirloom pieces to your shopping bag!`);
     setIsCartDrawerOpen(true);
