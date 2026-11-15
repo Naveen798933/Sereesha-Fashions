@@ -79,6 +79,10 @@ export async function POST(req: Request) {
           }
         } else if (cleanCode === "BRIDE15") {
           computedDiscount = Math.round(computedSubtotal * 0.15);
+        } else if (cleanCode === "FESTIVE2500") {
+          if (computedSubtotal >= 25000) {
+            computedDiscount = 2500;
+          }
         } else {
           try {
             const supabase = createServerAdminClient();
@@ -90,7 +94,9 @@ export async function POST(req: Request) {
               .single();
 
             if (coupon) {
-              const minSpend = Number(coupon.min_spend || coupon.min_order_amount || 0);
+              const minSpend = Number(
+                coupon.min_order ?? coupon.min_spend ?? coupon.min_order_amount ?? 0
+              );
               if (computedSubtotal >= minSpend) {
                 const discountVal = Number(coupon.discount_value || coupon.value || 0);
                 const discountType = coupon.discount_type || coupon.type;

@@ -110,9 +110,18 @@ export default function AdminOverviewPage() {
     }
   }, []);
 
+  const realizedRevenue = orders
+    .filter((o) => o.status !== "Cancelled")
+    .reduce((acc, curr) => acc + curr.total, 0);
   const totalRevenue = orders.reduce((acc, curr) => acc + curr.total, 0);
   const totalOrders = orders.length;
-  const avgOrderValue = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
+  const nonCancelledOrders = orders.filter((o) => o.status !== "Cancelled").length;
+  const avgOrderValue =
+    nonCancelledOrders > 0
+      ? Math.round(realizedRevenue / nonCancelledOrders)
+      : totalOrders > 0
+        ? Math.round(totalRevenue / totalOrders)
+        : 0;
   const pendingOrders = orders.filter(
     (o) => o.status !== "Delivered" && o.status !== "Cancelled"
   ).length;
@@ -146,16 +155,16 @@ export default function AdminOverviewPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <div className="bg-white p-5 border border-[#E8E2D8] rounded-xs shadow-xs">
           <div className="flex items-center justify-between text-stone-500 mb-2">
-            <span className="text-xs uppercase tracking-wider font-medium">Gross Revenue</span>
+            <span className="text-xs uppercase tracking-wider font-medium">Realized Revenue</span>
             <TrendingUp className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="text-2xl font-serif font-bold text-[#1C1B19]">
-            {formatINR(totalRevenue)}
+            {formatINR(realizedRevenue)}
           </div>
-          <p className="text-[11px] text-stone-400 mt-1">Total atelier order volume</p>
+          <p className="text-[11px] text-stone-400 mt-1">{formatINR(totalRevenue)} gross volume</p>
         </div>
 
         <div className="bg-white p-5 border border-[#E8E2D8] rounded-xs shadow-xs">
