@@ -1166,6 +1166,17 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
             <h2 className="font-serif text-2xl sm:text-3xl text-[#1C1B19] font-normal">
               You May Also Admire
             </h2>
+            <div className="mt-2">
+              <Link
+                href="/bridal-trousseau"
+                className="text-xs text-[#B79B63] hover:text-[#1C1B19] font-medium underline inline-flex items-center gap-1"
+              >
+                <span>
+                  Curating a full wedding? Explore the 5-Ceremony Bridal Trousseau Studio &amp; save
+                  up to 15% →
+                </span>
+              </Link>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">

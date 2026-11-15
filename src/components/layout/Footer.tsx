@@ -173,6 +173,14 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
+                <Link
+                  href="/bridal-trousseau"
+                  className="hover:text-white transition-colors text-[#B79B63]"
+                >
+                  Royal Bridal Trousseau Studio
+                </Link>
+              </li>
+              <li>
                 <Link href="/new-arrivals" className="hover:text-white transition-colors">
                   New Arrivals
                 </Link>
