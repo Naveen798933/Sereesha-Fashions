@@ -4,12 +4,13 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { X, Trash2, ArrowRight, ShoppingBag, ShieldCheck } from "lucide-react";
+import { X, Trash2, ArrowRight, ShoppingBag, ShieldCheck, Tag, Truck } from "lucide-react";
 import { useCartWishlist } from "@/context/CartWishlistContext";
 import { PRODUCTS } from "@/data/products";
 import { Button } from "@/components/ui/Button";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { formatINR } from "@/lib/utils";
+import { showToast } from "@/components/ui/Toast";
 
 export const CartDrawer: React.FC = () => {
   const {
@@ -43,6 +44,86 @@ export const CartDrawer: React.FC = () => {
   const freeShippingThreshold = 2999;
   const progressPercent = Math.min(100, (cartTotal / freeShippingThreshold) * 100);
   const remainingForFreeShipping = Math.max(0, freeShippingThreshold - cartTotal);
+
+  // Sync applied coupon from sessionStorage
+  interface AppliedCouponState {
+    code: string;
+    discount: number;
+    discountType: "percentage" | "fixed";
+    discountValue: number;
+  }
+  const [appliedCoupon, setAppliedCoupon] = React.useState<AppliedCouponState | null>(null);
+
+  React.useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem("sreesha_applied_coupon");
+      if (stored) {
+        setAppliedCoupon(JSON.parse(stored));
+      }
+    } catch {}
+  }, [isCartDrawerOpen, cartTotal]);
+
+  const calculateDiscount = () => {
+    if (!appliedCoupon) return 0;
+    if (appliedCoupon.code === "ROYAL20" && cartTotal < 40000) return 0;
+    if (appliedCoupon.code === "ROYAL15" && cartTotal < 15000) return 0;
+    if (appliedCoupon.code === "FESTIVE2500" && cartTotal < 25000) return 0;
+    if (appliedCoupon.discountType === "percentage") {
+      return Math.round((cartTotal * (appliedCoupon.discountValue || 10)) / 100);
+    }
+    return Math.min(cartTotal, appliedCoupon.discount || 0);
+  };
+
+  const discountAmount = calculateDiscount();
+  const estimatedFinalTotal =
+    Math.max(0, cartTotal - discountAmount) + (cartTotal >= freeShippingThreshold ? 0 : 150);
+
+  const handleApplyQuickCoupon = (code: string) => {
+    if (appliedCoupon?.code === code) {
+      setAppliedCoupon(null);
+      sessionStorage.removeItem("sreesha_applied_coupon");
+      showToast.info(`Coupon ${code} removed`);
+      return;
+    }
+
+    let payload: AppliedCouponState | null = null;
+    if (code === "WELCOME10") {
+      payload = {
+        code,
+        discountType: "percentage",
+        discountValue: 10,
+        discount: Math.round(cartTotal * 0.1),
+      };
+    } else if (code === "ROYAL15") {
+      if (cartTotal < 15000) {
+        showToast.error("ROYAL15 requires a minimum cart total of ₹15,000");
+        return;
+      }
+      payload = {
+        code,
+        discountType: "percentage",
+        discountValue: 15,
+        discount: Math.round(cartTotal * 0.15),
+      };
+    } else if (code === "FESTIVE2500") {
+      if (cartTotal < 25000) {
+        showToast.error("FESTIVE2500 requires a minimum cart total of ₹25,000");
+        return;
+      }
+      payload = {
+        code,
+        discountType: "fixed",
+        discountValue: 2500,
+        discount: 2500,
+      };
+    }
+
+    if (payload) {
+      setAppliedCoupon(payload);
+      sessionStorage.setItem("sreesha_applied_coupon", JSON.stringify(payload));
+      showToast.success(`Privilege Code ${code} Applied!`);
+    }
+  };
 
   if (!isCartDrawerOpen) return null;
 
@@ -241,27 +322,85 @@ export const CartDrawer: React.FC = () => {
 
         {/* Footer actions */}
         {cart.length > 0 && (
-          <div className="p-6 bg-white border-t border-[#E8E2D8] space-y-4">
-            <div className="space-y-1.5 text-xs">
+          <div className="p-5 bg-white border-t border-[#E8E2D8] space-y-3.5">
+            {/* Quick Privilege Coupon Chips */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-stone-500">
+                <span className="flex items-center gap-1">
+                  <Tag className="h-3 w-3 text-[#B79B63]" />
+                  <span>Apply Privilege Code</span>
+                </span>
+                {appliedCoupon && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAppliedCoupon(null);
+                      sessionStorage.removeItem("sreesha_applied_coupon");
+                      showToast.info("Privilege code removed");
+                    }}
+                    className="text-[#9A3434] hover:underline cursor-pointer"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                {[
+                  { code: "WELCOME10", label: "WELCOME10 (10% OFF)" },
+                  { code: "ROYAL15", label: "ROYAL15 (15% OFF >15k)" },
+                  { code: "FESTIVE2500", label: "FESTIVE2500 (₹2.5k OFF)" },
+                ].map((c) => (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => handleApplyQuickCoupon(c.code)}
+                    className={`px-2 py-1 text-[10px] rounded-xs font-mono font-medium border transition-colors shrink-0 cursor-pointer ${
+                      appliedCoupon?.code === c.code
+                        ? "bg-[#1C1B19] text-[#FAF7F2] border-[#1C1B19]"
+                        : "bg-[#FAF7F2] text-stone-700 border-[#E8E2D8] hover:border-[#B79B63]"
+                    }`}
+                  >
+                    {appliedCoupon?.code === c.code ? `✓ ${c.code}` : c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Price Breakdown */}
+            <div className="space-y-1.5 text-xs pt-1">
               <div className="flex justify-between text-[#5A5650]">
                 <span>Subtotal (Inclusive of All Taxes)</span>
                 <span className="font-semibold text-[#1C1B19]">{formatINR(cartTotal)}</span>
               </div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-[#2D6A4F] font-medium">
+                  <span>Privilege Savings ({appliedCoupon?.code})</span>
+                  <span>-{formatINR(discountAmount)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-[#5A5650]">
-                <span>Shipping</span>
+                <span>Express Courier Shipping</span>
                 <span className="text-[#2D6A4F] font-medium">
-                  {cartTotal >= freeShippingThreshold ? "FREE" : "₹150"}
+                  {cartTotal >= freeShippingThreshold ? "Complimentary" : "₹150"}
                 </span>
               </div>
               <div className="flex justify-between text-sm font-semibold text-[#1C1B19] pt-2 border-t border-[#E8E2D8]">
                 <span>Estimated Total</span>
-                <span>
-                  {formatINR(cartTotal >= freeShippingThreshold ? cartTotal : cartTotal + 150)}
-                </span>
+                <span className="font-bold text-[#1C1B19]">{formatINR(estimatedFinalTotal)}</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-2">
+            {/* BlueDart Express Promise */}
+            <div className="py-2 px-2.5 bg-[#FAF7F2] border border-[#E8E2D8] rounded-xs flex items-center justify-between text-[10px] text-stone-600">
+              <span className="flex items-center gap-1.5 font-medium">
+                <Truck className="h-3.5 w-3.5 text-[#B79B63]" />
+                <span>BlueDart Express: 2-4 Days Delivery</span>
+              </span>
+              <span className="text-emerald-700 font-semibold">Insured Dispatch</span>
+            </div>
+
+            {/* Checkout Action Buttons */}
+            <div className="grid grid-cols-2 gap-3 pt-1">
               <Button
                 variant="outline"
                 size="md"

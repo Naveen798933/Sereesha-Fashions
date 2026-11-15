@@ -183,9 +183,14 @@ export default function CheckoutPage() {
   const discountAmount = appliedCoupon ? appliedCoupon.discount : 0;
   const finalTotal = Math.max(0, cartTotal + shippingFee + giftPackagingFee - discountAmount);
 
-  const handleApplyCoupon = async () => {
-    const code = couponCode.trim().toUpperCase();
+  const handleApplyCoupon = async (explicitCode?: string) => {
+    const code = (typeof explicitCode === "string" ? explicitCode : couponCode)
+      .trim()
+      .toUpperCase();
     if (!code) return;
+    if (typeof explicitCode === "string") {
+      setCouponCode(code);
+    }
     setCouponLoading(true);
 
     try {
@@ -236,14 +241,25 @@ export default function CheckoutPage() {
       } catch {}
 
       if (!localMatched) {
-        if (code === "WELCOME10") {
+        if (code === "WELCOME10" || code === "ELEGANCE10") {
           const disc = Math.round(cartTotal * 0.1);
           setAppliedCoupon({ code, discount: disc });
           showToast.success(`Welcome coupon applied! Saved ${formatINR(disc)}`);
-        } else if (code === "ROYAL15" && cartTotal >= 10000) {
+        } else if (code === "ROYAL15" && cartTotal >= 15000) {
           const disc = Math.round(cartTotal * 0.15);
           setAppliedCoupon({ code, discount: disc });
           showToast.success(`Royal tier coupon applied! Saved ${formatINR(disc)}`);
+        } else if (code === "ROYAL20" && cartTotal >= 40000) {
+          const disc = Math.round(cartTotal * 0.2);
+          setAppliedCoupon({ code, discount: disc });
+          showToast.success(`Royal tier coupon applied! Saved ${formatINR(disc)}`);
+        } else if (code === "BRIDE15") {
+          const disc = Math.round(cartTotal * 0.15);
+          setAppliedCoupon({ code, discount: disc });
+          showToast.success(`Bridal coupon applied! Saved ${formatINR(disc)}`);
+        } else if (code === "FESTIVE2500" && cartTotal >= 25000) {
+          setAppliedCoupon({ code, discount: 2500 });
+          showToast.success(`Festive coupon applied! Saved ${formatINR(2500)}`);
         } else {
           showToast.error("Invalid coupon code");
         }
@@ -1215,13 +1231,36 @@ export default function CheckoutPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={handleApplyCoupon}
+                  onClick={() => handleApplyCoupon()}
                   disabled={couponLoading || !couponCode.trim()}
                   className="px-3.5 py-2 bg-[#1C1B19] text-[#FAF7F2] text-xs uppercase tracking-wider font-medium hover:bg-[#B79B63] transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {couponLoading ? "..." : "Apply"}
                 </button>
               </div>
+
+              {/* Quick Suggestion Chips */}
+              {!appliedCoupon && (
+                <div className="flex items-center gap-1.5 mt-2 overflow-x-auto no-scrollbar py-0.5">
+                  <span className="text-[10px] text-stone-400 uppercase tracking-wider shrink-0">
+                    Quick:
+                  </span>
+                  {[
+                    { code: "WELCOME10", label: "WELCOME10 (10% OFF)" },
+                    { code: "ROYAL15", label: "ROYAL15 (15% OFF >15k)" },
+                    { code: "BRIDE15", label: "BRIDE15 (15% OFF)" },
+                  ].map((c) => (
+                    <button
+                      key={c.code}
+                      type="button"
+                      onClick={() => handleApplyCoupon(c.code)}
+                      className="px-2 py-0.5 bg-[#FAF7F2] hover:bg-stone-100 border border-[#E8E2D8] text-[10px] font-mono text-stone-700 rounded-xs shrink-0 cursor-pointer"
+                    >
+                      {c.code}
+                    </button>
+                  ))}
+                </div>
+              )}
               {appliedCoupon && (
                 <div className="flex justify-between items-center text-[11px] text-[#2D6A4F] mt-1.5 bg-[#2D6A4F]/10 px-2 py-1">
                   <span>Coupon {appliedCoupon.code} applied</span>

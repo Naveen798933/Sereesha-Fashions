@@ -15,6 +15,8 @@ import {
   Check,
   ShieldCheck,
   Award,
+  Eye,
+  Scissors,
 } from "lucide-react";
 import { Product } from "@/data/products";
 import { getCustomerProducts } from "@/lib/catalog";
@@ -22,6 +24,7 @@ import { useCartWishlist } from "@/context/CartWishlistContext";
 import { formatINR, cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { Rating } from "@/components/ui/Rating";
+import { Button } from "@/components/ui/Button";
 
 type SortOption = "featured" | "price-asc" | "price-desc" | "rating";
 type QuickFilter =
@@ -57,6 +60,21 @@ export const ProductListingView: React.FC<ProductListingViewProps> = ({
   const [quickFilter, setQuickFilter] = React.useState<QuickFilter>("all");
   const [mobileColumns, setMobileColumns] = React.useState<1 | 2>(2);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = React.useState(false);
+
+  // Quick View Modal State
+  const [quickViewProduct, setQuickViewProduct] = React.useState<Product | null>(null);
+  const [quickViewImage, setQuickViewImage] = React.useState<string>("");
+  const [quickViewSize, setQuickViewSize] = React.useState<string>("Standard");
+  const [quickViewBlouse, setQuickViewBlouse] = React.useState<string>(
+    "Unstitched Matching Blouse (Included)"
+  );
+
+  const handleOpenQuickView = (p: Product) => {
+    setQuickViewProduct(p);
+    setQuickViewImage(p.primaryImage);
+    setQuickViewSize(p.sizes?.[0] || "Standard");
+    setQuickViewBlouse("Unstitched Matching Blouse (Included)");
+  };
 
   // Filter base list
   const baseProducts = React.useMemo(() => {
@@ -385,26 +403,44 @@ export const ProductListingView: React.FC<ProductListingViewProps> = ({
                     />
                   </button>
 
-                  {/* Quick Add Overlay on Hover (Desktop) */}
-                  <div className="hidden sm:block absolute inset-x-3 bottom-3 opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-10">
+                  {/* Quick Action Overlay on Hover (Desktop) */}
+                  <div className="hidden sm:grid grid-cols-2 gap-1.5 absolute inset-x-2.5 bottom-2.5 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-10">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenQuickView(product)}
+                      className="h-9 bg-white/95 text-[#1C1B19] text-[10px] uppercase tracking-[0.14em] font-medium hover:bg-stone-100 transition-colors flex items-center justify-center gap-1 border border-stone-300 shadow-md cursor-pointer backdrop-blur-xs"
+                      aria-label="Quick View piece"
+                    >
+                      <Eye className="h-3.5 w-3.5 text-[#B79B63]" /> Quick View
+                    </button>
                     <button
                       type="button"
                       onClick={() => addToCart(product, product.sizes[0])}
-                      className="w-full h-9 bg-[#1C1B19] text-[#FAF7F2] text-[10px] uppercase tracking-[0.16em] font-medium hover:bg-[#B79B63] transition-colors flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
+                      className="h-9 bg-[#1C1B19] text-[#FAF7F2] text-[10px] uppercase tracking-[0.14em] font-medium hover:bg-[#B79B63] hover:text-[#1C1B19] transition-colors flex items-center justify-center gap-1 shadow-md cursor-pointer"
                     >
-                      Quick Add to Bag
+                      <ShoppingBag className="h-3.5 w-3.5" /> + Bag
                     </button>
                   </div>
 
-                  {/* Mobile Direct Quick Add Icon Button */}
-                  <button
-                    type="button"
-                    onClick={() => addToCart(product, product.sizes[0])}
-                    className="sm:hidden absolute bottom-2.5 right-2.5 z-10 h-8 w-8 bg-[#1C1B19]/90 text-[#FAF7F2] flex items-center justify-center shadow-md active:scale-95 transition-transform"
-                    aria-label={`Add ${product.title} to bag`}
-                  >
-                    <ShoppingBag className="h-4 w-4 text-[#FAF7F2]" />
-                  </button>
+                  {/* Mobile Direct Action Buttons */}
+                  <div className="sm:hidden absolute bottom-2 right-2 z-10 flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenQuickView(product)}
+                      className="h-8 w-8 bg-white/95 text-[#1C1B19] border border-stone-200 flex items-center justify-center shadow-md active:scale-95 transition-transform"
+                      aria-label={`Quick view ${product.title}`}
+                    >
+                      <Eye className="h-3.5 w-3.5 text-[#B79B63]" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => addToCart(product, product.sizes[0])}
+                      className="h-8 w-8 bg-[#1C1B19]/90 text-[#FAF7F2] flex items-center justify-center shadow-md active:scale-95 transition-transform"
+                      aria-label={`Add ${product.title} to bag`}
+                    >
+                      <ShoppingBag className="h-3.5 w-3.5 text-[#FAF7F2]" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Details */}
@@ -595,6 +631,170 @@ export const ProductListingView: React.FC<ProductListingViewProps> = ({
               >
                 Show {sortedProducts.length} Pieces
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick View Modal */}
+      {quickViewProduct && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#1C1B19]/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="relative w-full max-w-3xl bg-white border border-[#E8E2D8] shadow-2xl rounded-xs overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setQuickViewProduct(null)}
+              className="absolute top-3 right-3 z-20 p-1.5 bg-white/90 hover:bg-white text-stone-700 hover:text-[#1C1B19] rounded-full transition-colors cursor-pointer border border-[#E8E2D8] shadow-xs"
+              aria-label="Close modal"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="grid grid-cols-1 md:grid-cols-2">
+              {/* Product Image */}
+              <div className="relative aspect-[4/5] bg-[#EFE8DD] overflow-hidden">
+                <Image
+                  src={quickViewImage || quickViewProduct.primaryImage}
+                  alt={quickViewProduct.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-cover object-center"
+                />
+                {quickViewProduct.badge && (
+                  <div className="absolute top-3 left-3 z-10">
+                    <Badge variant="gold">{quickViewProduct.badge}</Badge>
+                  </div>
+                )}
+                {/* Thumbnails */}
+                {quickViewProduct.galleryImages && quickViewProduct.galleryImages.length > 0 && (
+                  <div className="absolute bottom-3 inset-x-3 flex items-center gap-2 overflow-x-auto p-1.5 bg-white/80 backdrop-blur-xs rounded-xs">
+                    {[quickViewProduct.primaryImage, ...quickViewProduct.galleryImages]
+                      .slice(0, 4)
+                      .map((img, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setQuickViewImage(img)}
+                          className={`relative h-12 w-10 shrink-0 border overflow-hidden cursor-pointer ${
+                            (quickViewImage || quickViewProduct.primaryImage) === img
+                              ? "border-[#B79B63] ring-1 ring-[#B79B63]"
+                              : "border-stone-300 opacity-70 hover:opacity-100"
+                          }`}
+                        >
+                          <Image
+                            src={img}
+                            alt="Thumbnail"
+                            fill
+                            sizes="40px"
+                            className="object-cover"
+                          />
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Details & Customization */}
+              <div className="p-5 sm:p-6 flex flex-col justify-between space-y-4 max-h-[85vh] overflow-y-auto">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-stone-500">
+                    <span>{quickViewProduct.categoryLabel}</span>
+                    {quickViewProduct.silkMarkCertified && (
+                      <span className="text-[#B79B63] font-semibold flex items-center gap-1">
+                        <Award className="h-3.5 w-3.5" /> Silk Mark Certified
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 className="font-serif text-xl sm:text-2xl text-[#1C1B19] font-normal leading-snug">
+                    {quickViewProduct.title}
+                  </h3>
+
+                  <div className="flex items-baseline gap-2.5">
+                    <span className="text-lg font-serif font-bold text-[#1C1B19]">
+                      {formatINR(quickViewProduct.price)}
+                    </span>
+                    {quickViewProduct.originalPrice &&
+                      quickViewProduct.originalPrice > quickViewProduct.price && (
+                        <span className="text-xs text-stone-400 line-through">
+                          {formatINR(quickViewProduct.originalPrice)}
+                        </span>
+                      )}
+                  </div>
+
+                  <p className="text-xs text-stone-600 leading-relaxed line-clamp-3">
+                    {quickViewProduct.shortDescription || quickViewProduct.description}
+                  </p>
+
+                  {/* Size Option Selector */}
+                  <div className="space-y-1.5 pt-1">
+                    <label className="text-[10px] uppercase tracking-wider text-stone-500 font-medium">
+                      Select Option / Size:
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(quickViewProduct.sizes || ["Standard"]).map((sz) => (
+                        <button
+                          key={sz}
+                          type="button"
+                          onClick={() => setQuickViewSize(sz)}
+                          className={`px-3 py-1 text-xs border rounded-xs transition-colors cursor-pointer ${
+                            quickViewSize === sz
+                              ? "bg-[#1C1B19] text-[#FAF7F2] border-[#1C1B19]"
+                              : "bg-white text-stone-700 border-stone-200 hover:border-[#B79B63]"
+                          }`}
+                        >
+                          {sz}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Blouse Option */}
+                  {quickViewProduct.category === "sarees" && (
+                    <div className="space-y-1.5 pt-1">
+                      <label className="text-[10px] uppercase tracking-wider text-stone-500 font-medium flex items-center gap-1">
+                        <Scissors className="h-3 w-3 text-[#B79B63]" /> Blouse Customization:
+                      </label>
+                      <select
+                        value={quickViewBlouse}
+                        onChange={(e) => setQuickViewBlouse(e.target.value)}
+                        className="w-full text-xs p-2 border border-stone-200 rounded-xs bg-white text-stone-800 focus:outline-none focus:border-[#B79B63]"
+                      >
+                        <option value="Unstitched Matching Blouse (Included)">
+                          Unstitched Matching Blouse Fabric (Complimentary)
+                        </option>
+                        <option value="Custom Masterji Tailored Blouse">
+                          Bespoke Tailoring by Hyderabad Masterji (+₹1,500)
+                        </option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="space-y-2 pt-3 border-t border-[#E8E2D8]">
+                  <Button
+                    variant="primary"
+                    size="md"
+                    className="w-full py-2.5 text-xs font-semibold uppercase tracking-wider shadow-sm cursor-pointer"
+                    onClick={() => {
+                      addToCart(quickViewProduct, quickViewSize, quickViewBlouse, 1);
+                      setQuickViewProduct(null);
+                    }}
+                  >
+                    <ShoppingBag className="mr-2 h-4 w-4 text-[#B79B63]" />
+                    Add to Bag • {formatINR(quickViewProduct.price)}
+                  </Button>
+
+                  <Link
+                    href={`/women/${quickViewProduct.category}/${quickViewProduct.slug}`}
+                    onClick={() => setQuickViewProduct(null)}
+                    className="block text-center text-xs text-stone-600 hover:text-[#B79B63] transition-colors py-1"
+                  >
+                    View Full Product Details &amp; Video Preview →
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>

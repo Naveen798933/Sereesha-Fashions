@@ -9,6 +9,7 @@ import { CartDrawer } from "@/components/layout/CartDrawer";
 import { PageTransitionWrapper } from "@/components/layout/PageTransitionWrapper";
 import { SmoothScrollProvider } from "@/components/layout/SmoothScrollProvider";
 import { ToastProvider } from "@/components/ui/Toast";
+import { FloatingConcierge } from "@/components/ui/FloatingConcierge";
 import { CartWishlistProvider } from "@/context/CartWishlistContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/seo/JsonLd";
@@ -47,6 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Footer />
               <MobileBottomNav />
               <CartDrawer />
+              <FloatingConcierge />
               <ToastProvider />
             </SmoothScrollProvider>
           </CartWishlistProvider>
