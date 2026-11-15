@@ -14,6 +14,9 @@ import {
   MapPin,
   Tag,
   Gift,
+  AlertCircle,
+  RefreshCw,
+  Phone,
 } from "lucide-react";
 import { useCartWishlist } from "@/context/CartWishlistContext";
 import { useAuth } from "@/context/AuthContext";
@@ -158,6 +161,22 @@ export default function CheckoutPage() {
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [orderCompleted, setOrderCompleted] = React.useState(false);
   const [orderId, setOrderId] = React.useState("");
+
+  // Payment Failure & Recovery State
+  const [paymentError, setPaymentError] = React.useState<{
+    title: string;
+    message: string;
+    code?: string;
+    orderId?: string;
+    recoveryAction?: boolean;
+  } | null>(null);
+
+  // Atelier Simulation Gateway Modal State
+  const [simulationModal, setSimulationModal] = React.useState<{
+    orderId: string;
+    amount: number;
+    paymentMethod: PaymentMethod;
+  } | null>(null);
 
   const giftPackagingFee = includeGiftPackaging ? 250 : 0;
   const shippingFee = cartTotal >= 2999 ? 0 : 150;
@@ -360,6 +379,51 @@ export default function CheckoutPage() {
     router.push(`/order-confirmation?orderId=${generatedId}`);
   };
 
+  const handleSimulationSuccess = async () => {
+    if (!simulationModal) return;
+    setIsProcessing(true);
+    try {
+      const verifyRes = await fetch("/api/payment/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          razorpay_order_id: simulationModal.orderId,
+          razorpay_payment_id: `pay_sim_${Date.now()}`,
+          razorpay_signature: "simulated_atelier_signature",
+        }),
+      });
+      const verifyData = await verifyRes.json();
+      if (verifyData.verified) {
+        const simOrderId = simulationModal.orderId;
+        const simPaymentId = verifyData.paymentId || `pay_sim_${Date.now()}`;
+        setSimulationModal(null);
+        await finalizeOrder(undefined, simPaymentId, simOrderId);
+      } else {
+        throw new Error(verifyData.error || "Simulation verification failed");
+      }
+    } catch (err) {
+      console.error("Simulation error:", err);
+      showToast.error("Simulation verification error. Please retry.");
+      setIsProcessing(false);
+    }
+  };
+
+  const handleSimulationFailure = () => {
+    const failedOrderId = simulationModal?.orderId;
+    setSimulationModal(null);
+    setIsProcessing(false);
+    const failureMsg =
+      "Payment authorization declined by issuing bank (Transaction Limit Exceeded / Bank Timeout).";
+    setPaymentError({
+      title: "Payment Authorization Failed",
+      message: failureMsg,
+      code: "BAD_REQUEST_PAYMENT_DECLINED",
+      orderId: failedOrderId,
+      recoveryAction: true,
+    });
+    showToast.error(failureMsg);
+  };
+
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -378,6 +442,7 @@ export default function CheckoutPage() {
       return;
     }
 
+    setPaymentError(null);
     setIsProcessing(true);
 
     // If COD, skip gateway
@@ -423,6 +488,17 @@ export default function CheckoutPage() {
         throw new Error(orderData.error || "Failed to initialize payment gateway");
       }
 
+      // If server returned simulated order (keys pending or demo mode)
+      if (orderData.isSimulated) {
+        setSimulationModal({
+          orderId: orderData.orderId,
+          amount: Number(orderData.amount) / 100,
+          paymentMethod,
+        });
+        setIsProcessing(false);
+        return;
+      }
+
       // 2. Load Razorpay script dynamically
       const loadScript = (): Promise<boolean> => {
         return new Promise((resolve) => {
@@ -443,7 +519,14 @@ export default function CheckoutPage() {
       if (
         !scriptLoaded ||
         typeof window === "undefined" ||
-        !(window as unknown as { Razorpay?: new (opts: unknown) => { open: () => void } }).Razorpay
+        !(
+          window as unknown as {
+            Razorpay?: new (opts: unknown) => {
+              open: () => void;
+              on: (event: string, callback: (resp: unknown) => void) => void;
+            };
+          }
+        ).Razorpay
       ) {
         setIsProcessing(false);
         showToast.error(
@@ -478,9 +561,14 @@ export default function CheckoutPage() {
             modal: {
               ondismiss: () => void;
             };
-          }) => { open: () => void };
+          }) => {
+            open: () => void;
+            on: (event: string, callback: (response: unknown) => void) => void;
+          };
         }
       ).Razorpay;
+
+      let paymentHandled = false;
 
       const rzp = new RazorpayConstructor({
         key: orderData.keyId,
@@ -490,6 +578,7 @@ export default function CheckoutPage() {
         description: "Bespoke Couture & Pure Silk Handloom Order",
         order_id: orderData.orderId,
         handler: async (response) => {
+          paymentHandled = true;
           try {
             const verifyRes = await fetch("/api/payment/verify", {
               method: "POST",
@@ -504,23 +593,36 @@ export default function CheckoutPage() {
                 response.razorpay_order_id
               );
             } else {
-              showToast.error(
-                "Payment signature verification failed. Please contact concierge if funds were debited."
-              );
+              setPaymentError({
+                title: "Signature Verification Failed",
+                message:
+                  verifyData.error ||
+                  "Payment signature could not be verified. If funds were debited, please contact concierge with your payment reference.",
+                code: "VERIFICATION_FAILED",
+                orderId: response.razorpay_order_id,
+                recoveryAction: true,
+              });
+              showToast.error("Payment signature verification failed.");
               setIsProcessing(false);
             }
           } catch (err) {
             console.error("Verification network error:", err);
-            showToast.error(
-              "Payment verification network interruption. Please contact concierge with your payment reference."
-            );
+            setPaymentError({
+              title: "Network Interruption During Verification",
+              message:
+                "We were unable to confirm payment verification due to a network disruption. Please contact concierge with your payment reference.",
+              code: "NETWORK_ERROR",
+              orderId: response.razorpay_order_id,
+              recoveryAction: true,
+            });
+            showToast.error("Payment verification network interruption.");
             setIsProcessing(false);
           }
         },
         prefill: {
           name: formData.fullName,
           email: formData.email,
-          contact: formData.phone,
+          contact: formData.phone.replace(/[^\d]/g, "").slice(-10),
         },
         theme: {
           color: "#1C1B19",
@@ -528,15 +630,50 @@ export default function CheckoutPage() {
         modal: {
           ondismiss: () => {
             setIsProcessing(false);
-            showToast.error("Payment was cancelled. Your bag items remain preserved.");
+            if (!paymentHandled) {
+              showToast.info("Payment window closed. Your bag items remain preserved.");
+            }
           },
         },
+      });
+
+      rzp.on("payment.failed", (response: unknown) => {
+        paymentHandled = true;
+        setIsProcessing(false);
+        const errResp = response as
+          | {
+              error?: {
+                description?: string;
+                reason?: string;
+                code?: string;
+                metadata?: { order_id?: string; payment_id?: string };
+              };
+            }
+          | undefined;
+
+        const reason =
+          errResp?.error?.description ||
+          errResp?.error?.reason ||
+          "Payment was declined by your bank or card issuer.";
+        setPaymentError({
+          title: "Payment Authorization Failed",
+          message: reason,
+          code: errResp?.error?.code || "PAYMENT_FAILED",
+          orderId: errResp?.error?.metadata?.order_id || orderData.orderId,
+          recoveryAction: true,
+        });
+        showToast.error(`Payment Failed: ${reason}`);
       });
 
       rzp.open();
     } catch (error: unknown) {
       console.error("Payment initialization error:", error);
       const msg = error instanceof Error ? error.message : "Failed to initialize payment gateway";
+      setPaymentError({
+        title: "Payment Gateway Initialization Failed",
+        message: msg,
+        recoveryAction: true,
+      });
       showToast.error(msg);
       setIsProcessing(false);
     }
@@ -832,6 +969,63 @@ export default function CheckoutPage() {
                 <h2 className="font-serif text-xl text-[#1C1B19]">2. Payment Selection</h2>
               </div>
 
+              {/* Payment Error Alert & Direct Recovery Options */}
+              {paymentError && (
+                <div
+                  data-testid="payment-error-banner"
+                  className="p-4 bg-[#9A3434]/10 border border-[#9A3434]/30 rounded-xs flex items-start gap-3.5 text-xs animate-in fade-in duration-200"
+                >
+                  <AlertCircle className="h-5 w-5 shrink-0 text-[#9A3434] mt-0.5" />
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <strong className="font-semibold text-[#9A3434] text-sm">
+                        {paymentError.title}
+                      </strong>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentError(null)}
+                        className="text-[11px] text-[#8C867D] hover:text-[#1C1B19] cursor-pointer"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                    <p className="text-[#5A5650] leading-relaxed">{paymentError.message}</p>
+                    {paymentError.orderId && (
+                      <p className="text-[10px] font-mono text-[#8C867D]">
+                        Reference ID: {paymentError.orderId}
+                      </p>
+                    )}
+                    <div className="pt-2 flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleSubmitOrder}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1C1B19] text-[#FAF7F2] text-[11px] font-semibold uppercase tracking-wider hover:bg-[#B79B63] transition-colors rounded-2xs cursor-pointer shadow-xs"
+                      >
+                        <RefreshCw className="h-3 w-3" /> Retry Payment
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPaymentMethod("cod");
+                          setPaymentError(null);
+                        }}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-[#B79B63] text-[#1C1B19] text-[11px] font-semibold uppercase tracking-wider hover:bg-[#FAF7F2] transition-colors rounded-2xs cursor-pointer"
+                      >
+                        Switch to Cash on Delivery (COD)
+                      </button>
+                      <a
+                        href={`https://wa.me/916281344628?text=Hello%20Sreesha%20Elegance%2C%20my%20payment%20encountered%20an%20issue%20(${encodeURIComponent(paymentError.message)}).%20Can%20you%20assist%20me%20with%20order%20assistance%3F`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] text-[#128C7E] hover:underline ml-1 font-medium"
+                      >
+                        <Phone className="h-3 w-3" /> Concierge Help
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   type="button"
@@ -1104,6 +1298,101 @@ export default function CheckoutPage() {
           </div>
         </div>
       </form>
+
+      {/* Atelier Simulation Gateway Modal (when live Razorpay keys are not yet configured) */}
+      {simulationModal && (
+        <div
+          data-testid="simulation-modal"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1C1B19]/70 backdrop-blur-xs animate-in fade-in duration-200"
+        >
+          <div className="bg-[#FAF7F2] border border-[#B79B63]/40 w-full max-w-md p-6 sm:p-7 space-y-5 rounded-xs shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#E8E2D8] pb-3">
+              <div className="flex items-center gap-2 text-[#B79B63]">
+                <ShieldCheck className="h-5 w-5" />
+                <h3 className="font-serif text-lg text-[#1C1B19] font-medium">
+                  Atelier Payment Simulation
+                </h3>
+              </div>
+              <span className="text-[10px] uppercase font-mono px-2 py-0.5 bg-[#B79B63]/15 text-[#B79B63] rounded-2xs font-semibold">
+                Demo Mode
+              </span>
+            </div>
+
+            <div className="p-3.5 bg-white border border-[#E8E2D8] space-y-2 text-xs">
+              <div className="flex justify-between text-[#5A5650]">
+                <span>Payable Amount</span>
+                <span className="font-semibold text-sm text-[#1C1B19]">
+                  {formatINR(simulationModal.amount)}
+                </span>
+              </div>
+              <div className="flex justify-between text-[#5A5650]">
+                <span>Payment Method</span>
+                <span className="uppercase font-medium text-[#1C1B19]">
+                  {simulationModal.paymentMethod === "upi"
+                    ? "Instant UPI (GPay/PhonePe)"
+                    : simulationModal.paymentMethod === "card"
+                      ? "Credit / Debit Card"
+                      : "NetBanking"}
+                </span>
+              </div>
+              <div className="flex justify-between text-[#5A5650]">
+                <span>Simulation Reference</span>
+                <span className="font-mono text-[11px] text-[#8C867D]">
+                  {simulationModal.orderId}
+                </span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-[#5A5650] leading-relaxed">
+              Live Razorpay merchant credentials are not yet configured in{" "}
+              <code className="text-[#1C1B19] bg-[#EFE8DD] px-1 py-0.5 rounded-2xs font-mono">
+                .env.local
+              </code>
+              . You can complete and verify this order in Atelier simulation mode to test receipts,
+              transactional emails, and order registration.
+            </p>
+
+            <div className="space-y-2.5 pt-1">
+              <Button
+                type="button"
+                variant="primary"
+                size="lg"
+                onClick={handleSimulationSuccess}
+                disabled={isProcessing}
+                className="w-full text-xs uppercase tracking-wider py-3.5"
+              >
+                <CheckCircle2 className="h-4 w-4 mr-2 text-[#2D6A4F]" />
+                {isProcessing ? "Verifying Payment..." : "Authorize & Complete Payment"}
+              </Button>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSimulationFailure}
+                  disabled={isProcessing}
+                  className="text-[11px] text-[#9A3434] hover:bg-[#9A3434]/10 cursor-pointer"
+                >
+                  Simulate Bank Decline
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSimulationModal(null);
+                    setIsProcessing(false);
+                  }}
+                  disabled={isProcessing}
+                  className="text-[11px] cursor-pointer"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

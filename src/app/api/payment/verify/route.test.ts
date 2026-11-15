@@ -64,4 +64,21 @@ describe("Payment Verification Endpoint (POST /api/payment/verify)", () => {
     expect(data.orderId).toBe(orderId);
     expect(data.paymentId).toBe(paymentId);
   });
+
+  it("verifies simulated orders when live Razorpay secret is not present", async () => {
+    const req = new Request("http://localhost:3000/api/payment/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        razorpay_order_id: "order_rzp_test_simulated_999",
+        razorpay_payment_id: "pay_sim_12345",
+      }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.verified).toBe(true);
+    expect(data.orderId).toBe("order_rzp_test_simulated_999");
+  });
 });

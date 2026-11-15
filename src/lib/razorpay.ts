@@ -10,3 +10,18 @@ export const razorpay = new Razorpay({
 });
 
 export const getRazorpayKeyId = () => key_id;
+
+export const isRazorpayConfigured = (): boolean => {
+  const currentKey = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+  const currentSecret = process.env.RAZORPAY_KEY_SECRET;
+
+  return Boolean(
+    currentKey &&
+    currentKey.trim() !== "" &&
+    currentKey !== "rzp_test_sreesha_demo" &&
+    currentKey.startsWith("rzp_") &&
+    currentSecret &&
+    currentSecret.trim() !== "" &&
+    currentSecret !== "sreesha_mock_secret_key_2026"
+  );
+};

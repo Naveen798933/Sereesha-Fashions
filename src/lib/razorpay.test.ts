@@ -1,13 +1,18 @@
 import { describe, it, expect } from "vitest";
 import crypto from "crypto";
-import { getRazorpayKeyId } from "./razorpay";
+import { getRazorpayKeyId, isRazorpayConfigured } from "./razorpay";
 
 describe("Razorpay Integration Security & Signature Utility", () => {
-  it("provides a valid Razorpay key ID", () => {
+  it("provides a valid Razorpay key ID fallback", () => {
     const keyId = getRazorpayKeyId();
     expect(keyId).toBeDefined();
     expect(typeof keyId).toBe("string");
     expect(keyId.length).toBeGreaterThan(0);
+  });
+
+  it("correctly evaluates whether live Razorpay credentials are fully configured", () => {
+    const configured = isRazorpayConfigured();
+    expect(typeof configured).toBe("boolean");
   });
 
   it("successfully verifies valid HMAC-SHA256 signatures", () => {

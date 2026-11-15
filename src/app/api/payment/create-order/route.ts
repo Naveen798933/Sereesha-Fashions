@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { razorpay, getRazorpayKeyId } from "@/lib/razorpay";
+import { razorpay, getRazorpayKeyId, isRazorpayConfigured } from "@/lib/razorpay";
 import { PRODUCTS } from "@/data/products";
 import { createServerAdminClient } from "@/lib/supabase/server";
 
@@ -150,20 +150,22 @@ export async function POST(req: Request) {
     };
 
     let order;
-    try {
-      order = await razorpay.orders.create(options);
-    } catch {
-      if (
-        process.env.NODE_ENV === "production" &&
-        process.env.RAZORPAY_KEY_ID &&
-        process.env.RAZORPAY_KEY_SECRET
-      ) {
-        return NextResponse.json(
-          { error: "Payment gateway error. Please try again." },
-          { status: 502 }
-        );
+    let isSimulated = false;
+
+    if (isRazorpayConfigured()) {
+      try {
+        order = await razorpay.orders.create(options);
+      } catch (gatewayErr: unknown) {
+        console.error("[Razorpay API Error during orders.create]:", gatewayErr);
+        const errMsg =
+          gatewayErr instanceof Error
+            ? gatewayErr.message
+            : "Payment gateway error. Please try again.";
+        return NextResponse.json({ error: errMsg }, { status: 502 });
       }
-      // In dev or demo mode without live Razorpay keys, gracefully provide mock order
+    } else {
+      // In development or simulation mode without live Razorpay keys, gracefully provide mock order
+      isSimulated = true;
       const orderId = `order_rzp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
       order = {
         id: orderId,
@@ -183,6 +185,7 @@ export async function POST(req: Request) {
       amount: order.amount,
       currency: order.currency,
       keyId: getRazorpayKeyId(),
+      isSimulated,
     });
   } catch (error: unknown) {
     console.error("Razorpay order creation error:", error);
