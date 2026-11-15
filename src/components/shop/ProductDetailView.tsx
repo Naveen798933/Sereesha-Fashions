@@ -41,6 +41,7 @@ import {
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { showToast } from "@/components/ui/Toast";
 import { trackRecentlyViewed, RecentlyViewed } from "@/components/shop/RecentlyViewed";
+import { EnsembleBundleCard } from "@/components/shop/EnsembleBundleCard";
 import { createClient } from "@/lib/supabase/client";
 import { getAdminReviews } from "@/lib/catalog";
 
@@ -1140,6 +1141,11 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
             </Accordion>
           </div>
         </div>
+      </div>
+
+      {/* "Complete the Nizam Look" Curated Ensemble Bundle Studio */}
+      <div className="mt-12 sm:mt-16">
+        <EnsembleBundleCard product={product} selectedMainSize={selectedSize} />
       </div>
 
       {/* Related Pieces */}
