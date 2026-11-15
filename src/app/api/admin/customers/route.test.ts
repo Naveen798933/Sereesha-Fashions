@@ -8,6 +8,7 @@ vi.mock("@/lib/supabase/server", () => ({
     from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
         order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        neq: vi.fn().mockResolvedValue({ data: [], error: null }),
       }),
     }),
   }),
@@ -39,5 +40,17 @@ describe("Admin Customers API (GET /api/admin/customers)", () => {
     expect(data.success).toBe(true);
     expect(Array.isArray(data.customers)).toBe(true);
     expect(typeof data.total).toBe("number");
+    expect(data.metrics).toBeDefined();
+    expect(typeof data.metrics.totalRevenue).toBe("number");
+    expect(typeof data.metrics.royalWeaverCount).toBe("number");
+    expect(typeof data.metrics.zariCrownCount).toBe("number");
+
+    if (data.customers.length > 0) {
+      const first = data.customers[0];
+      expect(first).toHaveProperty("lifetimeSpend");
+      expect(first).toHaveProperty("tierId");
+      expect(first).toHaveProperty("tierName");
+      expect(first).toHaveProperty("orderCount");
+    }
   });
 });
