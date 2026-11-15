@@ -276,6 +276,51 @@ export default function CheckoutPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Non-blocking telemetry to record checkout dropoff / abandoned cart
+  const trackCartDropoff = React.useCallback(
+    async (
+      dropoffStep: "contact_entered" | "payment_initiated" | "payment_failed",
+      lastError?: string
+    ) => {
+      const cleanPhone = formData.phone.replace(/[^0-9]/g, "");
+      if (cleanPhone.length < 10 || cart.length === 0 || orderCompleted) {
+        return;
+      }
+      try {
+        await fetch("/api/admin/abandoned-carts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customerName: formData.fullName || "Patron",
+            phone: cleanPhone,
+            email: formData.email,
+            city: formData.city,
+            state: formData.state,
+            items: cart.map((item) => ({
+              id: item.id,
+              title: item.product.title,
+              category: item.product.category,
+              primaryImage: item.product.primaryImage,
+              price: item.product.price,
+              size: item.size,
+              blouseOption: item.blouseOption,
+              quantity: item.quantity,
+            })),
+            subtotal: cartTotal,
+            discount: discountAmount,
+            total: finalTotal,
+            appliedCoupon: appliedCoupon?.code,
+            dropoffStep,
+            lastError,
+          }),
+        });
+      } catch {
+        // Non-blocking telemetry
+      }
+    },
+    [formData, cart, cartTotal, discountAmount, finalTotal, appliedCoupon, orderCompleted]
+  );
+
   const finalizeOrder = async (
     trackingId?: string,
     verifiedPaymentId?: string,
@@ -437,6 +482,7 @@ export default function CheckoutPage() {
       orderId: failedOrderId,
       recoveryAction: true,
     });
+    trackCartDropoff("payment_failed", failureMsg);
     showToast.error(failureMsg);
   };
 
@@ -460,6 +506,7 @@ export default function CheckoutPage() {
 
     setPaymentError(null);
     setIsProcessing(true);
+    trackCartDropoff("payment_initiated");
 
     // If COD, skip gateway
     if (paymentMethod === "cod") {
@@ -678,6 +725,7 @@ export default function CheckoutPage() {
           orderId: errResp?.error?.metadata?.order_id || orderData.orderId,
           recoveryAction: true,
         });
+        trackCartDropoff("payment_failed", reason);
         showToast.error(`Payment Failed: ${reason}`);
       });
 
@@ -690,6 +738,7 @@ export default function CheckoutPage() {
         message: msg,
         recoveryAction: true,
       });
+      trackCartDropoff("payment_failed", msg);
       showToast.error(msg);
       setIsProcessing(false);
     }
@@ -877,6 +926,7 @@ export default function CheckoutPage() {
                     maxLength={10}
                     value={formData.phone}
                     onChange={handleInputChange}
+                    onBlur={() => trackCartDropoff("contact_entered")}
                     className="w-full p-2.5 bg-[#FAF7F2] border border-[#E8E2D8] text-[#1C1B19] outline-none focus:border-[#B79B63]"
                     placeholder="e.g. 9849012345"
                   />
