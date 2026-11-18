@@ -418,6 +418,24 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
       localStorage.setItem("sreesha_admin_reviews", JSON.stringify(currentAdminReviews));
     } catch {}
 
+    // Sync with server Reviews API
+    try {
+      await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: product.id,
+          productTitle: product.title,
+          author: reviewToAdd.author,
+          city: reviewToAdd.city,
+          rating: reviewToAdd.rating,
+          title: reviewToAdd.title,
+          comment: reviewToAdd.comment,
+          fit: reviewToAdd.fit,
+        }),
+      });
+    } catch {}
+
     try {
       const supabase = createClient();
       await supabase.from("reviews").insert([

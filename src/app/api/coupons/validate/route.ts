@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { readLocalCoupons } from "@/lib/serverStores";
 
 export async function POST(req: Request) {
   try {
@@ -128,8 +129,38 @@ export async function POST(req: Request) {
         });
       }
     } catch {
-      // ignore db error, proceed to fallback error
+      // ignore db error, proceed to fallback check
     }
+
+    // Check local persistent JSON store
+    try {
+      const localCoupons = readLocalCoupons();
+      const localCoupon = localCoupons.find((c) => c.code === cleanCode && c.active);
+      if (localCoupon) {
+        if (total < (localCoupon.min_order || 0)) {
+          return NextResponse.json({
+            valid: false,
+            error: `Code ${cleanCode} requires a minimum cart value of ₹${localCoupon.min_order.toLocaleString("en-IN")}`,
+          });
+        }
+
+        let discount = 0;
+        if (localCoupon.discount_type === "percentage") {
+          discount = Math.round((total * localCoupon.discount_value) / 100);
+        } else {
+          discount = Math.min(total, localCoupon.discount_value);
+        }
+
+        return NextResponse.json({
+          valid: true,
+          code: cleanCode,
+          discountType: localCoupon.discount_type,
+          discountValue: localCoupon.discount_value,
+          discountAmount: discount,
+          message: `Privilege code ${cleanCode} applied successfully!`,
+        });
+      }
+    } catch {}
 
     return NextResponse.json({
       valid: false,

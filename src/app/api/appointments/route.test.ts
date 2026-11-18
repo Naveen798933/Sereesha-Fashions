@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { POST, GET } from "./route";
+import { POST, GET, PATCH } from "./route";
+import { ADMIN_COOKIE_NAME, createSessionToken } from "@/lib/serverAdminAuth";
 
 // Mock email engine
 vi.mock("@/lib/email", () => ({
@@ -18,6 +19,9 @@ vi.mock("@/lib/supabase/server", () => ({
       insert: vi.fn().mockResolvedValue({ error: null }),
       select: () => ({
         order: () => Promise.resolve({ data: [], error: null }),
+      }),
+      update: () => ({
+        eq: vi.fn().mockResolvedValue({ error: null }),
       }),
     }),
   }),
@@ -100,5 +104,26 @@ describe("Appointments API (POST & GET /api/appointments)", () => {
     const data = await res.json();
     expect(data.success).toBe(false);
     expect(data.error).toMatch(/unauthorized/i);
+  });
+
+  it("PATCH allows authenticated admin to update appointment status", async () => {
+    const validToken = createSessionToken("sreesha", "Super Admin / Owner");
+    const req = new Request("http://localhost:3000/api/appointments", {
+      method: "PATCH",
+      headers: {
+        cookie: `${ADMIN_COOKIE_NAME}=${validToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: "SE-APT-1234",
+        status: "Completed",
+      }),
+    });
+
+    const res = await PATCH(req);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.message).toContain("Completed");
   });
 });

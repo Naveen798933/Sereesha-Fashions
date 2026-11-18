@@ -43,7 +43,7 @@ export async function POST(req: Request) {
         const itemIds = items.map((it: OrderItemInput) => it.id || it.productId).filter(Boolean);
         const { data: dbProducts } = await supabase
           .from("products")
-          .select("id, title, price, is_in_stock")
+          .select("id, title, price, in_stock")
           .in("id", itemIds);
 
         if (dbProducts && Array.isArray(dbProducts)) {
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
             productMap.set(dp.id, {
               price: Number(dp.price),
               title: dp.title,
-              inStock: dp.is_in_stock !== false,
+              inStock: dp.in_stock !== false,
             });
           });
         }

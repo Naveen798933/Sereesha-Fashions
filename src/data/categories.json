@@ -1,0 +1,57 @@
+[
+  {
+    "id": "cat-sarees",
+    "slug": "sarees",
+    "name": "Silk Sarees",
+    "description": "Authentic Kanchipuram, Banarasi, and Chanderi pure silk handlooms with gold zari.",
+    "imageUrl": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1000&q=85",
+    "subcategories": [
+      "Kanchipuram Silk",
+      "Banarasi Brocade",
+      "Chanderi Zari",
+      "Gadwal Handloom",
+      "Tussar Silk"
+    ],
+    "displayOrder": 1,
+    "isActive": true
+  },
+  {
+    "id": "cat-lehengas",
+    "slug": "lehengas",
+    "name": "Bridal Lehengas",
+    "description": "Opulent velvet and raw silk bridal lehengas with zardozi and gota patti embroidery.",
+    "imageUrl": "https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&w=1000&q=85",
+    "subcategories": ["Bridal Velvet", "Raw Silk Circular", "Banarasi Weave", "Pastel Reception"],
+    "displayOrder": 2,
+    "isActive": true
+  },
+  {
+    "id": "cat-kurtis",
+    "slug": "kurtis",
+    "name": "Designer Kurtis & Sets",
+    "description": "Celebration anarkalis, festive straight kurtis, and palazzo ensembles in chanderi silk.",
+    "imageUrl": "https://images.unsplash.com/photo-1617627143233-0072f0906bea?auto=format&fit=crop&w=1000&q=85",
+    "subcategories": [
+      "Floor-length Anarkali",
+      "Straight Festive Cut",
+      "Kurta & Pant Sets",
+      "Angrakha Style"
+    ],
+    "displayOrder": 3,
+    "isActive": true
+  },
+  {
+    "id": "cat-contemporary",
+    "slug": "contemporary",
+    "name": "Contemporary & Fusion",
+    "description": "Modern Indo-western drapes, cape sets, pre-stitched sarees, and celebration gowns.",
+    "imageUrl": "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=1000&q=85",
+    "subcategories": [
+      "Pre-stitched Concept Sarees",
+      "Jacket & Cape Ensembles",
+      "Festive Draped Gowns"
+    ],
+    "displayOrder": 4,
+    "isActive": true
+  }
+]

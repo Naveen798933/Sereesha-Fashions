@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { Plus, Check, Trash2, Copy } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { formatINR } from "@/lib/utils";
 import { showToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
@@ -69,36 +68,33 @@ export default function AdminCouponsPage() {
   const [newMinOrder, setNewMinOrder] = React.useState("");
 
   const loadCoupons = async () => {
-    let localStored: CouponItem[] = [];
+    try {
+      const res = await fetch("/api/admin/coupons");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.coupons) && data.coupons.length > 0) {
+        setCoupons(data.coupons);
+        try {
+          localStorage.setItem("sreesha_admin_coupons", JSON.stringify(data.coupons));
+        } catch {}
+        setLoading(false);
+        return;
+      }
+    } catch {}
+
     try {
       const stored = localStorage.getItem("sreesha_admin_coupons");
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          localStored = parsed;
           setCoupons(parsed);
+          setLoading(false);
+          return;
         }
       }
     } catch {}
 
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase.from("coupons").select("*");
-      if (!error && data && data.length > 0) {
-        setCoupons(data);
-        try {
-          localStorage.setItem("sreesha_admin_coupons", JSON.stringify(data));
-        } catch {}
-      } else if (localStored.length === 0) {
-        try {
-          localStorage.setItem("sreesha_admin_coupons", JSON.stringify(DEFAULT_COUPONS));
-        } catch {}
-      }
-    } catch {
-      // offline fallback
-    } finally {
-      setLoading(false);
-    }
+    setCoupons(DEFAULT_COUPONS);
+    setLoading(false);
   };
 
   React.useEffect(() => {
@@ -134,10 +130,17 @@ export default function AdminCouponsPage() {
     } catch {}
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase.from("coupons").insert([newCoupon]);
-      if (error) throw error;
-      showToast.success(`Coupon ${cleanCode} saved to database`);
+      const res = await fetch("/api/admin/coupons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newCoupon),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast.success(`Coupon ${cleanCode} saved to atelier database`);
+      } else {
+        showToast.success(`Coupon ${cleanCode} active locally`);
+      }
     } catch {
       showToast.success(`Coupon ${cleanCode} active locally`);
     }
@@ -159,8 +162,11 @@ export default function AdminCouponsPage() {
     } catch {}
 
     try {
-      const supabase = createClient();
-      await supabase.from("coupons").update({ active: nextState }).eq("code", code);
+      await fetch("/api/admin/coupons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...target, active: nextState }),
+      });
     } catch {}
 
     showToast.success(`Coupon ${code} ${nextState ? "activated" : "disabled"}`);
@@ -176,11 +182,12 @@ export default function AdminCouponsPage() {
     } catch {}
 
     try {
-      const supabase = createClient();
-      await supabase.from("coupons").delete().eq("code", code);
+      await fetch(`/api/admin/coupons?code=${encodeURIComponent(code)}`, {
+        method: "DELETE",
+      });
     } catch {}
 
-    showToast.info(`Coupon ${code} removed`);
+    showToast.success(`Coupon ${code} removed`);
   };
 
   const handleCopyCode = (code: string) => {

@@ -18,23 +18,47 @@ export default function AdminReviewsPage() {
   >("all");
   const [ratingFilter, setRatingFilter] = React.useState<number | "all">("all");
 
-  React.useEffect(() => {
+  const loadReviews = React.useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/reviews");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.reviews) && data.reviews.length > 0) {
+        setReviews(data.reviews);
+        return;
+      }
+    } catch {}
     setReviews(getAdminReviews());
   }, []);
+
+  React.useEffect(() => {
+    loadReviews();
+  }, [loadReviews]);
 
   const handleStatusChange = async (
     reviewId: string,
     newStatus: "approved" | "pending" | "hidden" | "spam"
   ) => {
     await updateReviewStatus(reviewId, newStatus);
-    setReviews(getAdminReviews());
+    try {
+      await fetch("/api/admin/reviews", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: reviewId, status: newStatus }),
+      });
+    } catch {}
+    loadReviews();
     showToast.success(`Review status updated to: ${newStatus.toUpperCase()}`);
   };
 
   const handleDelete = async (reviewId: string) => {
     if (!confirm("Are you sure you want to permanently delete this patron review?")) return;
     await deleteReviewItem(reviewId);
-    setReviews(getAdminReviews());
+    try {
+      await fetch(`/api/admin/reviews?id=${encodeURIComponent(reviewId)}`, {
+        method: "DELETE",
+      });
+    } catch {}
+    loadReviews();
     showToast.info("Patron review removed");
   };
 

@@ -61,6 +61,16 @@ export default function AdminOrdersPage() {
   const loadOrders = async () => {
     setLoading(true);
     try {
+      const res = await fetch("/api/admin/orders");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.orders) && data.orders.length > 0) {
+        setOrders(data.orders);
+        setLoading(false);
+        return;
+      }
+    } catch {}
+
+    try {
       const supabase = createClient();
       const { data: dbOrders, error } = await supabase
         .from("orders")
@@ -237,6 +247,13 @@ export default function AdminOrdersPage() {
     }
 
     await updateOrderStatus(orderId, status);
+    try {
+      await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, status }),
+      });
+    } catch {}
 
     const target = orders.find((o) => o.id === orderId);
     if (target && newStatus !== "Cancelled") {
@@ -257,6 +274,13 @@ export default function AdminOrdersPage() {
     const carrier = carrierInput.trim() || "BlueDart Express";
 
     await updateOrderTracking(orderId, tracking, carrier);
+    try {
+      await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, trackingNumber: tracking, carrier }),
+      });
+    } catch {}
 
     const target = orders.find((o) => o.id === orderId);
     if (target) {

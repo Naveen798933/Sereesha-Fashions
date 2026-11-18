@@ -403,6 +403,16 @@ export async function saveCategory(category: CategoryItem): Promise<void> {
     localStorage.setItem(STORAGE_CATEGORIES_KEY, JSON.stringify(current));
   } catch {}
 
+  // Sync with server Admin API
+  try {
+    await fetch("/api/admin/categories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(category),
+    });
+  } catch {}
+
+  // Direct Supabase fallback
   try {
     const supabase = createClient();
     await supabase.from("categories").upsert({
@@ -426,6 +436,14 @@ export async function deleteCategory(categoryId: string): Promise<void> {
     localStorage.setItem(STORAGE_CATEGORIES_KEY, JSON.stringify(current));
   } catch {}
 
+  // Sync with server Admin API
+  try {
+    await fetch(`/api/admin/categories?id=${encodeURIComponent(categoryId)}`, {
+      method: "DELETE",
+    });
+  } catch {}
+
+  // Direct Supabase fallback
   try {
     const supabase = createClient();
     await supabase.from("categories").delete().eq("id", categoryId);

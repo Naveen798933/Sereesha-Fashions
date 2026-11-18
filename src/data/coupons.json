@@ -1,0 +1,58 @@
+[
+  {
+    "code": "WELCOME10",
+    "discount_type": "percentage",
+    "discount_value": 10,
+    "min_order": 0,
+    "active": true
+  },
+  {
+    "code": "ELEGANCE10",
+    "discount_type": "percentage",
+    "discount_value": 10,
+    "min_order": 0,
+    "active": true
+  },
+  {
+    "code": "ROYAL15",
+    "discount_type": "percentage",
+    "discount_value": 15,
+    "min_order": 15000,
+    "active": true
+  },
+  {
+    "code": "BRIDE15",
+    "discount_type": "percentage",
+    "discount_value": 15,
+    "min_order": 25000,
+    "active": true
+  },
+  {
+    "code": "ROYAL20",
+    "discount_type": "percentage",
+    "discount_value": 20,
+    "min_order": 40000,
+    "active": true
+  },
+  {
+    "code": "FESTIVE2500",
+    "discount_type": "fixed",
+    "discount_value": 2500,
+    "min_order": 25000,
+    "active": true
+  },
+  {
+    "code": "TROUSSEAU12",
+    "discount_type": "percentage",
+    "discount_value": 12,
+    "min_order": 30000,
+    "active": true
+  },
+  {
+    "code": "ROYALTROUSSEAU15",
+    "discount_type": "percentage",
+    "discount_value": 15,
+    "min_order": 50000,
+    "active": true
+  }
+]

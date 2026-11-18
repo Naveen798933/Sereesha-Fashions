@@ -35,6 +35,15 @@ export default function AdminCategoriesPage() {
   React.useEffect(() => {
     setCategories(getCategories());
     setProducts(getAdminProducts());
+
+    fetch("/api/admin/categories")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.categories) && data.categories.length > 0) {
+          setCategories(data.categories);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const openAddModal = () => {

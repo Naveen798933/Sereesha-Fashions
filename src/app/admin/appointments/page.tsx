@@ -48,9 +48,16 @@ export default function AdminAppointmentsPage() {
     loadAppointments();
   }, []);
 
-  const handleUpdateStatus = (id: string, newStatus: AppointmentStatus) => {
+  const handleUpdateStatus = async (id: string, newStatus: AppointmentStatus) => {
     const updated = updateAppointmentStatusLocal(id, newStatus);
     setAppointments(updated);
+    try {
+      await fetch("/api/appointments", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status: newStatus }),
+      });
+    } catch {}
     showToast.success(`Appointment #${id} updated to "${newStatus}"`);
   };
 

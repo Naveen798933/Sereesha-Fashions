@@ -219,15 +219,40 @@ export default function AdminProductsPage() {
     showToast.success("Image added to gallery");
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file) => {
-      if (file.size > 5 * 1024 * 1024) {
-        showToast.error(`File ${file.name} exceeds 5MB limit.`);
-        return;
+    for (const file of Array.from(files)) {
+      if (file.size > 25 * 1024 * 1024) {
+        showToast.error(`File ${file.name} exceeds 25MB limit.`);
+        continue;
       }
+
+      // 1. Upload to dedicated media API
+      let uploadedUrl: string | null = null;
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/admin/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (data.success && data.url) {
+          uploadedUrl = data.url;
+        }
+      } catch {
+        // Fallback below
+      }
+
+      if (uploadedUrl) {
+        setGalleryImages((prev) => [...prev, uploadedUrl!]);
+        showToast.success(`Image "${file.name}" uploaded successfully!`);
+        continue;
+      }
+
+      // 2. Fallback to FileReader DataURL
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
@@ -235,8 +260,7 @@ export default function AdminProductsPage() {
         }
       };
       reader.readAsDataURL(file);
-    });
-    showToast.success("Images uploaded to gallery preview");
+    }
   };
 
   const handleMoveImage = (index: number, direction: "up" | "down") => {

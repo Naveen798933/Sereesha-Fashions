@@ -175,3 +175,52 @@ export async function GET(request: Request) {
     );
   }
 }
+
+export async function PATCH(request: Request) {
+  try {
+    let adminToken: string | undefined;
+
+    const cookieHeader = request.headers.get("cookie") || "";
+    const match = cookieHeader.match(new RegExp(`(?:^|; )${ADMIN_COOKIE_NAME}=([^;]*)`));
+    if (match) {
+      adminToken = decodeURIComponent(match[1]);
+    } else {
+      try {
+        const cookieStore = await cookies();
+        adminToken = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
+      } catch {}
+    }
+
+    if (!adminToken || !verifySessionToken(adminToken)) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Admin privileges required." },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const { id, status } = body;
+
+    if (!id || !status) {
+      return NextResponse.json(
+        { success: false, error: "Appointment ID and status are required." },
+        { status: 400 }
+      );
+    }
+
+    try {
+      const supabase = await createClient();
+      await supabase.from("appointments").update({ status }).eq("id", id);
+    } catch (dbErr) {
+      console.warn("[Appointments API] Supabase update notice:", dbErr);
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Appointment #${id} status updated to "${status}".`,
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to update appointment";
+    return NextResponse.json({ success: false, error: msg }, { status: 500 });
+  }
+}
