@@ -1,5 +1,20 @@
 [
   {
+    "id": "rev-1795027010228",
+    "productId": "saree-01",
+    "productTitle": "Kanchipuram Silk",
+    "author": "Meenakshi Sundaram",
+    "city": "Chennai",
+    "rating": 5,
+    "date": "19 November 2026",
+    "title": "Breathtaking handloom weave",
+    "comment": "The zari work is exceptional and silky smooth against the skin.",
+    "fit": "Bespoke Master Fit",
+    "verified": true,
+    "status": "approved",
+    "createdAt": "2026-11-18T18:36:50.228Z"
+  },
+  {
     "id": "rev-1795026025809",
     "productId": "saree-01",
     "productTitle": "Kanchipuram Silk",
@@ -44,7 +59,7 @@
     "verified": true,
     "status": "approved",
     "createdAt": "2026-10-02T10:00:00.000Z",
-    "updatedAt": "2026-11-18T18:20:25.788Z"
+    "updatedAt": "2026-11-18T18:36:50.213Z"
   },
   {
     "id": "rev-2",

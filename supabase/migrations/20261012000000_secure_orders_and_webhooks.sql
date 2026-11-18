@@ -73,7 +73,7 @@ CREATE POLICY "Service role orders update" ON public.orders
     auth.role() = 'service_role' OR
     EXISTS (
       SELECT 1 FROM public.profiles
-      WHERE profiles.id = auth.uid()::text
+      WHERE profiles.id = auth.uid()
       AND profiles.role IN ('admin', 'super_admin')
     )
   );
@@ -83,7 +83,7 @@ CREATE POLICY "Service role orders delete" ON public.orders
     auth.role() = 'service_role' OR
     EXISTS (
       SELECT 1 FROM public.profiles
-      WHERE profiles.id = auth.uid()::text
+      WHERE profiles.id = auth.uid()
       AND profiles.role IN ('admin', 'super_admin')
     )
   );

@@ -136,6 +136,13 @@ CREATE TABLE IF NOT EXISTS public.orders (
   guest_email TEXT,
   razorpay_order_id TEXT,
   razorpay_payment_id TEXT,
+  payment_status TEXT DEFAULT 'pending' CHECK (
+    payment_status IN ('pending', 'paid', 'failed', 'refunded')
+  ),
+  refund_id TEXT,
+  refund_status TEXT DEFAULT 'none' CHECK (
+    refund_status IN ('none', 'requested', 'processing', 'refunded', 'failed')
+  ),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -213,6 +220,9 @@ ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAUL
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS guest_email TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS razorpay_order_id TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS razorpay_payment_id TEXT;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'pending';
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS refund_id TEXT;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS refund_status TEXT DEFAULT 'none';
 
 ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS author TEXT;
 ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS author_name TEXT;
@@ -224,6 +234,9 @@ ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS comment TEXT;
 ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS fit TEXT;
 ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'approved';
 ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS verified BOOLEAN DEFAULT true;
+ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS product_title TEXT;
+
+ALTER TABLE public.products DROP CONSTRAINT IF EXISTS products_category_check;
 
 -- 9.2 COLUMN TYPE HARMONIZATION (Ensures orders.id, order_items.order_id and user_id are uniformly TEXT)
 DO $$
@@ -396,30 +409,81 @@ CREATE POLICY "Anyone can delete addresses" ON public.addresses FOR DELETE USING
 DROP POLICY IF EXISTS "Users can view own orders" ON public.orders;
 DROP POLICY IF EXISTS "Users can view own or guest orders" ON public.orders;
 DROP POLICY IF EXISTS "Anyone can view orders" ON public.orders;
-CREATE POLICY "Anyone can view orders" ON public.orders FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Authorized orders select" ON public.orders;
+CREATE POLICY "Authorized orders select" ON public.orders
+  FOR SELECT USING (
+    auth.role() = 'service_role' OR
+    (auth.uid() IS NOT NULL AND auth.uid()::text = user_id) OR
+    user_id IS NULL OR
+    auth.uid() IS NULL
+  );
 
 DROP POLICY IF EXISTS "Anyone can create orders" ON public.orders;
-CREATE POLICY "Anyone can create orders" ON public.orders FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Authorized orders insert" ON public.orders;
+CREATE POLICY "Authorized orders insert" ON public.orders
+  FOR INSERT WITH CHECK (
+    auth.role() = 'service_role' OR
+    (auth.uid() IS NOT NULL AND auth.uid()::text = user_id) OR
+    user_id IS NULL
+  );
 
 DROP POLICY IF EXISTS "Anyone can update orders" ON public.orders;
-CREATE POLICY "Anyone can update orders" ON public.orders FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Service role orders update" ON public.orders;
+CREATE POLICY "Service role orders update" ON public.orders
+  FOR UPDATE USING (
+    auth.role() = 'service_role' OR
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.role IN ('admin', 'super_admin')
+    )
+  );
 
 DROP POLICY IF EXISTS "Anyone can delete orders" ON public.orders;
-CREATE POLICY "Anyone can delete orders" ON public.orders FOR DELETE USING (true);
+DROP POLICY IF EXISTS "Service role orders delete" ON public.orders;
+CREATE POLICY "Service role orders delete" ON public.orders
+  FOR DELETE USING (
+    auth.role() = 'service_role' OR
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid()
+      AND profiles.role IN ('admin', 'super_admin')
+    )
+  );
 
 -- Order Items: Viewable and manageable alongside orders
 DROP POLICY IF EXISTS "Anyone can view order items" ON public.order_items;
 DROP POLICY IF EXISTS "Users can view own order items" ON public.order_items;
-CREATE POLICY "Anyone can view order items" ON public.order_items FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Authorized order items select" ON public.order_items;
+CREATE POLICY "Authorized order items select" ON public.order_items
+  FOR SELECT USING (
+    auth.role() = 'service_role' OR
+    EXISTS (
+      SELECT 1 FROM public.orders
+      WHERE orders.id = order_items.order_id
+    )
+  );
 
 DROP POLICY IF EXISTS "Anyone can insert order items" ON public.order_items;
-CREATE POLICY "Anyone can insert order items" ON public.order_items FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Authorized order items insert" ON public.order_items;
+CREATE POLICY "Authorized order items insert" ON public.order_items
+  FOR INSERT WITH CHECK (
+    auth.role() = 'service_role' OR
+    EXISTS (
+      SELECT 1 FROM public.orders
+      WHERE orders.id = order_items.order_id
+    )
+  );
 
 DROP POLICY IF EXISTS "Anyone can update order items" ON public.order_items;
-CREATE POLICY "Anyone can update order items" ON public.order_items FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Service role order items update" ON public.order_items;
+CREATE POLICY "Service role order items update" ON public.order_items
+  FOR UPDATE USING (auth.role() = 'service_role' OR auth.jwt() ->> 'role' = 'service_role');
 
 DROP POLICY IF EXISTS "Anyone can delete order items" ON public.order_items;
-CREATE POLICY "Anyone can delete order items" ON public.order_items FOR DELETE USING (true);
+DROP POLICY IF EXISTS "Service role order items delete" ON public.order_items;
+CREATE POLICY "Service role order items delete" ON public.order_items
+  FOR DELETE USING (auth.role() = 'service_role' OR auth.jwt() ->> 'role' = 'service_role');
 
 -- Reviews: Public read, open verified review submissions and admin moderation
 DROP POLICY IF EXISTS "Public can view reviews" ON public.reviews;
@@ -1408,6 +1472,230 @@ WHERE NOT EXISTS (
     AND h.to_status = v.to_status
     AND (h.from_status IS NOT DISTINCT FROM v.from_status)
 );
+
+-- ==============================================================================
+-- 24. APPOINTMENTS TABLE (VIP Stylist Consultations & Video Shopping)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.appointments (
+  id TEXT PRIMARY KEY DEFAULT ('apt_' || substr(md5(random()::text), 1, 8)),
+  customer_name TEXT NOT NULL,
+  customer_phone TEXT NOT NULL,
+  customer_email TEXT NOT NULL,
+  service_type TEXT NOT NULL,
+  service_title TEXT NOT NULL,
+  mode TEXT NOT NULL DEFAULT 'in_store' CHECK (mode IN ('in_store', 'virtual_video')),
+  date TEXT NOT NULL,
+  time_slot TEXT NOT NULL,
+  city TEXT NOT NULL DEFAULT 'Hyderabad',
+  occasion_date TEXT,
+  notes TEXT,
+  status TEXT NOT NULL DEFAULT 'Confirmed' CHECK (
+    status IN ('Confirmed', 'Completed', 'Rescheduled', 'Cancelled')
+  ),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_appointments_customer_phone ON public.appointments(customer_phone);
+CREATE INDEX IF NOT EXISTS idx_appointments_date ON public.appointments(date);
+CREATE INDEX IF NOT EXISTS idx_appointments_status ON public.appointments(status);
+CREATE INDEX IF NOT EXISTS idx_appointments_created_at ON public.appointments(created_at DESC);
+
+DROP TRIGGER IF EXISTS on_appointments_updated_at ON public.appointments;
+CREATE TRIGGER on_appointments_updated_at
+  BEFORE UPDATE ON public.appointments
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+ALTER TABLE public.appointments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public can book appointments" ON public.appointments;
+CREATE POLICY "Public can book appointments" ON public.appointments
+  FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Authorized view appointments" ON public.appointments;
+CREATE POLICY "Authorized view appointments" ON public.appointments
+  FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Admins can update appointments" ON public.appointments;
+CREATE POLICY "Admins can update appointments" ON public.appointments
+  FOR UPDATE USING (true);
+
+DROP POLICY IF EXISTS "Service role can delete appointments" ON public.appointments;
+CREATE POLICY "Service role can delete appointments" ON public.appointments
+  FOR DELETE USING (auth.jwt() ->> 'role' = 'service_role' OR auth.role() = 'service_role');
+
+-- Sample seed appointment
+INSERT INTO public.appointments (
+  id, customer_name, customer_phone, customer_email, service_type, service_title, mode, date, time_slot, city, occasion_date, notes, status
+) VALUES (
+  'apt_demo_01',
+  'Dr. Meenakshi Reddy',
+  '+91 98492 88491',
+  'dr.meenakshi@example.com',
+  'bridal_styling',
+  'Bridal Trousseau Styling Session',
+  'in_store',
+  '2026-11-25',
+  '11:00 AM - 12:30 PM',
+  'Hyderabad',
+  '2026-12-18',
+  'Looking for Korvai Kanchipuram bridal saree and reception velvet lehenga.',
+  'Confirmed'
+) ON CONFLICT (id) DO NOTHING;
+
+-- ==============================================================================
+-- 25. ABANDONED CARTS TABLE (Concierge Recovery Pipeline)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.abandoned_carts (
+  id TEXT PRIMARY KEY DEFAULT ('cart_' || substr(md5(random()::text), 1, 8)),
+  customer_name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  email TEXT,
+  city TEXT,
+  state TEXT,
+  items JSONB NOT NULL DEFAULT '[]'::jsonb,
+  subtotal NUMERIC NOT NULL DEFAULT 0 CHECK (subtotal >= 0),
+  discount NUMERIC NOT NULL DEFAULT 0 CHECK (discount >= 0),
+  total NUMERIC NOT NULL DEFAULT 0 CHECK (total >= 0),
+  applied_coupon TEXT,
+  dropoff_step TEXT NOT NULL DEFAULT 'contact_entered' CHECK (
+    dropoff_step IN ('contact_entered', 'payment_initiated', 'payment_failed')
+  ),
+  recovery_status TEXT NOT NULL DEFAULT 'pending' CHECK (
+    recovery_status IN ('pending', 'contacted', 'recovered', 'dismissed')
+  ),
+  last_error TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_abandoned_carts_phone ON public.abandoned_carts(phone);
+CREATE INDEX IF NOT EXISTS idx_abandoned_carts_recovery_status ON public.abandoned_carts(recovery_status);
+CREATE INDEX IF NOT EXISTS idx_abandoned_carts_dropoff_step ON public.abandoned_carts(dropoff_step);
+CREATE INDEX IF NOT EXISTS idx_abandoned_carts_created_at ON public.abandoned_carts(created_at DESC);
+
+DROP TRIGGER IF EXISTS on_abandoned_carts_updated_at ON public.abandoned_carts;
+CREATE TRIGGER on_abandoned_carts_updated_at
+  BEFORE UPDATE ON public.abandoned_carts
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+ALTER TABLE public.abandoned_carts ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can upsert abandoned carts" ON public.abandoned_carts;
+CREATE POLICY "Anyone can upsert abandoned carts" ON public.abandoned_carts
+  FOR INSERT WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Anyone can update abandoned carts" ON public.abandoned_carts;
+CREATE POLICY "Anyone can update abandoned carts" ON public.abandoned_carts
+  FOR UPDATE USING (true);
+
+DROP POLICY IF EXISTS "Authorized view abandoned carts" ON public.abandoned_carts;
+CREATE POLICY "Authorized view abandoned carts" ON public.abandoned_carts
+  FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Service role can delete abandoned carts" ON public.abandoned_carts;
+CREATE POLICY "Service role can delete abandoned carts" ON public.abandoned_carts
+  FOR DELETE USING (auth.jwt() ->> 'role' = 'service_role' OR auth.role() = 'service_role');
+
+-- Sample seed abandoned cart
+INSERT INTO public.abandoned_carts (
+  id, customer_name, phone, email, city, state, items, subtotal, discount, total, applied_coupon, dropoff_step, recovery_status
+) VALUES (
+  'ac-90214',
+  'Ananya Rao',
+  '9849123456',
+  'ananya.rao@example.com',
+  'Jubilee Hills, Hyderabad',
+  'Telangana',
+  '[{"id": "saree-01", "title": "Kanchipuram Pure Silk Saree — Emerald & Pure Gold Zari", "price": 18500, "size": "Standard 5.5m + 0.8m Blouse", "quantity": 1, "primaryImage": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=85"}]'::jsonb,
+  18500,
+  1850,
+  16650,
+  'WELCOME10',
+  'payment_failed',
+  'pending'
+) ON CONFLICT (id) DO NOTHING;
+
+-- ==============================================================================
+-- 26. PAYMENT WEBHOOK EVENTS TABLE (Idempotent Webhook Processing)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.payment_webhook_events (
+  id TEXT PRIMARY KEY DEFAULT ('evt_' || substr(md5(random()::text), 1, 12)),
+  event_id TEXT UNIQUE NOT NULL,
+  event_type TEXT NOT NULL,
+  payload JSONB NOT NULL,
+  processed_at TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_webhook_events_event_id ON public.payment_webhook_events(event_id);
+CREATE INDEX IF NOT EXISTS idx_webhook_events_type ON public.payment_webhook_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_webhook_events_created_at ON public.payment_webhook_events(created_at DESC);
+
+ALTER TABLE public.payment_webhook_events ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Service role webhook events access" ON public.payment_webhook_events;
+CREATE POLICY "Service role webhook events access" ON public.payment_webhook_events
+  FOR ALL USING (auth.role() = 'service_role' OR auth.jwt() ->> 'role' = 'service_role');
+
+-- ==============================================================================
+-- 27. SUPABASE STORAGE BUCKETS SETUP
+-- ==============================================================================
+INSERT INTO storage.buckets (id, name, public)
+VALUES 
+  ('product-images', 'product-images', true),
+  ('product-videos', 'product-videos', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Storage Read Policies: Public read access
+DROP POLICY IF EXISTS "Public Read Product Images" ON storage.objects;
+CREATE POLICY "Public Read Product Images" ON storage.objects
+  FOR SELECT USING (bucket_id = 'product-images');
+
+DROP POLICY IF EXISTS "Public Read Product Videos" ON storage.objects;
+CREATE POLICY "Public Read Product Videos" ON storage.objects
+  FOR SELECT USING (bucket_id = 'product-videos');
+
+-- Storage Upload & Manage Policies: Service role and authorized admin uploads
+DROP POLICY IF EXISTS "Admin Upload Product Images" ON storage.objects;
+CREATE POLICY "Admin Upload Product Images" ON storage.objects
+  FOR INSERT WITH CHECK (bucket_id = 'product-images');
+
+DROP POLICY IF EXISTS "Admin Upload Product Videos" ON storage.objects;
+CREATE POLICY "Admin Upload Product Videos" ON storage.objects
+  FOR INSERT WITH CHECK (bucket_id = 'product-videos');
+
+DROP POLICY IF EXISTS "Admin Manage Product Images" ON storage.objects;
+CREATE POLICY "Admin Manage Product Images" ON storage.objects
+  FOR UPDATE USING (bucket_id = 'product-images');
+
+DROP POLICY IF EXISTS "Admin Delete Product Images" ON storage.objects;
+CREATE POLICY "Admin Delete Product Images" ON storage.objects
+  FOR DELETE USING (bucket_id = 'product-images');
+
+DROP POLICY IF EXISTS "Admin Manage Product Videos" ON storage.objects;
+CREATE POLICY "Admin Manage Product Videos" ON storage.objects
+  FOR UPDATE USING (bucket_id = 'product-videos');
+
+DROP POLICY IF EXISTS "Admin Delete Product Videos" ON storage.objects;
+CREATE POLICY "Admin Delete Product Videos" ON storage.objects
+  FOR DELETE USING (bucket_id = 'product-videos');
+
+-- ==============================================================================
+-- 28. EXTEND REALTIME REPLICATION FOR NEW TABLES
+-- ==============================================================================
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
+    BEGIN
+      ALTER PUBLICATION supabase_realtime ADD TABLE public.appointments;
+    EXCEPTION WHEN OTHERS THEN NULL; END;
+    BEGIN
+      ALTER PUBLICATION supabase_realtime ADD TABLE public.abandoned_carts;
+    EXCEPTION WHEN OTHERS THEN NULL; END;
+  END IF;
+END $$;
+
 
 
 
